@@ -26,13 +26,9 @@
             box-shadow: 0 6px 20px rgba(0,0,0,0.05);
             background: white;
         }
-        .table-responsive {
-            border-radius: 16px;
-            overflow: hidden;
-        }
         .badge-gravedad {
-            font-size: 0.8rem;
-            padding: 6px 12px;
+            font-size: 0.75rem;
+            padding: 5px 10px;
             border-radius: 20px;
         }
         .btn-action {
@@ -42,8 +38,8 @@
             font-weight: 600;
         }
         .report-img {
-            width: 60px;
-            height: 60px;
+            width: 55px;
+            height: 55px;
             object-fit: cover;
             border-radius: 10px;
             cursor: pointer;
@@ -52,6 +48,15 @@
         .report-img:hover {
             transform: scale(1.08);
         }
+        /* Estilo responsivo móvil mejorado para las tarjetas de reporte */
+        @media (max-width: 768px) {
+            .desktop-table { display: none; }
+            .mobile-card-report { display: block; }
+        }
+        @media (min-width: 769px) {
+            .desktop-table { display: block; }
+            .mobile-card-report { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -59,18 +64,18 @@
     <!-- Cabecera de Administración -->
     <div class="admin-header mb-4">
         <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-            <div class="d-flex align-items-center gap-3">
-                <div class="bg-success bg-opacity-20 text-success p-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+            <div class="d-flex align-items-center gap-3 text-center text-md-start">
+                <div class="bg-success bg-opacity-20 text-success p-2 rounded-circle d-flex align-items-center justify-content-center mx-auto mx-md-0" style="width: 45px; height: 45px;">
                     <i class="fa-solid fa-shield-halved fs-5"></i>
                 </div>
                 <div>
-                    <h4 class="fw-bold mb-0">Panel de Gestión Municipal</h4>
-                    <p class="text-muted small mb-0 text-light opacity-75">EcoMapa Fray Bentos - Moderación de Incidentes</p>
+                    <h4 class="fw-bold mb-0 fs-5">Panel de Gestión Municipal</h4>
+                    <p class="text-muted small mb-0 text-light opacity-75">EcoMapa Fray Bentos</p>
                 </div>
             </div>
             <div class="d-flex gap-2">
                 <a href="/" class="btn btn-outline-light btn-action rounded-pill px-3">
-                    <i class="fa-solid fa-map me-1"></i> Ver Mapa Público
+                    <i class="fa-solid fa-map me-1"></i> Mapa
                 </a>
                 <a href="/logout" class="btn btn-danger btn-action rounded-pill px-3">
                     <i class="fa-solid fa-right-from-bracket me-1"></i> Salir
@@ -82,13 +87,13 @@
     <!-- Contenido Principal -->
     <div class="container pb-5">
         
-        <!-- Tarjeta de Estadísticas / Resumen -->
+        <!-- Tarjeta de Estadísticas -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card-custom p-4 bg-white d-flex flex-row align-items-center justify-content-between">
+                <div class="card-custom p-3 p-md-4 bg-white d-flex flex-row align-items-center justify-content-between">
                     <div>
-                        <span class="text-muted small text-uppercase fw-bold">Total de Reportes Registrados</span>
-                        <h2 class="fw-bold text-success mb-0 mt-1">{{ reportes|length }} Incidencias</h2>
+                        <span class="text-muted small text-uppercase fw-bold" style="font-size: 0.75rem;">Total de Reportes</span>
+                        <h3 class="fw-bold text-success mb-0 mt-1">{{ reportes|length }} Incidencias</h3>
                     </div>
                     <div class="fs-1 text-success opacity-25">
                         <i class="fa-solid fa-clipboard-list"></i>
@@ -97,8 +102,8 @@
             </div>
         </div>
 
-        <!-- Tabla de Reportes -->
-        <div class="card-custom p-3 p-md-4">
+        <!-- Vista para Computadora (Tabla Clásica) -->
+        <div class="card-custom p-4 desktop-table">
             <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-list-check me-2 text-success"></i>Listado de Reportes Ciudadanos</h5>
             
             {% if reportes|length == 0 %}
@@ -112,7 +117,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th class="py-3">Foto</th>
-                                <th class="py-3">Categoría / Problema</th>
+                                <th class="py-3">Categoría</th>
                                 <th class="py-3">Descripción</th>
                                 <th class="py-3">Gravedad</th>
                                 <th class="py-3">Ubicación</th>
@@ -138,7 +143,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <div style="max-width: 250px; font-size: 0.9rem;" class="text-secondary">
+                                    <div style="max-width: 220px; font-size: 0.9rem;" class="text-secondary">
                                         {{ r.descripcion }}
                                     </div>
                                 </td>
@@ -147,14 +152,13 @@
                                 </td>
                                 <td>
                                     <a href="https://maps.google.com/?q={{ r.latitud }},{{ r.longitud }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill">
-                                        <i class="fa-solid fa-location-dot me-1"></i> Ver GPS
+                                        <i class="fa-solid fa-location-dot me-1"></i> GPS
                                     </a>
                                 </td>
                                 <td class="text-center">
-                                    <!-- Botón para eliminar o marcar como resuelto -->
-                                    <form action="/admin/eliminar/{{ r.id }}" method="POST" class="d-inline" onsubmit="return confirm('¿Confirma que desea eliminar o marcar como resuelto este reporte?');">
-                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">
-                                            <i class="fa-solid fa-trash-can me-1"></i> Resolver
+                                    <form action="/admin/eliminar/{{ r.id }}" method="POST" class="d-inline" onsubmit="return confirm('¿Confirma que desea marcar como resuelto este reporte?');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold">
+                                            <i class="fa-solid fa-check me-1"></i> Resolver
                                         </button>
                                     </form>
                                 </td>
@@ -165,6 +169,67 @@
                 </div>
             {% endif %}
         </div>
+
+        <!-- Vista para Celulares (Tarjetas Verticales Optimizadas) -->
+        <div class="mobile-card-report">
+            <h5 class="fw-bold mb-3 text-dark px-1"><i class="fa-solid fa-list-check me-2 text-success"></i>Incidencias Registradas</h5>
+            
+            {% if reportes|length == 0 %}
+                <div class="card-custom text-center py-5 text-muted p-4">
+                    <i class="fa-solid fa-folder-open display-4 mb-3 opacity-50"></i>
+                    <p class="mb-0">No hay reportes registrados en este momento.</p>
+                </div>
+            {% else %}
+                <div class="d-flex flex-column gap-3">
+                    {% for r in reportes %}
+                    <div class="card-custom p-3 position-relative">
+                        <div class="d-flex align-items-start gap-3 mb-2">
+                            {% if r.foto_path %}
+                                <a href="/static/{{ r.foto_path }}" target="_blank">
+                                    <img src="/static/{{ r.foto_path }}" class="report-img shadow-sm flex-shrink-0" alt="Evidencia">
+                                </a>
+                            {% else %}
+                                <div class="bg-light rounded-3 d-flex align-items-center justify-content-center text-muted flex-shrink-0" style="width: 55px; height: 55px; font-size: 0.7rem;">
+                                    Sin foto
+                                </div>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h6 class="fw-bold text-success mb-0" style="font-size: 0.95rem;">{{ r.categoria_nombre or r.categoria }}</h6>
+                                    <span class="badge badge-gravedad bg-light text-dark border">{{ r.gravedad }}</span>
+                                </div>
+                                <p class="text-secondary small mb-1" style="font-size: 0.85rem; line-height: 1.4;">
+                                    {{ r.descripcion }}
+                                </p>
+                            </div>
+                        </div>
+
+                        {% if r.otra_categoria_texto %}
+                            <div class="small text-muted mb-2 ps-1">
+                                <strong>Detalle:</strong> {{ r.otra_categoria_texto }}
+                            </div>
+                        {% endif %}
+
+                        <hr class="my-2 opacity-10">
+
+                        <!-- Botones de Acción Móvil (Completamente Visibles y Cómodos) -->
+                        <div class="d-flex align-items-center justify-content-between pt-1">
+                            <a href="https://maps.google.com/?q={{ r.latitud }},{{ r.longitud }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3" style="font-size: 0.8rem;">
+                                <i class="fa-solid fa-location-dot me-1"></i> Ver en Mapa
+                            </a>
+                            
+                            <form action="/admin/eliminar/{{ r.id }}" method="POST" class="d-inline" onsubmit="return confirm('¿Confirma que desea marcar como resuelto este reporte?');">
+                                <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold" style="font-size: 0.8rem;">
+                                    <i class="fa-solid fa-check me-1"></i> Resolver
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
     </div>
 
     <!-- Bootstrap JS -->
