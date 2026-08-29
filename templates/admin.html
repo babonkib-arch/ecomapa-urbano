@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - EcoMapa</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .navbar-admin { background-color: #1e293b; }
+        .card-custom { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .img-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; cursor: pointer; transition: transform 0.2s; }
+        .img-preview:hover { transform: scale(1.1); }
+    </style>
+</head>
+<body>
+
+    <!-- Navegación Superior -->
+    <nav class="navbar navbar-dark navbar-admin px-4 py-3">
+        <div class="container-fluid">
+            <span class="navbar-brand fw-bold">
+                <i class="fa-solid fa-user-shield me-2"></i>EcoMapa Admin
+            </span>
+            <div class="d-flex align-items-center">
+                <span class="text-light me-3 small d-none d-md-inline">
+                    <i class="fa-solid fa-user me-1"></i> {{ user.email }}
+                </span>
+                <a href="/" class="btn btn-outline-light btn-sm rounded-pill px-3 me-2">
+                    <i class="fa-solid fa-map me-1"></i> Mapa Público
+                </a>
+                <a href="/logout" class="btn btn-danger btn-sm rounded-pill px-3">
+                    <i class="fa-solid fa-right-from-bracket me-1"></i> Salir
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Tabla de Gestión de Incidencias -->
+    <div class="container my-5">
+        <div class="card card-custom bg-white p-4">
+            <h4 class="fw-bold mb-4 text-secondary">
+                <i class="fa-solid fa-list-check me-2"></i>Gestión de Incidencias
+            </h4>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Categoría</th>
+                            <th>Descripción</th>
+                            <th>Ubicación</th>
+                            <th>Evidencia</th>
+                            <th>Gravedad</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-admin-body">
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">Cargando incidencias...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script JavaScript para Cargar e Interactuar con los Reportes -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            cargarTablaAdmin();
+        });
+
+        function cargarTablaAdmin() {
+            const tablaBody = document.getElementById('tabla-admin-body');
+            if (!tablaBody) return;
+
+            fetch('/api/reportes')
+                .then(response => response.json())
+                .then(reportes => {
+                    tablaBody.innerHTML = '';
+
+                    if (reportes.length === 0) {
+                        tablaBody.innerHTML = `
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">
+                                    No hay incidencias registradas en la base de datos.
+                                </td>
+                            </tr>`;
+                        return;
+                    }
+
+                    reportes.forEach(r => {
+                        const tr = document.createElement('tr');
+
+                        // Badge de Gravedad
+                        let badgeGravedad = '<span class="badge bg-warning text-dark">🟡 Media</span>';
+                        if (r.gravedad && r.gravedad.includes('Alta')) {
+                            badgeGravedad = '<span class="badge bg-danger">🔴 Alta</span>';
+                        } else if (r.gravedad && r.gravedad.includes('Baja')) {
+                            badgeGravedad = '<span class="badge bg-success">🟢 Baja</span>';
+                        }
+
+                        // Badge de Estado
+                        const badgeEstado = r.estado === 'Resuelto' 
+                            ? '<span class="badge bg-success-subtle text-success border border-success">Resuelto</span>' 
+                            : '<span class="badge bg-secondary">Pendiente</span>';
+
+                        // Coordenadas y Enlace GPS a Google Maps
+                        const lat = parseFloat(r.latitud).toFixed(5);
+                        const lng = parseFloat(r.longitud).toFixed(5);
+                        const ubicacionHtml = `
+                            <div>
+                                <small class="text-muted d-block font-monospace">${lat}, ${lng}</small>
+                                <a href="https://www.google.com/maps?q=${r.latitud},${r.longitud}" 
+                                   target="_blank" 
+                                   class="btn btn-outline-danger btn-sm py-0 px-2 mt-1 rounded-pill" 
+                                   style="font-size: 0.75rem;">
+                                    <i class="fa-solid fa-location-dot me-1"></i>Abrir GPS
+                                </a>
+                            </div>`;
+
+                        // Imagen Evidencia
+                        const fotoHtml = r.foto_path 
+                            ? `<a href="/static/${r.foto_path}" target="_blank">
+                                <img src="/static/${r.foto_path}" class="img-preview border shadow-sm" alt="Foto Incidencia" title="Ver imagen completa">
+                               </a>` 
+                            : '<span class="badge bg-light text-muted border">Sin Foto</span>';
+
+                        // Botón de Acción (Resolver)
+                        const botonAccion = r.estado !== 'Resuelto' 
+                            ? `<button class="btn btn-sm btn-success rounded-pill px-3" onclick="marcarResuelto(${r.id})">
+                                <i class="fa-solid fa-check me-1"></i> Marcar Resuelto
+                               </button>` 
+                            : '<button class="btn btn-sm btn-light rounded-pill px-3 text-muted" disabled>Completado</button>';
+
+                        tr.innerHTML = `
+                            <td class="fw-bold text-muted">#${r.id}</td>
+                            <td class="fw-bold">${r.categoria}</td>
+                            <td style="max-width: 220px;">${r.descripcion}</td>
+                            <td>${ubicacionHtml}</td>
+                            <td>${fotoHtml}</td>
+                            <td>${badgeGravedad}</td>
+                            <td>${badgeEstado}</td>
+                            <td class="text-end">${botonAccion}</td>
+                        `;
+
+                        tablaBody.appendChild(tr);
+                    });
+                })
+                .catch(err => console.error("Error cargando tabla:", err));
+        }
+
+        function marcarResuelto(idReporte) {
+            fetch(`/admin/resolver/${idReporte}`, {
+                method: 'POST'
+            })
+            .then(() => {
+                cargarTablaAdmin();
+            })
+            .catch(err => console.error("Error al resolver:", err));
+        }
+    </script>
+</body>
+</html>
