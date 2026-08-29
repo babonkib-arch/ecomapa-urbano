@@ -11,32 +11,85 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body, html { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        #map { height: 100vh; width: 100vw; z-index: 1; }
-        .btn-reportar-float {
+        body, html { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+        
+        /* Pantalla de Presentación / Bienvenida */
+        #welcomeScreen {
             position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 1000;
-            border-radius: 50px;
-            padding: 15px 25px;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #198754 0%, #0f5132 100%);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+            padding: 20px;
         }
+        #welcomeScreen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        #map { height: 100vh; width: 100vw; z-index: 1; position: relative; }
+        
         .header-brand {
             position: fixed;
             top: 15px;
             left: 15px;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 8px 18px;
+            z-index: 9999;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 20px;
             border-radius: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             backdrop-filter: blur(5px);
+        }
+        .instruction-banner {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            background: rgba(25, 135, 84, 0.95);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            text-align: center;
+            pointer-events: none;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
+
+    <!-- Pantalla de Inicio / Presentación Profesional -->
+    <div id="welcomeScreen">
+        <div class="container text-center max-width-container" style="max-width: 600px;">
+            <div class="mb-4">
+                <i class="fa-solid fa-earth-americas display-3 text-light animate-bounce"></i>
+            </div>
+            <h1 class="fw-bold mb-3 display-5">EcoMapa Fray Bentos</h1>
+            <p class="lead mb-4 text-light opacity-90">
+                Plataforma ciudadana oficial para reportar incidentes ambientales, microbasurales y mejorar juntos los espacios públicos de nuestra hermosa ciudad de <strong>Fray Bentos, Río Negro</strong>.
+            </p>
+            <div class="card bg-white text-dark p-4 shadow-lg border-0 mb-4" style="border-radius: 20px; text-align: left;">
+                <h6 class="fw-bold text-success mb-3"><i class="fa-solid fa-circle-info me-2"></i>¿Cómo funciona?</h6>
+                <ul class="mb-0 ps-3 small text-muted">
+                    <li class="mb-2">📍 Toca cualquier punto del mapa interactivo de la ciudad.</li>
+                    <li class="mb-2">📸 Toma una foto del incidente directamente con tu cámara.</li>
+                    <li>🚀 Envía tu reporte para que el municipio y los administradores lo solucionen.</li>
+                </ul>
+            </div>
+            <button onclick="entrarAlMapa()" class="btn btn-light btn-lg text-success fw-bold px-5 py-3 shadow-lg rounded-pill fs-5">
+                <i class="fa-solid fa-map-location-dot me-2"></i> Ver Mapa y Participar
+            </button>
+        </div>
+    </div>
 
     <!-- Logo / Encabezado Flotante -->
     <div class="header-brand d-flex align-items-center gap-2">
@@ -44,13 +97,13 @@
         <span class="fw-bold fs-5 text-dark">EcoMapa Fray Bentos</span>
     </div>
 
+    <!-- Indicador flotante para guiar al usuario -->
+    <div class="instruction-banner">
+        <i class="fa-solid fa-hand-pointer me-1"></i> Toca el mapa en el lugar del incidente para reportar
+    </div>
+
     <!-- Mapa Leaflet -->
     <div id="map"></div>
-
-    <!-- Botón Principal para Reportar -->
-    <button class="btn btn-success btn-lg btn-reportar-float" data-bs-toggle="modal" data-bs-target="#modalReporte">
-        <i class="fa-solid fa-camera me-2"></i> Reportar Incidencia
-    </button>
 
     <!-- Modal Formulario de Reporte -->
     <div class="modal fade" id="modalReporte" tabindex="-1" aria-hidden="true">
@@ -65,27 +118,34 @@
                         
                         <!-- Categoría -->
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Tipo de Problema</label>
-                            <select name="id_categoria" class="form-select" required>
-                                <option value="1">Microbasural / Acumulación de residuos</option>
-                                <option value="2">Poda indebida / Árbol en riesgo</option>
-                                <option value="3">Vertido de aguas servidas / Contaminación</option>
-                                <option value="4">Falta de iluminación pública</option>
-                                <option value="5">Contaminación de aire / Humo</option>
-                                <option value="6">Ruidos molestos / Contaminación acústica</option>
-                                <option value="7">Animales sueltos / Plagas</option>
+                            <label class="form-label fw-bold">🏷️ Tipo de Problema</label>
+                            <select name="id_categoria" id="selectCategoria" class="form-select" required onchange="verificarOtroCategoria()">
+                                <option value="1">🗑️ Microbasural / Acumulación de residuos</option>
+                                <option value="2">🌳 Poda indebida / Árbol en riesgo</option>
+                                <option value="3">🌊 Vertido de aguas servidas / Contaminación</option>
+                                <option value="4">💡 Falta de iluminación pública</option>
+                                <option value="5">💨 Contaminación de aire / Humo</option>
+                                <option value="6">🔊 Ruidos molestos / Contaminación acústica</option>
+                                <option value="7">🐕 Animales sueltos / Plagas</option>
+                                <option value="otro">✏️ Otro (Escribir incidente)</option>
                             </select>
+                        </div>
+
+                        <!-- Campo extra por si selecciona "Otro" -->
+                        <div class="mb-3 d-none" id="divOtraCategoria">
+                            <label class="form-label fw-bold">✏️ Especificar Tipo de Incidente</label>
+                            <input type="text" id="otra_categoria_texto" name="otra_categoria_texto" class="form-control" placeholder="Escribe cuál es el problema...">
                         </div>
 
                         <!-- Descripción -->
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Descripción Corta</label>
+                            <label class="form-label fw-bold">📝 Descripción Corta</label>
                             <textarea name="descripcion" class="form-control" rows="2" placeholder="Detalla brevemente el problema..." required></textarea>
                         </div>
 
                         <!-- Gravedad -->
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Nivel de Gravedad</label>
+                            <label class="form-label fw-bold">⚠️ Nivel de Gravedad</label>
                             <select name="gravedad" class="form-select" required>
                                 <option value="🟢 Baja">🟢 Baja (Poco urgente)</option>
                                 <option value="🟡 Media" selected>🟡 Media (Moderada)</option>
@@ -93,23 +153,24 @@
                             </select>
                         </div>
 
-                        <!-- Foto Evidencia -->
+                        <!-- CÁMARA DIRECTA (Atributos capture="environment" y accept="image/*" fuerzan la apertura de cámara en celulares) -->
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Tomar Foto del Incidente</label>
+                            <label class="form-label fw-bold">📸 Foto de evidencia (Abrir Cámara)</label>
                             <input type="file" id="foto" name="foto" accept="image/*" capture="environment" class="form-control" required>
+                            <div class="form-text text-muted small mt-1">Al hacer clic se abrirá directamente la cámara del dispositivo.</div>
                         </div>
 
-                        <!-- Coordenadas Ocultas (Por defecto centrado en Fray Bentos) -->
-                        <input type="hidden" id="latitud" name="latitud" value="-33.1307">
-                        <input type="hidden" id="longitud" name="longitud" value="-58.3006">
+                        <!-- Coordenadas capturadas del clic en el mapa -->
+                        <input type="hidden" id="latitud" name="latitud">
+                        <input type="hidden" id="longitud" name="longitud">
                         
-                        <div id="statusUbicacion" class="alert alert-info py-2 small mb-0">
-                            <i class="fa-solid fa-spinner fa-spin me-1"></i> Obteniendo ubicación GPS...
+                        <div class="alert alert-success py-2 small mb-0">
+                            <i class="fa-solid fa-location-dot me-1"></i> Ubicación seleccionada en el mapa correctamente.
                         </div>
                     </div>
                     <div class="modal-footer border-0 pt-0">
                         <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" id="btnEnviar" class="btn btn-success rounded-pill px-4">Publicar Reporte</button>
+                        <button type="submit" id="btnEnviar" class="btn btn-success rounded-pill px-4">🚀 Publicar Reporte</button>
                     </div>
                 </form>
             </div>
@@ -120,57 +181,63 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let map;
+        let map, tempMarker;
         const defaultLat = -33.1307;
         const defaultLng = -58.3006;
+        let modalReporte;
 
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
-            obtenerUbicacion();
             cargarReportesPublicos();
+            modalReporte = new bootstrap.Modal(document.getElementById('modalReporte'));
         });
 
+        function entrarAlMapa() {
+            const welcome = document.getElementById('welcomeScreen');
+            welcome.classList.add('fade-out');
+            setTimeout(() => {
+                welcome.style.display = 'none';
+                if (map) {
+                    map.invalidateSize(); // Refresca las dimensiones de Leaflet al quitar la pantalla de bienvenida
+                }
+            }, 600);
+        }
+
         function initMap() {
-            // Inicializar mapa en Fray Bentos
             map = L.map('map').setView([defaultLat, defaultLng], 14);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
+
+            map.on('click', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+
+                document.getElementById('latitud').value = lat;
+                document.getElementById('longitud').value = lng;
+
+                if (tempMarker) {
+                    map.removeLayer(tempMarker);
+                }
+                tempMarker = L.marker([lat, lng]).addTo(map);
+
+                modalReporte.show();
+            });
         }
 
-        function obtenerUbicacion() {
-            const statusDiv = document.getElementById('statusUbicacion');
-            const btnEnviar = document.getElementById('btnEnviar');
+        function verificarOtroCategoria() {
+            const select = document.getElementById('selectCategoria');
+            const divOtro = document.getElementById('divOtraCategoria');
+            const inputOtro = document.getElementById('otra_categoria_texto');
 
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const userLat = position.coords.latitude;
-                        const userLng = position.coords.longitude;
-
-                        document.getElementById('latitud').value = userLat;
-                        document.getElementById('longitud').value = userLng;
-
-                        map.setView([userLat, userLng], 16);
-                        L.marker([userLat, userLng]).addTo(map).bindPopup("<b>Tu ubicación actual</b>").openPopup();
-
-                        statusDiv.className = "alert alert-success py-2 small mb-0";
-                        statusDiv.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Ubicación GPS obtenida.';
-                        btnEnviar.disabled = false;
-                    },
-                    (error) => {
-                        // Si se rechaza o falla el GPS, se usan las coordenadas predeterminadas de Fray Bentos
-                        statusDiv.className = "alert alert-warning py-2 small mb-0";
-                        statusDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> No se pudo obtener GPS preciso. Usando ubicación central de Fray Bentos.';
-                        btnEnviar.disabled = false;
-                    },
-                    { enableHighAccuracy: true, timeout: 7000 }
-                );
+            if (select.value === 'otro') {
+                divOtro.classList.remove('d-none');
+                inputOtro.required = true;
             } else {
-                statusDiv.className = "alert alert-warning py-2 small mb-0";
-                statusDiv.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> GPS no soportado en este navegador.';
-                btnEnviar.disabled = false;
+                divOtro.classList.add('d-none');
+                inputOtro.required = false;
+                inputOtro.value = '';
             }
         }
 
@@ -192,7 +259,6 @@
                 .catch(err => console.error("Error al cargar reportes:", err));
         }
 
-        // Envío del formulario sin bloqueo
         document.getElementById('formReporte').addEventListener('submit', function(e) {
             e.preventDefault();
             const btnEnviar = document.getElementById('btnEnviar');
@@ -213,13 +279,13 @@
                 } else {
                     alert('Error al guardar reporte: ' + data.message);
                     btnEnviar.disabled = false;
-                    btnEnviar.innerHTML = 'Publicar Reporte';
+                    btnEnviar.innerHTML = '🚀 Publicar Reporte';
                 }
             })
             .catch(err => {
                 alert('Ocurrió un error al enviar el reporte.');
                 btnEnviar.disabled = false;
-                btnEnviar.innerHTML = 'Publicar Reporte';
+                btnEnviar.innerHTML = '🚀 Publicar Reporte';
             });
         });
     </script>
