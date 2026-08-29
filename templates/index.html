@@ -11,21 +11,23 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body, html { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; background-color: #f8f9fa; }
+        body, html { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; background-color: #f4f6f5; }
         
-        /* Pantalla de Presentación / Bienvenida */
+        /* Pantalla de Presentación Profesional Estilo Dashboard / Portal Ambiental */
         #welcomeScreen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(135deg, #198754 0%, #0f5132 100%);
+            background: #111d15; /* Fondo oscuro forestal muy elegante y profesional */
+            background-image: radial-gradient(circle at 10% 20%, rgba(25, 135, 84, 0.15) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(32, 201, 151, 0.1) 0%, transparent 40%);
             z-index: 10000;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: #ffffff;
             transition: opacity 0.6s ease, visibility 0.6s ease;
             padding: 20px;
             overflow-y: auto;
@@ -33,6 +35,25 @@
         #welcomeScreen.fade-out {
             opacity: 0;
             visibility: hidden;
+        }
+
+        .portal-container {
+            width: 100%;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .eco-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            height: 100%;
+            transition: transform 0.3s ease;
+        }
+        .eco-card:hover {
+            border-color: rgba(32, 201, 151, 0.3);
         }
 
         #map { height: 100vh; width: 100vw; z-index: 1; position: relative; }
@@ -56,8 +77,9 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 9999;
-            background: rgba(25, 135, 84, 0.95);
+            background: rgba(17, 29, 21, 0.95);
             color: white;
+            border: 1px solid rgba(32, 201, 151, 0.3);
             padding: 10px 20px;
             border-radius: 30px;
             font-size: 0.85rem;
@@ -69,7 +91,7 @@
             max-width: 380px;
         }
 
-        /* Pantalla de Éxito Profesional (Modal de Éxito Personalizado) */
+        /* Pantalla de Éxito Profesional */
         #successScreen {
             position: fixed;
             top: 0;
@@ -112,41 +134,75 @@
             box-shadow: 0 0 0 10px rgba(25, 135, 84, 0.1);
         }
 
-        /* Ajustes mobile-friendly para formularios y modales */
-        .modal-content {
-            border-radius: 20px !important;
-            border: none;
-        }
-        .form-control, .form-select {
-            padding: 12px 15px;
-            font-size: 1rem;
-            border-radius: 12px;
-        }
+        .modal-content { border-radius: 20px !important; border: none; }
+        .form-control, .form-select { padding: 12px 15px; font-size: 1rem; border-radius: 12px; }
     </style>
 </head>
 <body>
 
-    <!-- Pantalla de Inicio / Presentación Profesional -->
+    <!-- Pantalla de Inicio Profesional con Apartados Laterales -->
     <div id="welcomeScreen">
-        <div class="container text-center" style="max-width: 550px;">
-            <div class="mb-3">
-                <i class="fa-solid fa-earth-americas display-4 text-light"></i>
+        <div class="portal-container py-4">
+            
+            <!-- Cabecera Principal -->
+            <div class="text-center mb-5">
+                <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success p-3 rounded-circle mb-3" style="width: 70px; height: 70px;">
+                    <i class="fa-solid fa-seedling fs-2"></i>
+                </div>
+                <h1 class="fw-bold mb-2 display-6 text-white">EcoMapa Fray Bentos</h1>
+                <p class="text-light opacity-75 max-w-600 mx-auto" style="max-width: 650px;">
+                    Plataforma de inteligencia ambiental y gobernanza participativa para la conservación, monitoreo y desarrollo sostenible de nuestra ciudad.
+                </p>
             </div>
-            <h1 class="fw-bold mb-2 fs-2">EcoMapa Fray Bentos</h1>
-            <p class="text-light opacity-90 small mb-4">
-                Plataforma ciudadana oficial para reportar incidentes ambientales, microbasurales y colaborar con el mantenimiento de los espacios públicos en <strong>Fray Bentos, Río Negro</strong>.
-            </p>
-            <div class="card bg-white text-dark p-3 shadow-lg border-0 mb-4 text-start" style="border-radius: 16px;">
-                <h6 class="fw-bold text-success mb-2 small"><i class="fa-solid fa-circle-info me-2"></i>Guía rápida de uso:</h6>
-                <ul class="mb-0 ps-3 small text-muted" style="line-height: 1.6;">
-                    <li>📍 Toca sobre cualquier ubicación del mapa.</li>
-                    <li>📸 Saca la foto del problema al instante con tu cámara.</li>
-                    <li>🚀 Envía tu reporte de forma rápida y segura.</li>
-                </ul>
+
+            <!-- Estructura en Rejilla con Apartados Laterales e Información Central -->
+            <div class="row g-4 align-items-stretch mb-5">
+                
+                <!-- Apartado Lateral Izquierdo: Compromiso Ambiental -->
+                <div class="col-lg-4">
+                    <div class="eco-card">
+                        <div class="text-success mb-3 fs-4"><i class="fa-solid fa-earth-americas"></i></div>
+                        <h5 class="fw-bold text-white mb-2">Acción Climática Local</h5>
+                        <p class="text-muted small mb-0" style="color: #adb5bd !important; line-height: 1.6;">
+                            El cuidado de los espacios públicos y la gestión de residuos definen la resiliencia ecológica de Fray Bentos. Cada reporte ciudadano activa protocolos directos de saneamiento y preservación urbana.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Bloque Central: Guía de Uso y Acceso -->
+                <div class="col-lg-4">
+                    <div class="eco-card border-success border-opacity-50 text-center d-flex flex-column justify-content-between" style="background: rgba(25, 135, 84, 0.08);">
+                        <div>
+                            <div class="text-success mb-2 fs-4"><i class="fa-solid fa-compass"></i></div>
+                            <h5 class="fw-bold text-white mb-3">Guía Rápida de Uso</h5>
+                            <ul class="text-start small text-light ps-3 mb-4" style="line-height: 1.7; opacity: 0.9;">
+                                <li>📍 Selecciona cualquier punto exacto del mapa.</li>
+                                <li>📸 Registra la evidencia visual con tu cámara.</li>
+                                <li>🚀 Envía la alerta para seguimiento municipal.</li>
+                            </ul>
+                        </div>
+                        <button onclick="entrarAlMapa()" class="btn btn-success btn-lg fw-bold py-3 shadow rounded-pill w-100 fs-6">
+                            <i class="fa-solid fa-map-location-dot me-2"></i> Entrar al Mapa
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Apartado Lateral Derecho: Transparencia Urbana -->
+                <div class="col-lg-4">
+                    <div class="eco-card">
+                        <div class="text-success mb-3 fs-4"><i class="fa-solid fa-shield-halved"></i></div>
+                        <h5 class="fw-bold text-white mb-2">Comunidad y Control</h5>
+                        <p class="text-muted small mb-0" style="color: #adb5bd !important; line-height: 1.6;">
+                            Construimos un entorno urbano más limpio mediante la fiscalización activa y colaborativa. Monitorea microbasurales, áreas verdes protegidas y factores de riesgo ambiental en tiempo real.
+                        </p>
+                    </div>
+                </div>
+
             </div>
-            <button onclick="entrarAlMapa()" class="btn btn-light btn-lg text-success fw-bold w-100 py-3 shadow rounded-pill fs-6">
-                <i class="fa-solid fa-map-location-dot me-2"></i> Ver Mapa y Participar
-            </button>
+
+            <div class="text-center text-muted small opacity-50">
+                Municipio de Fray Bentos • Río Negro, Uruguay
+            </div>
         </div>
     </div>
 
@@ -158,7 +214,7 @@
             </div>
             <h3 class="fw-bold text-dark mb-2">¡Reporte Enviado!</h3>
             <p class="text-muted small mb-4">
-                Tu reporte ha sido registrado correctamente en el sistema de Fray Bentos. Gracias por colaborar con nuestra ciudad.
+                Tu reporte ha sido registrado correctamente en el sistema de Fray Bentos. Gracias por colaborar con el medio ambiente.
             </p>
             <button onclick="cerrarPantallaExito()" class="btn btn-success btn-lg w-100 rounded-pill py-3 fw-bold shadow-sm">
                 Continuar en el Mapa
@@ -280,7 +336,6 @@
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([defaultLat, defaultLng], 14);
 
-            // Añadir control de zoom abajo a la derecha para comodidad móvil
             L.control.zoom({ position: 'bottomright' }).addTo(map);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -351,9 +406,7 @@
             .then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
-                    // Ocultar modal del formulario actual
                     modalReporte.hide();
-                    // Mostrar pantalla de éxito profesional con tick verde
                     document.getElementById('successScreen').style.display = 'flex';
                 } else {
                     alert('Error al guardar reporte: ' + data.message);
