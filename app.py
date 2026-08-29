@@ -217,11 +217,15 @@ def admin():
     
     return render_template('admin.html', reportes=reportes, user=current_user)
 
-@app.route('/admin/resolver/<int:id_reporte>', methods=['POST'])
+@app.route('/admin/eliminar/<int:id>', methods=['POST'])
 @login_required
-def resolver_reporte(id_reporte):
+def admin_eliminar(id):
+    if not current_user.es_admin:
+        return "Acceso denegado.", 403
+        
     conn = get_db_connection()
-    conn.execute('UPDATE reportes SET estado = "Resuelto" WHERE id = ?', (id_reporte,))
+    # Elimina el reporte por completo de la base de datos (y con ello se oculta del mapa y del panel)
+    conn.execute('DELETE FROM reportes WHERE id = ?', (id,))
     conn.commit()
     conn.close()
     return redirect(url_for('admin'))
