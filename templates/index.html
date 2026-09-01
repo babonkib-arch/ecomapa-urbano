@@ -19,15 +19,14 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: #0d1b12;
-            background-image: radial-gradient(circle at 10% 20%, rgba(25, 135, 84, 0.2) 0%, transparent 40%),
-                              radial-gradient(circle at 90% 80%, rgba(32, 201, 151, 0.15) 0%, transparent 40%);
+            background: #09150d;
+            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.95) 70%);
             z-index: 10000;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #ffffff;
-            transition: opacity 0.6s ease, visibility 0.6s ease;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
             padding: 20px;
             overflow-y: auto;
         }
@@ -36,7 +35,7 @@
             visibility: hidden;
         }
 
-        /* Animaciones ambientales de hojas flotantes de fondo */
+        /* Animación y Caída Realista de Hojas y Cruces Verdes */
         .ambient-bg {
             position: absolute;
             width: 100%;
@@ -47,17 +46,27 @@
             pointer-events: none;
             z-index: 1;
         }
-        .floating-leaf {
+        .falling-element {
             position: absolute;
-            color: rgba(32, 201, 151, 0.15);
-            animation: floatUp 12s linear infinite;
-            bottom: -50px;
+            top: -10vh;
+            animation: fallDown linear infinite;
+            opacity: 0.75;
         }
-        @keyframes floatUp {
-            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-            20% { opacity: 1; }
-            80% { opacity: 1; }
-            100% { transform: translateY(-105vh) rotate(360deg); opacity: 0; }
+        @keyframes fallDown {
+            0% {
+                transform: translateY(-10vh) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            15% {
+                opacity: 0.8;
+            }
+            85% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(110vh) translateX(80px) rotate(360deg);
+                opacity: 0;
+            }
         }
 
         .portal-container {
@@ -68,7 +77,7 @@
             z-index: 2;
         }
 
-        /* Nuevo Logotipo Profesional de Alta Calidad (Escudo Ambiental con Cruz de Salud) */
+        /* Logotipo Profesional: Hoja + Burbujas de Agua + Cruz Verde Combinada */
         .pro-eco-logo-wrapper {
             display: flex;
             flex-direction: column;
@@ -77,56 +86,68 @@
             text-align: center;
         }
         .pro-eco-logo {
-            width: 110px;
-            height: 110px;
-            background: linear-gradient(135deg, #134e32 0%, #198754 50%, #20c997 100%);
-            border-radius: 30px;
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(145deg, #134e32 0%, #198754 50%, #0f3d27 100%);
+            border-radius: 35px;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            box-shadow: 0 15px 35px rgba(25, 135, 84, 0.45), inset 0 2px 4px rgba(255, 255, 255, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            animation: logoPulse 3s ease-in-out infinite;
+            box-shadow: 0 15px 40px rgba(25, 135, 84, 0.5), inset 0 3px 6px rgba(255, 255, 255, 0.35);
+            border: 2px solid rgba(32, 201, 151, 0.4);
+            animation: logoPulse 3.5s ease-in-out infinite;
         }
         @keyframes logoPulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 15px 35px rgba(25, 135, 84, 0.45); }
-            50% { transform: scale(1.03); box-shadow: 0 20px 45px rgba(32, 201, 151, 0.65); }
+            0%, 100% { transform: scale(1); box-shadow: 0 15px 40px rgba(25, 135, 84, 0.5); }
+            50% { transform: scale(1.04); box-shadow: 0 20px 50px rgba(32, 201, 151, 0.75); }
         }
-        .pro-eco-logo .main-icon {
-            font-size: 52px;
-            color: #ffffff;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        .pro-eco-logo .main-leaf-icon {
+            font-size: 56px;
+            color: #20c997;
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
         }
-        .pro-eco-logo .badge-cross {
+        /* Cruz médica verde combinada dentro/superpuesta */
+        .pro-eco-logo .logo-cross-badge {
             position: absolute;
-            top: -6px;
+            bottom: -6px;
             right: -6px;
             background: #ffffff;
-            color: #dc3545;
-            width: 32px;
-            height: 32px;
+            color: #198754;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
             border: 2px solid #134e32;
-            font-weight: bold;
+        }
+        /* Burbujas de agua decorativas flotando alrededor del logo */
+        .water-bubble {
+            position: absolute;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(32, 201, 151, 0.4));
+            border-radius: 50%;
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.2);
+            animation: bubbleFloat 3s ease-in-out infinite;
+        }
+        @keyframes bubbleFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
         }
 
         .eco-card {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
             border-radius: 20px;
             padding: 25px;
             height: 100%;
             transition: transform 0.3s ease;
         }
         .eco-card:hover {
-            border-color: rgba(32, 201, 151, 0.3);
+            border-color: rgba(32, 201, 151, 0.35);
             transform: translateY(-3px);
         }
 
@@ -154,7 +175,6 @@
             background: rgba(255, 255, 255, 1);
         }
 
-        /* Panel Desplegable con Botón de Hamburguesa (3 rayitas) */
         .info-dropdown-panel {
             position: absolute;
             top: 55px;
@@ -198,7 +218,6 @@
             max-width: 380px;
         }
 
-        /* Pantalla de Éxito Ambiental con Animación */
         #successScreen {
             position: fixed;
             top: 0;
@@ -240,12 +259,6 @@
             font-size: 45px;
             margin: 0 auto 20px auto;
             box-shadow: 0 0 0 12px rgba(25, 135, 84, 0.12);
-            animation: pulseGlow 2s infinite;
-        }
-        @keyframes pulseGlow {
-            0% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.3); }
-            70% { box-shadow: 0 0 0 15px rgba(25, 135, 84, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
         }
 
         .modal-content { border-radius: 20px !important; border: none; }
@@ -254,25 +267,27 @@
 </head>
 <body>
 
-    <!-- Pantalla de Inicio / Intro Profesional -->
+    <!-- Pantalla de Inicio / Intro con 3 segundos de duración automática -->
     <div id="welcomeScreen">
-        <!-- Hojas animadas flotando de fondo -->
-        <div class="ambient-bg">
-            <i class="fa-solid fa-leaf floating-leaf" style="left: 10%; font-size: 24px; animation-duration: 9s; animation-delay: 0s;"></i>
-            <i class="fa-solid fa-seedling floating-leaf" style="left: 30%; font-size: 18px; animation-duration: 12s; animation-delay: 2s;"></i>
-            <i class="fa-solid fa-tree floating-leaf" style="left: 65%; font-size: 30px; animation-duration: 14s; animation-delay: 1s;"></i>
-            <i class="fa-solid fa-leaf floating-leaf" style="left: 85%; font-size: 22px; animation-duration: 10s; animation-delay: 4s;"></i>
+        <!-- Fondo ambiental interactivo con caída realista de hojas y cruces verdes de salud -->
+        <div class="ambient-bg" id="ambientBg">
+            <!-- Generadas dinámicamente o por defecto con JS para realismo fluido -->
         </div>
 
         <div class="portal-container py-4">
             <div class="text-center mb-5">
-                <!-- Nuevo Logotipo Profesional de Alta Calidad -->
+                <!-- Logotipo Profesional: Hoja + Burbujas de Agua + Cruz Verde Combinada -->
                 <div class="pro-eco-logo-wrapper mb-3">
                     <div class="pro-eco-logo">
-                        <i class="fa-solid fa-earth-americas main-icon"></i>
-                        <div class="badge-cross"><i class="fa-solid fa-plus"></i></div>
+                        <i class="fa-solid fa-leaf main-leaf-icon"></i>
+                        <div class="logo-cross-badge"><i class="fa-solid fa-plus"></i></div>
+                        <!-- Burbujas de agua simulando frescura -->
+                        <div class="water-bubble" style="width: 12px; height: 12px; top: -8px; left: 20px; animation-delay: 0s;"></div>
+                        <div class="water-bubble" style="width: 8px; height: 8px; top: 15px; right: -6px; animation-delay: 1s;"></div>
+                        <div class="water-bubble" style="width: 10px; height: 10px; bottom: 10px; left: -6px; animation-delay: 0.5s;"></div>
                     </div>
                 </div>
+                
                 <!-- Título exacto solicitado -->
                 <h1 class="fw-bold mb-2 display-6 text-white tracking-wide">EcoMapa Urbano Fray Bentos</h1>
                 <p class="text-light opacity-75 mx-auto" style="max-width: 650px;">
@@ -358,7 +373,6 @@
     <!-- Cabecera superior con el Botón de Menú Estilo Hamburguesa (3 rayitas) -->
     <div class="header-brand-container">
         <div class="header-brand d-flex align-items-center gap-2 shadow-sm" onclick="toggleInfoDropdown(event)">
-            <!-- Icono de 3 rayitas (menú hamburguesa) característico -->
             <div style="width: 30px; height: 30px; background: #198754; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
                 <i class="fa-solid fa-bars"></i>
             </div>
@@ -366,7 +380,7 @@
             <i class="fa-solid fa-chevron-down text-muted ms-1" style="font-size: 0.75rem;" id="dropdownChevron"></i>
         </div>
 
-        <!-- Panel Desplegable con la Información Institucional -->
+        <!-- Panel Desplegable Institucional -->
         <div class="info-dropdown-panel" id="infoDropdownPanel">
             <div class="mb-3 border-bottom pb-2">
                 <span class="d-block fw-bold text-success mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-users me-1"></i> ¿Quiénes somos?</span>
@@ -471,7 +485,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
             cargarReportesPublicos();
+            generarCaidaAmbiental();
             modalReporte = new bootstrap.Modal(document.getElementById('modalReporte'));
+
+            // Temporizador automático de 3 segundos para mostrar la pantalla principal manteniendo efectos
+            setTimeout(() => {
+                entrarAlMapa();
+            }, 3000);
 
             // Cerrar el menú desplegable si se hace clic fuera de él
             document.addEventListener('click', (e) => {
@@ -485,7 +505,35 @@
             });
         });
 
-        // Función para alternar el menú desplegable al hacer clic en el botón de hamburguesa
+        // Generar mezcla realista de hojas cayendo y cruces verdes de salud
+        function generarCaidaAmbiental() {
+            const bg = document.getElementById('ambientBg');
+            const iconos = ['fa-leaf', 'fa-plus', 'fa-seedling', 'fa-hospital'];
+            const cantidad = 22;
+
+            for (let i = 0; i < cantidad; i++) {
+                const el = document.createElement('i');
+                const tipoIcono = iconos[Math.floor(Math.random() * iconos.length)];
+                el.className = `fa-solid ${tipoIcono} falling-element`;
+                
+                const leftPos = Math.random() * 100;
+                const duracion = 7 + Math.random() * 8; // entre 7 y 15 segundos
+                const retraso = Math.random() * 5;
+                const tamano = 14 + Math.random() * 18;
+                
+                // Darle color esmeralda / salud diferenciado
+                const colorOpac = 0.2 + Math.random() * 0.4;
+                el.style.left = `${leftPos}%`;
+                el.style.animationDuration = `${duracion}s`;
+                el.style.animationDelay = `${retraso}s`;
+                el.style.fontSize = `${tamano}px`;
+                el.style.color = tipoIcono === 'fa-plus' || tipoIcono === 'fa-hospital' ? `rgba(32, 201, 151, ${colorOpac + 0.1})` : `rgba(25, 135, 84, ${colorOpac})`;
+
+                bg.appendChild(el);
+            }
+        }
+
+        // Función para alternar el menú desplegable (3 rayitas)
         function toggleInfoDropdown(event) {
             event.stopPropagation();
             const panel = document.getElementById('infoDropdownPanel');
@@ -500,14 +548,16 @@
 
         function entrarAlMapa() {
             const welcome = document.getElementById('welcomeScreen');
-            welcome.classList.add('fade-out');
-            setTimeout(() => {
-                welcome.style.display = 'none';
-                if (map) { 
-                    map.invalidateSize();
-                    solicitarUbicacionUsuario(); 
-                }
-            }, 600);
+            if (welcome && welcome.style.display !== 'none') {
+                welcome.classList.add('fade-out');
+                setTimeout(() => {
+                    welcome.style.display = 'none';
+                    if (map) { 
+                        map.invalidateSize();
+                        solicitarUbicacionUsuario(); 
+                    }
+                }, 800);
+            }
         }
 
         function solicitarUbicacionUsuario() {
