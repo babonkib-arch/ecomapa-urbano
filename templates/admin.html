@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cargando Panel - EcoMapa Fray Bentos</title>
+    <title>Panel Admin - EcoMapa Fray Bentos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -12,10 +12,10 @@
             margin: 0; 
             padding: 0; 
             font-family: 'Segoe UI', system-ui, sans-serif; 
-            overflow: hidden; 
-            background-color: #09150d; 
+            background-color: #f8f9fa; 
         }
 
+        /* Pantalla de carga inicial opcional solo si entras de cero */
         #adminIntroScreen {
             position: fixed;
             top: 0;
@@ -35,6 +35,7 @@
         #adminIntroScreen.fade-out {
             opacity: 0;
             visibility: hidden;
+            display: none;
         }
 
         .ambient-bg {
@@ -54,16 +55,10 @@
             opacity: 0.75;
         }
         @keyframes fallDown {
-            0% {
-                transform: translateY(-10vh) translateX(0) rotate(0deg);
-                opacity: 0;
-            }
+            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
             15% { opacity: 0.85; }
             85% { opacity: 0.85; }
-            100% {
-                transform: translateY(110vh) translateX(60px) rotate(360deg);
-                opacity: 0;
-            }
+            100% { transform: translateY(110vh) translateX(60px) rotate(360deg); opacity: 0; }
         }
 
         .pro-eco-logo-wrapper {
@@ -111,18 +106,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.35);
             border: 2px solid #134e32;
         }
-        .water-bubble {
-            position: absolute;
-            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(32, 201, 151, 0.4));
-            border-radius: 50%;
-            box-shadow: inset 0 1px 2px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.2);
-            animation: bubbleFloat 3s ease-in-out infinite;
-        }
-        @keyframes bubbleFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
-        }
-
         .loading-bar-container {
             width: 260px;
             height: 8px;
@@ -141,7 +124,7 @@
         }
     </style>
 </head>
-<body>
+<body class="bg-light">
 
     <div id="adminIntroScreen">
         <div class="ambient-bg" id="introAmbientBg"></div>
@@ -150,15 +133,74 @@
                 <div class="pro-eco-logo">
                     <i class="fa-solid fa-shield-halved main-leaf-icon"></i>
                     <div class="logo-cross-badge"><i class="fa-solid fa-lock"></i></div>
-                    <div class="water-bubble" style="width: 12px; height: 12px; top: -8px; left: 20px; animation-delay: 0s;"></div>
-                    <div class="water-bubble" style="width: 8px; height: 8px; top: 15px; right: -6px; animation-delay: 1s;"></div>
                 </div>
             </div>
             <h1 class="fw-bold mb-2 display-6 text-white">Portal de Administradores</h1>
-            <p class="text-light opacity-75 small mb-4">Cargando sistema de seguridad municipal...</p>
-            
+            <p class="text-light opacity-75 small mb-4">Verificando sesión segura...</p>
             <div class="loading-bar-container">
                 <div class="loading-bar-fill" id="loadingBarFill"></div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="navbar navbar-dark bg-dark px-4 py-3">
+        <div class="container-fluid">
+            <span class="navbar-brand fw-bold"><i class="fa-solid fa-user-shield me-2"></i>Panel Admin EcoMapa</span>
+            <div>
+                {% if user %}
+                    <span class="text-light small me-3"><i class="fa-solid fa-user me-1"></i> {{ user.email }}</span>
+                {% endif %}
+                <a href="/logout" class="btn btn-outline-danger btn-sm rounded-pill px-3 me-2">Cerrar Sesión</a>
+                <a href="/" class="btn btn-outline-light btn-sm rounded-pill px-3">Ver Mapa Público</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="card border-0 shadow-sm p-4 bg-white rounded-3">
+            <h4 class="fw-bold mb-4 text-secondary"><i class="fa-solid fa-list-check me-2"></i>Gestión de Incidencias</h4>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Categoría</th>
+                            <th>Descripción</th>
+                            <th>Evidencia</th>
+                            <th>Gravedad</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-admin-body">
+                        {% if reportes %}
+                            {% for r in reportes %}
+                                <tr>
+                                    <td>{{ r.id }}</td>
+                                    <td>{{ r.categoria }}</td>
+                                    <td>{{ r.descripcion }}</td>
+                                    <td>
+                                        {% if r.foto_path %}
+                                            <a href="{{ r.foto_path }}" target="_blank" class="btn btn-sm btn-outline-success">Ver Foto</a>
+                                        {% else %}
+                                            <span class="text-muted small">Sin foto</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><span class="badge bg-secondary">{{ r.gravedad }}</span></td>
+                                    <td><span class="badge bg-warning text-dark">{{ r.estado }}</span></td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-success rounded-pill px-3 resolver-btn" data-id="{{ r.id }}">Resolver</button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-3 text-muted">No hay incidencias registradas.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -166,32 +208,35 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const bg = document.getElementById('introAmbientBg');
-            const iconos = ['fa-leaf', 'fa-plus', 'fa-check', 'fa-seedling'];
-            for (let i = 0; i < 22; i++) {
-                const el = document.createElement('i');
-                el.className = `fa-solid ${iconos[Math.floor(Math.random() * iconos.length)]} falling-element`;
-                el.style.left = `${Math.random() * 100}%`;
-                el.style.animationDuration = `${7 + Math.random() * 7}s`;
-                el.style.animationDelay = `${Math.random() * 5}s`;
-                el.style.fontSize = `${15 + Math.random() * 16}px`;
-                el.style.color = `rgba(32, 201, 151, ${0.3 + Math.random() * 0.4})`;
-                bg.appendChild(el);
+            if (bg) {
+                const iconos = ['fa-leaf', 'fa-plus', 'fa-check', 'fa-seedling'];
+                for (let i = 0; i < 15; i++) {
+                    const el = document.createElement('i');
+                    el.className = `fa-solid ${iconos[Math.floor(Math.random() * iconos.length)]} falling-element`;
+                    el.style.left = `${Math.random() * 100}%`;
+                    el.style.animationDuration = `${5 + Math.random() * 5}s`;
+                    el.style.animationDelay = `${Math.random() * 2}s`;
+                    el.style.fontSize = `${15 + Math.random() * 12}px`;
+                    el.style.color = `rgba(32, 201, 151, ${0.3 + Math.random() * 0.4})`;
+                    bg.appendChild(el);
+                }
             }
 
             let barra = document.getElementById('loadingBarFill');
             let progreso = 0;
             let intervalo = setInterval(() => {
-                progreso += 2.5;
-                barra.style.width = progreso + '%';
+                progreso += 10; // Carga rápida de transición (0.4 segundos en total)
+                if(barra) barra.style.width = progreso + '%';
                 if (progreso >= 100) {
                     clearInterval(intervalo);
-                    document.getElementById('adminIntroScreen').classList.add('fade-out');
-                    setTimeout(() => {
-                        window.location.href = '/login'; // O la ruta de tu archivo login.html
-                    }, 800);
+                    const intro = document.getElementById('adminIntroScreen');
+                    if (intro) {
+                        intro.classList.add('fade-out');
+                    }
                 }
-            }, 100);
+            }, 40);
         });
     </script>
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 </body>
 </html>
