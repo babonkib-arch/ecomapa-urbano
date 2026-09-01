@@ -209,7 +209,7 @@ def crear_reporte():
                 unique_filename = f"{int(time.time())}_{filename}"
                 
                 # Sube la foto directamente a Supabase Storage (Bucket: "fotos")
-                if supabase_cliente:
+                if supabase_cliente and SUPABASE_URL:
                     file_bytes = file.read()
                     supabase_cliente.storage.from_("fotos").upload(
                         path=unique_filename,
@@ -217,12 +217,10 @@ def crear_reporte():
                         file_options={"content-type": file.content_type}
                     )
                     
-                    # Obtener la URL pública de forma segura
-                    res_url = supabase_cliente.storage.from_("fotos").get_public_url(unique_filename)
-                    if isinstance(res_url, dict):
-                        foto_path = res_url.get("publicUrl") or res_url.get("public_url")
-                    else:
-                        foto_path = str(res_url)
+                    # Construcción limpia y directa de la URL pública estándar de Supabase Storage
+                    # Formato: https://<tu-proyecto>.supabase.co/storage/v1/object/public/fotos/<archivo>
+                    base_clean = SUPABASE_URL.rstrip('/')
+                    foto_path = f"{base_clean}/storage/v1/object/public/fotos/{unique_filename}"
 
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -306,7 +304,7 @@ def admin_eliminar(id):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Elimina la foto de Supabase Storage para liberar espacio al resolver
+        # Elimina la foto de Supabase Storage al resolver el reporte
         if supabase_cliente:
             cursor.execute('SELECT foto_path FROM reportes WHERE id = %s', (id,))
             reporte = cursor.fetchone()
