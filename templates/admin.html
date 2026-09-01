@@ -2,153 +2,28 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Panel Admin - EcoMapa Fray Bentos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Profesional - EcoMapa Fray Bentos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body, html { 
-            height: 100%; 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-            background-color: #f8f9fa; 
-        }
-
-        /* Pantalla de carga inicial opcional solo si entras de cero */
-        #adminIntroScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #09150d;
-            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.99) 70%);
-            z-index: 30000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            transition: opacity 0.8s ease, visibility 0.8s ease;
-            padding: 20px;
-        }
-        #adminIntroScreen.fade-out {
-            opacity: 0;
-            visibility: hidden;
-            display: none;
-        }
-
-        .ambient-bg {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            overflow: hidden;
-            pointer-events: none;
-            z-index: 1;
-        }
-        .falling-element {
-            position: absolute;
-            top: -10vh;
-            animation: fallDown linear infinite;
-            opacity: 0.75;
-        }
-        @keyframes fallDown {
-            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
-            15% { opacity: 0.85; }
-            85% { opacity: 0.85; }
-            100% { transform: translateY(110vh) translateX(60px) rotate(360deg); opacity: 0; }
-        }
-
-        .pro-eco-logo-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-        .pro-eco-logo {
-            width: 110px;
-            height: 110px;
-            background: linear-gradient(145deg, #134e32 0%, #198754 50%, #0f3d27 100%);
-            border-radius: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            box-shadow: 0 15px 40px rgba(25, 135, 84, 0.5), inset 0 3px 6px rgba(255, 255, 255, 0.35);
-            border: 2px solid rgba(32, 201, 151, 0.4);
-            animation: logoPulse 3.5s ease-in-out infinite;
-        }
-        @keyframes logoPulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 15px 40px rgba(25, 135, 84, 0.5); }
-            50% { transform: scale(1.04); box-shadow: 0 20px 50px rgba(32, 201, 151, 0.75); }
-        }
-        .pro-eco-logo .main-leaf-icon {
-            font-size: 48px;
-            color: #20c997;
-            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
-        }
-        .pro-eco-logo .logo-cross-badge {
-            position: absolute;
-            bottom: -6px;
-            right: -6px;
-            background: #ffffff;
-            color: #198754;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
-            border: 2px solid #134e32;
-        }
-        .loading-bar-container {
-            width: 260px;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            margin: 25px auto 0 auto;
-            overflow: hidden;
-            border: 1px solid rgba(32, 201, 151, 0.2);
-        }
-        .loading-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #198754, #20c997);
-            border-radius: 10px;
-            transition: width 0.1s linear;
-        }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .card-custom { border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .table th { font-weight: 600; color: #495057; background-color: #fafbfc !important; }
+        .badge-gps { background-color: #e9ecef; color: #0d6efd; border: 1px solid #cfe2ff; transition: all 0.2s; font-weight: 500; }
+        .badge-gps:hover { background-color: #0d6efd; color: #fff; text-decoration: none; }
+        .img-thumbnail-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 10px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .img-thumbnail-preview:hover { transform: scale(1.08); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
-    <div id="adminIntroScreen">
-        <div class="ambient-bg" id="introAmbientBg"></div>
-        <div class="text-center position-relative z-2">
-            <div class="pro-eco-logo-wrapper mb-4">
-                <div class="pro-eco-logo">
-                    <i class="fa-solid fa-shield-halved main-leaf-icon"></i>
-                    <div class="logo-cross-badge"><i class="fa-solid fa-lock"></i></div>
-                </div>
-            </div>
-            <h1 class="fw-bold mb-2 display-6 text-white">Portal de Administradores</h1>
-            <p class="text-light opacity-75 small mb-4">Verificando sesión segura...</p>
-            <div class="loading-bar-container">
-                <div class="loading-bar-fill" id="loadingBarFill"></div>
-            </div>
-        </div>
-    </div>
-
-    <nav class="navbar navbar-dark bg-dark px-4 py-3">
+    <nav class="navbar navbar-dark bg-dark px-4 py-3 shadow-sm">
         <div class="container-fluid">
-            <span class="navbar-brand fw-bold"><i class="fa-solid fa-user-shield me-2"></i>Panel Admin EcoMapa</span>
-            <div>
+            <span class="navbar-brand fw-bold fs-5"><i class="fa-solid fa-shield-halved text-success me-2"></i>Panel Admin EcoMapa</span>
+            <div class="d-flex align-items-center">
                 {% if user %}
-                    <span class="text-light small me-3"><i class="fa-solid fa-user me-1"></i> {{ user.email }}</span>
+                    <span class="text-light small me-3 d-none d-md-inline"><i class="fa-solid fa-user-circle me-1 text-success"></i> {{ user.email }}</span>
                 {% endif %}
                 <a href="/logout" class="btn btn-outline-danger btn-sm rounded-pill px-3 me-2">Cerrar Sesión</a>
                 <a href="/" class="btn btn-outline-light btn-sm rounded-pill px-3">Ver Mapa Público</a>
@@ -157,17 +32,21 @@
     </nav>
 
     <div class="container my-5">
-        <div class="card border-0 shadow-sm p-4 bg-white rounded-3">
-            <h4 class="fw-bold mb-4 text-secondary"><i class="fa-solid fa-list-check me-2"></i>Gestión de Incidencias</h4>
+        <div class="card card-custom p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="fw-bold text-dark m-0"><i class="fa-solid fa-list-check me-2 text-success"></i>Gestión de Incidencias Municipales</h4>
+                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-semibold">Sistema Activo</span>
+            </div>
 
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+                    <thead>
                         <tr>
                             <th>ID</th>
                             <th>Categoría</th>
                             <th>Descripción</th>
-                            <th>Evidencia</th>
+                            <th>Evidencia Fotográfica</th>
+                            <th>Ubicación GPS (Intendencia)</th>
                             <th>Gravedad</th>
                             <th>Estado</th>
                             <th class="text-end">Acción</th>
@@ -177,26 +56,42 @@
                         {% if reportes %}
                             {% for r in reportes %}
                                 <tr>
-                                    <td>{{ r.id }}</td>
-                                    <td>{{ r.categoria }}</td>
-                                    <td>{{ r.descripcion }}</td>
+                                    <td class="fw-bold text-muted">#{{ r.id }}</td>
+                                    <td class="fw-semibold text-secondary">{{ r.categoria }}</td>
+                                    <td style="max-width: 220px;" class="text-truncate" title="{{ r.descripcion }}">{{ r.descripcion }}</td>
                                     <td>
                                         {% if r.foto_path %}
-                                            <a href="{{ r.foto_path }}" target="_blank" class="btn btn-sm btn-outline-success">Ver Foto</a>
+                                            <img src="{{ r.foto_path }}" alt="Evidencia" class="img-thumbnail-preview shadow-sm" data-bs-toggle="modal" data-bs-target="#imgModal" onclick="document.getElementById('modalImageContainer').src='{{ r.foto_path }}'">
                                         {% else %}
                                             <span class="text-muted small">Sin foto</span>
                                         {% endif %}
                                     </td>
-                                    <td><span class="badge bg-secondary">{{ r.gravedad }}</span></td>
-                                    <td><span class="badge bg-warning text-dark">{{ r.estado }}</span></td>
+                                    <td>
+                                        <a href="https://www.google.com/maps?q={{ r.latitud }},{{ r.longitud }}" target="_blank" class="badge badge-gps px-3 py-2 rounded-pill text-decoration-none">
+                                            <i class="fa-solid fa-location-dot me-1 text-primary"></i> Ver en GPS (Google Maps)
+                                        </a>
+                                        <div class="text-muted" style="font-size: 11px; margin-top: 2px;">Lat: {{ r.latitud | round(4) }}, Lon: {{ r.longitud | round(4) }}</div>
+                                    </td>
+                                    <td>
+                                        {% if r.gravedad == 'Alta' %}
+                                            <span class="badge bg-danger">Alta</span>
+                                        {% elif r.gravedad == 'Media' %}
+                                            <span class="badge bg-warning text-dark">Media</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Baja</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><span class="badge bg-warning text-dark px-2 py-1">{{ r.estado }}</span></td>
                                     <td class="text-end">
-                                        <button class="btn btn-sm btn-success rounded-pill px-3 resolver-btn" data-id="{{ r.id }}">Resolver</button>
+                                        <button class="btn btn-sm btn-success rounded-pill px-3 resolver-btn fw-semibold shadow-sm" data-id="{{ r.id }}">
+                                            <i class="fa-solid fa-check me-1"></i> Resolver
+                                        </button>
                                     </td>
                                 </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="7" class="text-center py-3 text-muted">No hay incidencias registradas.</td>
+                                <td colspan="8" class="text-center py-4 text-muted">No hay incidencias registradas en este momento.</td>
                             </tr>
                         {% endif %}
                     </tbody>
@@ -205,38 +100,22 @@
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const bg = document.getElementById('introAmbientBg');
-            if (bg) {
-                const iconos = ['fa-leaf', 'fa-plus', 'fa-check', 'fa-seedling'];
-                for (let i = 0; i < 15; i++) {
-                    const el = document.createElement('i');
-                    el.className = `fa-solid ${iconos[Math.floor(Math.random() * iconos.length)]} falling-element`;
-                    el.style.left = `${Math.random() * 100}%`;
-                    el.style.animationDuration = `${5 + Math.random() * 5}s`;
-                    el.style.animationDelay = `${Math.random() * 2}s`;
-                    el.style.fontSize = `${15 + Math.random() * 12}px`;
-                    el.style.color = `rgba(32, 201, 151, ${0.3 + Math.random() * 0.4})`;
-                    bg.appendChild(el);
-                }
-            }
+    <!-- Visor Modal de Fotos en Pantalla -->
+    <div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content bg-dark border-0 rounded-4 overflow-hidden shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title text-white fw-bold"><i class="fa-solid fa-image me-2 text-success"></i>Evidencia Fotográfica</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <img id="modalImageContainer" src="" class="img-fluid rounded-3 shadow" style="max-height: 75vh;" alt="Evidencia Ampliada">
+                </div>
+            </div>
+        </div>
+    </div>
 
-            let barra = document.getElementById('loadingBarFill');
-            let progreso = 0;
-            let intervalo = setInterval(() => {
-                progreso += 10; // Carga rápida de transición (0.4 segundos en total)
-                if(barra) barra.style.width = progreso + '%';
-                if (progreso >= 100) {
-                    clearInterval(intervalo);
-                    const intro = document.getElementById('adminIntroScreen');
-                    if (intro) {
-                        intro.classList.add('fade-out');
-                    }
-                }
-            }, 40);
-        });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 </body>
 </html>
