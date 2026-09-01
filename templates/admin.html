@@ -45,35 +45,39 @@
         }
 
         .navbar-custom {
-            background: #0d2114 !important;
-            border-bottom: 2px solid #20c997;
+            background: rgba(13, 33, 20, 0.9) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(32, 201, 151, 0.25);
         }
 
-        /* Tarjetas con contraste total y fondo sólido legible para móviles */
+        /* Tarjeta estilo app pública pero integrada al diseño verde del admin */
         .report-card-mobile {
-            background: #0f2618;
-            border: 2px solid #20c997;
+            background: rgba(13, 33, 20, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(32, 201, 151, 0.35);
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            color: #ffffff;
         }
 
         .badge-gps { 
-            background-color: #0d6efd; 
-            color: #ffffff; 
-            font-weight: 600; 
+            background-color: rgba(13, 110, 253, 0.2); 
+            color: #9ec5fe; 
+            border: 1px solid rgba(13, 110, 253, 0.4); 
+            font-weight: 500; 
         }
         .badge-gps:hover { 
-            background-color: #0b5ed7; 
+            background-color: #0d6efd; 
             color: #fff; 
         }
 
         .img-preview-mobile { 
-            width: 75px; 
-            height: 75px; 
+            width: 100%; 
+            max-height: 220px; 
             object-fit: cover; 
-            border-radius: 12px; 
+            border-radius: 14px; 
             cursor: pointer; 
-            border: 2px solid #20c997;
+            border: 1px solid rgba(32, 201, 151, 0.4);
         }
 
         /* Modal de Éxito Estilo App */
@@ -112,72 +116,69 @@
                 {% if user %}
                     <span class="small me-2 d-none d-md-inline text-info fw-semibold"><i class="fa-solid fa-user-circle me-1 text-success"></i> {{ user.email }}</span>
                 {% endif %}
-                <a href="/logout" class="btn btn-danger btn-sm rounded-pill px-2 me-1 fw-bold">Salir</a>
-                <a href="/" class="btn btn-light btn-sm rounded-pill px-2 text-dark fw-bold">Mapa</a>
+                <a href="/logout" class="btn btn-outline-danger btn-sm rounded-pill px-2 me-1">Salir</a>
+                <a href="/" class="btn btn-outline-light btn-sm rounded-pill px-2">Mapa</a>
             </div>
         </div>
     </nav>
 
-    <div class="container container-mobile my-4 px-3" style="max-width: 800px;">
+    <div class="container container-mobile my-4 px-3" style="max-width: 650px;">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="fw-bold text-white m-0 fs-5"><i class="fa-solid fa-list-check me-2 text-success"></i>Gestión de Incidencias</h4>
-            <span class="badge bg-success px-3 py-2 rounded-pill fw-bold text-white shadow-sm">Sistema Activo</span>
+            <span class="badge bg-success bg-opacity-25 text-success px-3 py-2 rounded-pill fw-semibold border border-success border-opacity-25">Sistema Activo</span>
         </div>
 
-        <!-- Contenedor de Tarjetas Móviles -->
+        <!-- Contenedor de Tarjetas Estilo App Pública -->
         <div id="tabla-admin-body" class="row g-3">
             {% if reportes %}
                 {% for r in reportes %}
                     <div class="col-12 reporte-item" data-id="{{ r.id }}">
-                        <div class="report-card-mobile p-3 p-md-4">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="report-card-mobile p-4">
+                            <!-- Cabecera de la tarjeta: Gravedad/Estado a la izquierda y tiempo transcurrido a la derecha -->
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex gap-1 align-items-center">
+                                    <span class="badge 
+                                        {% if r.gravedad == 'Alta' %}bg-danger
+                                        {% elif r.gravedad == 'Media' %}bg-warning text-dark
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ r.gravedad or 'Normal' }}
+                                    </span>
+                                    <span class="badge bg-info text-dark">{{ r.estado }}</span>
+                                </div>
+                                <div class="text-muted small text-light opacity-75">
+                                    <i class="fa-regular fa-clock me-1"></i>{{ r.hace_cuanto or r.tiempo_transcurrido or 'Hace un momento' }}
+                                </div>
+                            </div>
+
+                            <!-- Categoría -->
+                            <h4 class="fw-bold text-success mb-2" style="color: #20c997 !important; font-size: 1.25rem;">
+                                {{ r.categoria }}
+                            </h4>
+
+                            <!-- Descripción -->
+                            <p class="text-light mb-2 fs-6 opacity-90">{{ r.descripcion }}</p>
+
+                            <!-- Fecha y Hora exacta -->
+                            <div class="text-muted small text-light opacity-75 mb-3">
+                                <i class="fa-regular fa-calendar-days me-1"></i>{{ r.fecha or r.fecha_creacion or 'Fecha no disponible' }}
+                            </div>
+
+                            <!-- Imagen de Evidencia (si existe) -->
+                            {% if r.foto_path %}
+                                <div class="mb-3">
+                                    <img src="{{ r.foto_path }}" alt="Evidencia" class="img-preview-mobile shadow-sm" data-bs-toggle="modal" data-bs-target="#imgModal" onclick="document.getElementById('modalImageContainer').src='{{ r.foto_path }}'">
+                                </div>
+                            {% endif %}
+
+                            <!-- GPS y Botón Resolver -->
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top border-success border-opacity-25 mt-3">
                                 <div>
-                                    <span class="badge bg-dark border border-secondary text-light mb-1 fw-bold">#{{ r.id }}</span>
-                                    <h5 class="fw-bold mb-0 text-info" style="font-size: 1.1rem;">{{ r.categoria }}</h5>
-                                </div>
-                                <div class="d-flex gap-1">
-                                    {% if r.gravedad == 'Alta' %}
-                                        <span class="badge bg-danger fw-bold">Alta</span>
-                                    {% elif r.gravedad == 'Media' %}
-                                        <span class="badge bg-warning text-dark fw-bold">Media</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary fw-bold">Baja</span>
-                                    {% endif %}
-                                    <span class="badge bg-warning text-dark fw-bold">{{ r.estado }}</span>
-                                </div>
-                            </div>
-
-                            <!-- Descripción clara y legible -->
-                            <div class="bg-black bg-opacity-40 p-2.5 rounded-3 mb-3 border border-secondary border-opacity-50">
-                                <span class="d-block text-warning small fw-bold mb-1"><i class="fa-solid fa-align-left me-1"></i>Descripción:</span>
-                                <p class="text-white mb-0 fs-6">{{ r.descripcion }}</p>
-                            </div>
-
-                            <!-- Información detallada de Fecha, Hora y Antigüedad -->
-                            <div class="bg-black bg-opacity-40 p-2.5 rounded-3 mb-3 border border-secondary border-opacity-50">
-                                <div class="d-flex flex-column gap-1">
-                                    <div class="text-light small"><strong class="text-success"><i class="fa-regular fa-calendar-days me-1"></i>Fecha:</strong> {{ r.fecha or 'No registrada' }}</div>
-                                    <div class="text-light small"><strong class="text-success"><i class="fa-regular fa-clock me-1"></i>Hora:</strong> {{ r.hora or 'No registrada' }}</div>
-                                    <div class="text-light small"><strong class="text-success"><i class="fa-solid fa-hourglass-start me-1"></i>Subido:</strong> {{ r.hace_cuanto or r.tiempo_transcurrido or 'Hace un momento' }}</div>
-                                </div>
-                            </div>
-
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top border-secondary">
-                                <div class="d-flex align-items-center gap-3">
-                                    {% if r.foto_path %}
-                                        <img src="{{ r.foto_path }}" alt="Evidencia" class="img-preview-mobile shadow" data-bs-toggle="modal" data-bs-target="#imgModal" onclick="document.getElementById('modalImageContainer').src='{{ r.foto_path }}'">
-                                    {% else %}
-                                        <div class="text-light small bg-black p-2 rounded-3 border border-secondary">Sin foto</div>
-                                    {% endif %}
-                                    <div>
-                                        <a href="https://www.google.com/maps/search/?api=1&query={{ r.latitud }},{{ r.longitud }}" target="_blank" class="badge badge-gps px-3 py-2 rounded-pill text-decoration-none d-inline-block shadow-sm">
-                                            <i class="fa-solid fa-location-dot me-1"></i> Ver en GPS
-                                        </a>
-                                        <div class="text-light small mt-1" style="font-size: 11px;">Lat/Lon: {{ r.latitud | round(4) }}, {{ r.longitud | round(4) }}</div>
-                                    </div>
+                                    <a href="https://www.google.com/maps/search/?api=1&query={{ r.latitud }},{{ r.longitud }}" target="_blank" class="badge badge-gps px-3 py-2 rounded-pill text-decoration-none d-inline-block">
+                                        <i class="fa-solid fa-location-dot me-1"></i> Ver en GPS
+                                    </a>
                                 </div>
 
-                                <button class="btn btn-success rounded-pill px-4 py-2 resolver-btn fw-bold shadow w-100 mt-2" data-id="{{ r.id }}" style="background: #198754; border: none; font-size: 1rem;">
+                                <button class="btn btn-success rounded-pill px-4 py-2 resolver-btn fw-semibold shadow-sm" data-id="{{ r.id }}" style="background: #198754; border: none;">
                                     <i class="fa-solid fa-check me-1"></i> Resolver
                                 </button>
                             </div>
@@ -186,7 +187,7 @@
                 {% endfor %}
             {% else %}
                 <div class="col-12 text-center py-5">
-                    <div class="report-card-mobile p-4 text-light">No hay incidencias registradas en este momento.</div>
+                    <div class="report-card-mobile p-4 text-muted">No hay incidencias registradas en este momento.</div>
                 </div>
             {% endif %}
         </div>
@@ -195,7 +196,7 @@
     <!-- Visor Modal de Fotos -->
     <div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content bg-dark border-1 border-success rounded-4 overflow-hidden shadow-lg">
+            <div class="modal-content bg-dark border-1 border-success border-opacity-50 rounded-4 overflow-hidden shadow-lg">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title text-white fw-bold"><i class="fa-solid fa-image me-2 text-success"></i>Evidencia Fotográfica</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
