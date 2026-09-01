@@ -13,14 +13,13 @@
     <style>
         body, html { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; background-color: #f4f6f5; }
         
-        /* Pantalla de Presentación Profesional Estilo Dashboard / Portal Ambiental */
         #welcomeScreen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: #111d15; /* Fondo oscuro forestal muy elegante y profesional */
+            background: #111d15;
             background-image: radial-gradient(circle at 10% 20%, rgba(25, 135, 84, 0.15) 0%, transparent 40%),
                               radial-gradient(circle at 90% 80%, rgba(32, 201, 151, 0.1) 0%, transparent 40%);
             z-index: 10000;
@@ -39,7 +38,7 @@
 
         .portal-container {
             width: 100%;
-            max-width: 1100px;
+            max-width: 1150px;
             margin: auto;
         }
 
@@ -91,15 +90,15 @@
             max-width: 380px;
         }
 
-        /* Pantalla de Éxito Profesional */
+        /* Pantalla de Éxito Ambiental con Animación Realista */
         #successScreen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(8px);
+            background: rgba(11, 22, 15, 0.85);
+            backdrop-filter: blur(10px);
             z-index: 11000;
             display: none;
             align-items: center;
@@ -107,93 +106,111 @@
             padding: 20px;
         }
         .success-card {
-            background: white;
+            background: #ffffff;
             width: 100%;
-            max-width: 400px;
-            border-radius: 24px;
-            padding: 35px 25px;
+            max-width: 420px;
+            border-radius: 28px;
+            padding: 40px 30px;
             text-align: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-            animation: scaleUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
-        @keyframes scaleUp {
-            from { transform: scale(0.6); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        @keyframes bounceIn {
+            0% { transform: scale(0.4); opacity: 0; }
+            70% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
         }
         .success-icon-wrapper {
-            width: 85px;
-            height: 85px;
-            background: #d1e7dd;
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, #d1e7dd 0%, #a3cfbb 100%);
             color: #198754;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 42px;
+            font-size: 45px;
             margin: 0 auto 20px auto;
-            box-shadow: 0 0 0 10px rgba(25, 135, 84, 0.1);
+            box-shadow: 0 0 0 12px rgba(25, 135, 84, 0.12);
+            animation: pulseGlow 2s infinite;
+        }
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.3); }
+            70% { box-shadow: 0 0 0 15px rgba(25, 135, 84, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
         }
 
         .modal-content { border-radius: 20px !important; border: none; }
         .form-control, .form-select { padding: 12px 15px; font-size: 1rem; border-radius: 12px; }
+        
+        /* Semáforo badge estilos */
+        .badge-semaforo-baja { background-color: #198754; color: white; }
+        .badge-semaforo-media { background-color: #ffc107; color: #000; }
+        .badge-semaforo-alta { background-color: #dc3545; color: white; }
     </style>
 </head>
 <body>
 
-    <!-- Pantalla de Inicio Profesional con Apartados Laterales -->
+    <!-- Pantalla de Inicio Profesional con Semáforos Ambientales -->
     <div id="welcomeScreen">
         <div class="portal-container py-4">
-            
-            <!-- Cabecera Principal -->
             <div class="text-center mb-5">
                 <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success p-3 rounded-circle mb-3" style="width: 70px; height: 70px;">
                     <i class="fa-solid fa-seedling fs-2"></i>
                 </div>
                 <h1 class="fw-bold mb-2 display-6 text-white">EcoMapa Fray Bentos</h1>
-                <p class="text-light opacity-75 max-w-600 mx-auto" style="max-width: 650px;">
+                <p class="text-light opacity-75 mx-auto" style="max-width: 650px;">
                     Plataforma de inteligencia ambiental y gobernanza participativa para la conservación, monitoreo y desarrollo sostenible de nuestra ciudad.
                 </p>
             </div>
 
-            <!-- Estructura en Rejilla con Apartados Laterales e Información Central -->
+            <!-- Rejilla con Apartados Laterales y Guía de Semáforos -->
             <div class="row g-4 align-items-stretch mb-5">
                 
-                <!-- Apartado Lateral Izquierdo: Compromiso Ambiental -->
+                <!-- Izquierda: Acción Climática -->
                 <div class="col-lg-4">
                     <div class="eco-card">
                         <div class="text-success mb-3 fs-4"><i class="fa-solid fa-earth-americas"></i></div>
                         <h5 class="fw-bold text-white mb-2">Acción Climática Local</h5>
-                        <p class="text-muted small mb-0" style="color: #adb5bd !important; line-height: 1.6;">
-                            El cuidado de los espacios públicos y la gestión de residuos definen la resiliencia ecológica de Fray Bentos. Cada reporte ciudadano activa protocolos directos de saneamiento y preservación urbana.
+                        <p class="small mb-0" style="color: #adb5bd !important; line-height: 1.6;">
+                            El cuidado de los espacios públicos y la gestión de residuos definen la resiliencia ecológica de Fray Bentos. Cada reporte activa protocolos de saneamiento municipal.
                         </p>
                     </div>
                 </div>
 
-                <!-- Bloque Central: Guía de Uso y Acceso -->
+                <!-- Centro: Guía de Uso + Código de Semáforos -->
                 <div class="col-lg-4">
                     <div class="eco-card border-success border-opacity-50 text-center d-flex flex-column justify-content-between" style="background: rgba(25, 135, 84, 0.08);">
                         <div>
                             <div class="text-success mb-2 fs-4"><i class="fa-solid fa-compass"></i></div>
-                            <h5 class="fw-bold text-white mb-3">Guía Rápida de Uso</h5>
-                            <ul class="text-start small text-light ps-3 mb-4" style="line-height: 1.7; opacity: 0.9;">
-                                <li>📍 Selecciona cualquier punto exacto del mapa.</li>
-                                <li>📸 Registra la evidencia visual con tu cámara.</li>
-                                <li>🚀 Envía la alerta para seguimiento municipal.</li>
+                            <h5 class="fw-bold text-white mb-3">Guía y Códigos de Alerta</h5>
+                            <ul class="text-start small text-light ps-3 mb-3" style="line-height: 1.6; opacity: 0.9;">
+                                <li>📍 Selecciona un punto exacto en el mapa.</li>
+                                <li>📸 Captura la evidencia fotográfica.</li>
                             </ul>
+                            
+                            <!-- Guía de Colores de Semáforos -->
+                            <div class="bg-dark bg-opacity-50 p-3 rounded-4 text-start mb-3 border border-secondary border-opacity-25">
+                                <span class="d-block fw-bold text-success mb-2" style="font-size: 0.8rem;"><i class="fa-solid fa-traffic-light me-1"></i> Sistema de Semáforos:</span>
+                                <div class="d-flex align-items-center gap-2 mb-1 small text-light"><span class="badge rounded-pill bg-success" style="width:12px;height:12px;padding:0;"></span> 🟢 <b>Baja:</b> Poco urgente</div>
+                                <div class="d-flex align-items-center gap-2 mb-1 small text-light"><span class="badge rounded-pill bg-warning" style="width:12px;height:12px;padding:0;"></span> 🟡 <b>Media:</b> Moderada</div>
+                                <div class="d-flex align-items-center gap-2 small text-light"><span class="badge rounded-pill bg-danger" style="width:12px;height:12px;padding:0;"></span> 🔴 <b>Alta:</b> Urgente / Peligro</div>
+                            </div>
                         </div>
+                        
                         <button onclick="entrarAlMapa()" class="btn btn-success btn-lg fw-bold py-3 shadow rounded-pill w-100 fs-6">
                             <i class="fa-solid fa-map-location-dot me-2"></i> Entrar al Mapa
                         </button>
                     </div>
                 </div>
 
-                <!-- Apartado Lateral Derecho: Transparencia Urbana -->
+                <!-- Derecha: Transparencia Comunitaria -->
                 <div class="col-lg-4">
                     <div class="eco-card">
                         <div class="text-success mb-3 fs-4"><i class="fa-solid fa-shield-halved"></i></div>
                         <h5 class="fw-bold text-white mb-2">Comunidad y Control</h5>
-                        <p class="text-muted small mb-0" style="color: #adb5bd !important; line-height: 1.6;">
-                            Construimos un entorno urbano más limpio mediante la fiscalización activa y colaborativa. Monitorea microbasurales, áreas verdes protegidas y factores de riesgo ambiental en tiempo real.
+                        <p class="small mb-0" style="color: #adb5bd !important; line-height: 1.6;">
+                            Haz clic sobre cualquier marcador en el mapa para ver la foto, fecha exacta, hora y nivel de gravedad de los incidentes subidos por otros ciudadanos.
                         </p>
                     </div>
                 </div>
@@ -206,34 +223,31 @@
         </div>
     </div>
 
-    <!-- Pantalla de Éxito Profesional (Oculta por defecto) -->
+    <!-- Pantalla de Éxito Ambiental Animada -->
     <div id="successScreen">
         <div class="success-card">
             <div class="success-icon-wrapper">
-                <i class="fa-solid fa-check"></i>
+                <i class="fa-solid fa-leaf"></i>
             </div>
-            <h3 class="fw-bold text-dark mb-2">¡Reporte Enviado!</h3>
-            <p class="text-muted small mb-4">
-                Tu reporte ha sido registrado correctamente en el sistema de Fray Bentos. Gracias por colaborar con el medio ambiente.
+            <h3 class="fw-bold text-success mb-2">¡Reporte Registrado con Éxito!</h3>
+            <p class="text-muted small mb-4" style="line-height: 1.5;">
+                Tu aporte ha sido sincronizado en el sistema ambiental de Fray Bentos. Juntos protegemos nuestros espacios naturales y urbanos.
             </p>
-            <button onclick="cerrarPantallaExito()" class="btn btn-success btn-lg w-100 rounded-pill py-3 fw-bold shadow-sm">
-                Continuar en el Mapa
+            <button onclick="cerrarPantallaExito()" class="btn btn-success btn-lg w-100 rounded-pill py-3 fw-bold shadow">
+                Volver al EcoMapa
             </button>
         </div>
     </div>
 
-    <!-- Logo / Encabezado Flotante -->
     <div class="header-brand d-flex align-items-center gap-2">
         <i class="fa-solid fa-leaf text-success fs-5"></i>
         <span class="fw-bold text-dark">EcoMapa Fray Bentos</span>
     </div>
 
-    <!-- Indicador flotante para guiar al usuario -->
     <div class="instruction-banner">
         <i class="fa-solid fa-hand-pointer me-1"></i> Toca el mapa para reportar un problema
     </div>
 
-    <!-- Mapa Leaflet -->
     <div id="map"></div>
 
     <!-- Modal Formulario de Reporte -->
@@ -247,7 +261,6 @@
                 <form id="formReporte" enctype="multipart/form-data">
                     <div class="modal-body p-4">
                         
-                        <!-- Categoría -->
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-secondary">🏷️ TIPO DE PROBLEMA</label>
                             <select name="id_categoria" id="selectCategoria" class="form-select" required onchange="verificarOtroCategoria()">
@@ -262,21 +275,18 @@
                             </select>
                         </div>
 
-                        <!-- Campo extra para "Otro" -->
                         <div class="mb-3 d-none" id="divOtraCategoria">
                             <label class="form-label fw-bold small text-secondary">✏️ ESPECIFICAR INCIDENTE</label>
                             <input type="text" id="otra_categoria_texto" name="otra_categoria_texto" class="form-control" placeholder="Escribe cuál es el problema...">
                         </div>
 
-                        <!-- Descripción -->
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-secondary">📝 DESCRIPCIÓN CORTA</label>
                             <textarea name="descripcion" class="form-control" rows="2" placeholder="Detalla brevemente el problema..." required></textarea>
                         </div>
 
-                        <!-- Gravedad -->
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-secondary">⚠️ NIVEL DE GRAVEDAD</label>
+                            <label class="form-label fw-bold small text-secondary">⚠️ NIVEL DE GRAVEDAD (SEMÁFORO)</label>
                             <select name="gravedad" class="form-select" required>
                                 <option value="🟢 Baja">🟢 Baja (Poco urgente)</option>
                                 <option value="🟡 Media" selected>🟡 Media (Moderada)</option>
@@ -284,14 +294,12 @@
                             </select>
                         </div>
 
-                        <!-- CÁMARA DIRECTA -->
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-secondary">📸 FOTO DE EVIDENCIA</label>
                             <input type="file" id="foto" name="foto" accept="image/*" capture="environment" class="form-control" required>
                             <div class="form-text text-muted" style="font-size: 0.75rem;">Se abrirá la cámara directamente para capturar la foto.</div>
                         </div>
 
-                        <!-- Coordenadas ocultas -->
                         <input type="hidden" id="latitud" name="latitud">
                         <input type="hidden" id="longitud" name="longitud">
                     </div>
@@ -335,7 +343,6 @@
 
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([defaultLat, defaultLng], 14);
-
             L.control.zoom({ position: 'bottomright' }).addTo(map);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -353,7 +360,6 @@
                     map.removeLayer(tempMarker);
                 }
                 tempMarker = L.marker([lat, lng]).addTo(map);
-
                 modalReporte.show();
             });
         }
@@ -378,14 +384,40 @@
                 .then(res => res.json())
                 .then(reportes => {
                     reportes.forEach(r => {
-                        const fotoHtml = r.foto_path ? `<img src="/static/${r.foto_path}" style="width:100%; max-height:110px; object-fit:cover; border-radius:8px; margin-top:5px;">` : '';
+                        // Determinar color de pin según gravedad
+                        let colorHex = '#ffc107'; // Amarillo por defecto
+                        if (r.gravedad && r.gravedad.includes('Baja')) colorHex = '#198754';
+                        if (r.gravedad && r.gravedad.includes('Alta')) colorHex = '#dc3545';
+                        if (r.gravedad && r.gravedad.includes('Media')) colorHex = '#ffc107';
+
+                        // Crear marcador personalizado con círculo de color semáforo
+                        const pinIcon = L.divIcon({
+                            className: 'custom-semaforo-pin',
+                            html: `<div style="background-color: ${colorHex}; width: 22px; height: 22px; border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.4);"></div>`,
+                            iconSize: [22, 22],
+                            iconAnchor: [11, 11]
+                        });
+
+                        const fotoHtml = r.foto_path ? `<a href="/static/${r.foto_path}" target="_blank"><img src="/static/${r.foto_path}" style="width:100%; max-height:120px; object-fit:cover; border-radius:8px; margin-top:6px; box-shadow:0 2px 5px rgba(0,0,0,0.1);"></a>` : '<small class="text-muted d-block mt-2">Sin imagen adjunta</small>';
+                        
+                        const fechaFormateada = r.fecha_creacion ? r.fecha_creacion : 'Fecha no registrada';
+                        const haceCuanto = r.tiempo_transcurrido ? r.tiempo_transcurrido : 'Recientemente';
+
                         const popupContent = `
-                            <div style="max-width:180px;">
-                                <strong style="color:#198754; font-size:0.9rem;">${r.categoria}</strong><br>
-                                <small style="font-size:0.8rem;">${r.descripcion}</small><br>
+                            <div style="width: 210px; font-family: 'Segoe UI', sans-serif;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="badge border text-dark" style="font-size: 0.75rem;">${r.gravedad}</span>
+                                    <small class="text-muted" style="font-size: 0.7rem;"><i class="fa-regular fa-clock me-1"></i>${haceCuanto}</small>
+                                </div>
+                                <strong style="color:#198754; font-size: 0.95rem; display:block; margin-bottom:2px;">${r.categoria}</strong>
+                                <p style="font-size: 0.85rem; color:#495057; margin-bottom:6px; line-height:1.3;">${r.descripcion}</p>
+                                <div style="font-size: 0.7rem; color: #6c757d; margin-bottom: 4px;">
+                                    <i class="fa-regular fa-calendar-days me-1"></i>${fechaFormateada}
+                                </div>
                                 ${fotoHtml}
                             </div>`;
-                        L.marker([r.latitud, r.longitud]).addTo(map).bindPopup(popupContent);
+
+                        L.marker([r.latitud, r.longitud], { icon: pinIcon }).addTo(map).bindPopup(popupContent);
                     });
                 })
                 .catch(err => console.error("Error al cargar reportes:", err));

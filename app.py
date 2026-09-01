@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import time
+from datetime import datetime
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
@@ -35,6 +36,31 @@ def get_db_connection():
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def calcular_tiempo_transcurrido(fecha_str):
+    if not fecha_str:
+        return "Recientemente"
+    try:
+        # Formato esperado: YYYY-MM-DD HH:MM:SS
+        fecha_reporte = datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
+        ahora = datetime.now()
+        diferencia = ahora - fecha_reporte
+        
+        segundos = diferencia.total_seconds()
+        minutos = int(segundos // 60)
+        horas = int(minutos // 60)
+        dias = int(horas // 24)
+        
+        if dias > 0:
+            return f"Hace {dias} {'día' if dias == 1 else 'días'}"
+        elif horas > 0:
+            return f"Hace {horas} {'hora' if horas == 1 else 'horas'}"
+        elif minutos > 0:
+            return f"Hace {minutos} {'minuto' if minutos == 1 else 'minutos'}"
+        else:
+            return "Hace un momento"
+    except Exception:
+        return "Recientemente"
+
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -47,7 +73,7 @@ def init_db():
         )
     ''')
     
-    # Tabla de reportes
+    # Tabla de reportes con fecha y hora
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS reportes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,6 +84,7 @@ def init_db():
             latitud REAL NOT NULL,
             longitud REAL NOT NULL,
             foto_path TEXT,
+            fecha_creacion TEXT,
             FOREIGN KEY (id_categoria) REFERENCES categorias (id)
         )
     ''')
@@ -123,21 +150,27 @@ def load_user(user_id):
 def index():
     return render_template('index.html')
 
-# Al resolver una incidencia, se excluye del mapa público
 @app.route('/api/reportes', methods=['GET'])
 def obtener_reportes():
     conn = get_db_connection()
     reportes = conn.execute('''
         SELECT r.id, 
                COALESCE(c.nombre, 'Incidencia General') as categoria, 
-               r.descripcion, r.gravedad, r.estado, r.latitud, r.longitud, r.foto_path 
+               r.descripcion, r.gravedad, r.estado, r.latitud, r.longitud, r.foto_path, r.fecha_creacion
         FROM reportes r 
         LEFT JOIN categorias c ON r.id_categoria = c.id
         WHERE r.estado != 'Resuelto' OR r.estado IS NULL
         ORDER BY r.id DESC
     ''').fetchall()
     conn.close()
-    return jsonify([dict(r) for r in reportes])
+    
+    lista_resultado = []
+    for r in reportes:
+        dic = dict(r)
+        dic['tiempo_transcurrido'] = calcular_tiempo_transcurrido(dic.get('fecha_creacion'))
+        lista_resultado.append(dic)
+        
+    return jsonify(lista_resultado)
 
 @app.route('/api/reportes', methods=['POST'])
 def crear_reporte():
@@ -147,6 +180,7 @@ def crear_reporte():
         gravedad = request.form.get('gravedad')
         latitud = request.form.get('latitud')
         longitud = request.form.get('longitud')
+        fecha_creacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         if not id_categoria or id_categoria == 'otro':
             id_categoria = 1
@@ -163,9 +197,9 @@ def crear_reporte():
 
         conn = get_db_connection()
         conn.execute('''
-            INSERT INTO reportes (id_categoria, descripcion, gravedad, latitud, longitud, foto_path)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (id_categoria, descripcion, gravedad, latitud, longitud, foto_path))
+            INSERT INTO reportes (id_categoria, descripcion, gravedad, latitud, longitud, foto_path, fecha_creacion)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (id_categoria, descripcion, gravedad, latitud, longitud, foto_path, fecha_creacion))
         conn.commit()
         conn.close()
 
@@ -208,14 +242,20 @@ def admin():
     conn = get_db_connection()
     reportes = conn.execute('''
         SELECT r.id, COALESCE(c.nombre, 'Incidencia General') as categoria, 
-               r.descripcion, r.gravedad, r.estado, r.latitud, r.longitud, r.foto_path 
+               r.descripcion, r.gravedad, r.estado, r.latitud, r.longitud, r.foto_path, r.fecha_creacion
         FROM reportes r 
         LEFT JOIN categorias c ON r.id_categoria = c.id
         ORDER BY r.id DESC
     ''').fetchall()
     conn.close()
     
-    return render_template('admin.html', reportes=reportes, user=current_user)
+    lista_reportes = []
+    for r in reportes:
+        dic = dict(r)
+        dic['tiempo_transcurrido'] = calcular_tiempo_transcurrido(dic.get('fecha_creacion'))
+        lista_reportes.append(dic)
+    
+    return render_template('admin.html', reportes=lista_reportes, user=current_user)
 
 @app.route('/admin/eliminar/<int:id>', methods=['POST'])
 @login_required
@@ -224,7 +264,6 @@ def admin_eliminar(id):
         return "Acceso denegado.", 403
         
     conn = get_db_connection()
-    # Elimina el reporte por completo de la base de datos (y con ello se oculta del mapa y del panel)
     conn.execute('DELETE FROM reportes WHERE id = ?', (id,))
     conn.commit()
     conn.close()
