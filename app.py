@@ -40,7 +40,6 @@ def calcular_tiempo_transcurrido(fecha_str):
     if not fecha_str:
         return "Recientemente"
     try:
-        # Formato esperado: YYYY-MM-DD HH:MM:SS
         fecha_reporte = datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
         ahora = datetime.now()
         diferencia = ahora - fecha_reporte
@@ -73,7 +72,7 @@ def init_db():
         )
     ''')
     
-    # Tabla de reportes con fecha y hora
+    # Tabla de reportes
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS reportes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -88,6 +87,12 @@ def init_db():
             FOREIGN KEY (id_categoria) REFERENCES categorias (id)
         )
     ''')
+    
+    # Migración automática por si la tabla ya existía sin la columna fecha_creacion
+    cursor.execute("PRAGMA table_info(reportes)")
+    columns = [column[1] for column in cursor.fetchall()]
+    if 'fecha_creacion' not in columns:
+        cursor.execute("ALTER TABLE reportes ADD COLUMN fecha_creacion TEXT")
     
     # Tabla de Usuarios / Admins
     cursor.execute('''
