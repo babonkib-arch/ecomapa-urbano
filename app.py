@@ -37,8 +37,8 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def calcular_tiempo_transcurrido(fecha_str):
-    if not fecha_str:
-        return "Recientemente"
+    if not fecha_str or fecha_str == 'None' or fecha_str == 'N/D':
+        return "Hace tiempo"
     try:
         fecha_reporte = datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
         ahora = datetime.now()
@@ -58,7 +58,7 @@ def calcular_tiempo_transcurrido(fecha_str):
         else:
             return "Hace un momento"
     except Exception:
-        return "Recientemente"
+        return "Hace tiempo"
 
 def init_db():
     conn = get_db_connection()
@@ -88,11 +88,14 @@ def init_db():
         )
     ''')
     
-    # Migración automática por si la tabla ya existía sin la columna fecha_creacion
     cursor.execute("PRAGMA table_info(reportes)")
     columns = [column[1] for column in cursor.fetchall()]
     if 'fecha_creacion' not in columns:
         cursor.execute("ALTER TABLE reportes ADD COLUMN fecha_creacion TEXT")
+    
+    fecha_actual = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    cursor.execute("UPDATE reportes SET fecha_creacion = ? WHERE fecha_creacion IS NULL OR fecha_creacion = '' OR fecha_creacion = 'None'", 
+                   (fecha_actual,))
     
     # Tabla de Usuarios / Admins
     cursor.execute('''
@@ -104,7 +107,6 @@ def init_db():
         )
     ''')
     
-    # Categorías iniciales
     cursor.execute('SELECT COUNT(*) FROM categorias')
     if cursor.fetchone()[0] == 0:
         categorias = [
@@ -118,7 +120,6 @@ def init_db():
         ]
         cursor.executemany('INSERT INTO categorias (nombre) VALUES (?)', categorias)
         
-    # Administradores Predeterminados
     admins_predeterminados = [
         "admin@ecomapa.com",
         "babonkib@gmail.com",
@@ -172,6 +173,8 @@ def obtener_reportes():
     lista_resultado = []
     for r in reportes:
         dic = dict(r)
+        if not dic.get('fecha_creacion'):
+            dic['fecha_creacion'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         dic['tiempo_transcurrido'] = calcular_tiempo_transcurrido(dic.get('fecha_creacion'))
         lista_resultado.append(dic)
         
@@ -257,6 +260,8 @@ def admin():
     lista_reportes = []
     for r in reportes:
         dic = dict(r)
+        if not dic.get('fecha_creacion'):
+            dic['fecha_creacion'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         dic['tiempo_transcurrido'] = calcular_tiempo_transcurrido(dic.get('fecha_creacion'))
         lista_reportes.append(dic)
     
@@ -266,13 +271,16 @@ def admin():
 @login_required
 def admin_eliminar(id):
     if not current_user.es_admin:
-        return "Acceso denegado.", 403
+        return jsonify({'status': 'error', 'message': 'Acceso denegado.'}), 403
         
-    conn = get_db_connection()
-    conn.execute('DELETE FROM reportes WHERE id = ?', (id,))
-    conn.commit()
-    conn.close()
-    return redirect(url_for('admin'))
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM reportes WHERE id = ?', (id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'success', 'message': 'Incidencia resuelta correctamente.'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
