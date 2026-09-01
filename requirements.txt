@@ -4,3 +4,4 @@ Werkzeug
 gunicorn
 psycopg2-binary==2.9.9
 supabase==2.3.4
+gotrue==2.8.1
