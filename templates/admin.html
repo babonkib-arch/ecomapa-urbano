@@ -8,8 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { 
-            background-color: #09150d; 
-            background-image: radial-gradient(circle at 50% 10%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.98) 70%);
+            background-color: #050d08; 
             color: #ffffff;
             font-family: 'Segoe UI', system-ui, sans-serif;
             min-height: 100vh;
@@ -46,39 +45,35 @@
         }
 
         .navbar-custom {
-            background: rgba(13, 33, 20, 0.9) !important;
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(32, 201, 151, 0.25);
+            background: #0d2114 !important;
+            border-bottom: 2px solid #20c997;
         }
 
-        /* Tarjetas estilo app móvil para cada reporte */
+        /* Tarjetas con contraste total y fondo sólido legible para móviles */
         .report-card-mobile {
-            background: rgba(13, 33, 20, 0.85);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(32, 201, 151, 0.3);
+            background: #0f2618;
+            border: 2px solid #20c997;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transition: transform 0.2s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
         }
 
         .badge-gps { 
-            background-color: rgba(13, 110, 253, 0.2); 
-            color: #9ec5fe; 
-            border: 1px solid rgba(13, 110, 253, 0.4); 
-            font-weight: 500; 
+            background-color: #0d6efd; 
+            color: #ffffff; 
+            font-weight: 600; 
         }
         .badge-gps:hover { 
-            background-color: #0d6efd; 
+            background-color: #0b5ed7; 
             color: #fff; 
         }
 
         .img-preview-mobile { 
-            width: 70px; 
-            height: 70px; 
+            width: 75px; 
+            height: 75px; 
             object-fit: cover; 
-            border-radius: 14px; 
+            border-radius: 12px; 
             cursor: pointer; 
-            border: 2px solid rgba(32, 201, 151, 0.5);
+            border: 2px solid #20c997;
         }
 
         /* Modal de Éxito Estilo App */
@@ -115,10 +110,10 @@
             <span class="navbar-brand fw-bold fs-6"><i class="fa-solid fa-shield-halved text-success me-2"></i>Admin EcoMapa</span>
             <div class="d-flex align-items-center">
                 {% if user %}
-                    <span class="text-light small me-2 d-none d-md-inline" style="color: #a8dadc !important;"><i class="fa-solid fa-user-circle me-1 text-success"></i> {{ user.email }}</span>
+                    <span class="small me-2 d-none d-md-inline text-info fw-semibold"><i class="fa-solid fa-user-circle me-1 text-success"></i> {{ user.email }}</span>
                 {% endif %}
-                <a href="/logout" class="btn btn-outline-danger btn-sm rounded-pill px-2 me-1">Salir</a>
-                <a href="/" class="btn btn-outline-light btn-sm rounded-pill px-2">Mapa</a>
+                <a href="/logout" class="btn btn-danger btn-sm rounded-pill px-2 me-1 fw-bold">Salir</a>
+                <a href="/" class="btn btn-light btn-sm rounded-pill px-2 text-dark fw-bold">Mapa</a>
             </div>
         </div>
     </nav>
@@ -126,7 +121,7 @@
     <div class="container container-mobile my-4 px-3" style="max-width: 800px;">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="fw-bold text-white m-0 fs-5"><i class="fa-solid fa-list-check me-2 text-success"></i>Gestión de Incidencias</h4>
-            <span class="badge bg-success bg-opacity-25 text-success px-3 py-2 rounded-pill fw-semibold border border-success border-opacity-25">Sistema Activo</span>
+            <span class="badge bg-success px-3 py-2 rounded-pill fw-bold text-white shadow-sm">Sistema Activo</span>
         </div>
 
         <!-- Contenedor de Tarjetas Móviles -->
@@ -134,42 +129,55 @@
             {% if reportes %}
                 {% for r in reportes %}
                     <div class="col-12 reporte-item" data-id="{{ r.id }}">
-                        <div class="card-custom report-card-mobile p-3 p-md-4">
+                        <div class="report-card-mobile p-3 p-md-4">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div>
-                                    <span class="badge bg-secondary mb-1">#{{ r.id }}</span>
-                                    <h5 class="fw-bold text-white mb-0" style="color: #20c997 !important;">{{ r.categoria }}</h5>
+                                    <span class="badge bg-dark border border-secondary text-light mb-1 fw-bold">#{{ r.id }}</span>
+                                    <h5 class="fw-bold mb-0 text-info" style="font-size: 1.1rem;">{{ r.categoria }}</h5>
                                 </div>
                                 <div class="d-flex gap-1">
                                     {% if r.gravedad == 'Alta' %}
-                                        <span class="badge bg-danger">Alta</span>
+                                        <span class="badge bg-danger fw-bold">Alta</span>
                                     {% elif r.gravedad == 'Media' %}
-                                        <span class="badge bg-warning text-dark">Media</span>
+                                        <span class="badge bg-warning text-dark fw-bold">Media</span>
                                     {% else %}
-                                        <span class="badge bg-secondary">Baja</span>
+                                        <span class="badge bg-secondary fw-bold">Baja</span>
                                     {% endif %}
-                                    <span class="badge bg-warning text-dark">{{ r.estado }}</span>
+                                    <span class="badge bg-warning text-dark fw-bold">{{ r.estado }}</span>
                                 </div>
                             </div>
 
-                            <p class="text-light opacity-80 small mb-3">{{ r.descripcion }}</p>
+                            <!-- Descripción clara y legible -->
+                            <div class="bg-black bg-opacity-40 p-2.5 rounded-3 mb-3 border border-secondary border-opacity-50">
+                                <span class="d-block text-warning small fw-bold mb-1"><i class="fa-solid fa-align-left me-1"></i>Descripción:</span>
+                                <p class="text-white mb-0 fs-6">{{ r.descripcion }}</p>
+                            </div>
 
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top border-success border-opacity-25">
+                            <!-- Información detallada de Fecha, Hora y Antigüedad -->
+                            <div class="bg-black bg-opacity-40 p-2.5 rounded-3 mb-3 border border-secondary border-opacity-50">
+                                <div class="d-flex flex-column gap-1">
+                                    <div class="text-light small"><strong class="text-success"><i class="fa-regular fa-calendar-days me-1"></i>Fecha:</strong> {{ r.fecha or 'No registrada' }}</div>
+                                    <div class="text-light small"><strong class="text-success"><i class="fa-regular fa-clock me-1"></i>Hora:</strong> {{ r.hora or 'No registrada' }}</div>
+                                    <div class="text-light small"><strong class="text-success"><i class="fa-solid fa-hourglass-start me-1"></i>Subido:</strong> {{ r.hace_cuanto or r.tiempo_transcurrido or 'Hace un momento' }}</div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top border-secondary">
                                 <div class="d-flex align-items-center gap-3">
                                     {% if r.foto_path %}
-                                        <img src="{{ r.foto_path }}" alt="Evidencia" class="img-preview-mobile shadow-sm" data-bs-toggle="modal" data-bs-target="#imgModal" onclick="document.getElementById('modalImageContainer').src='{{ r.foto_path }}'">
+                                        <img src="{{ r.foto_path }}" alt="Evidencia" class="img-preview-mobile shadow" data-bs-toggle="modal" data-bs-target="#imgModal" onclick="document.getElementById('modalImageContainer').src='{{ r.foto_path }}'">
                                     {% else %}
-                                        <div class="text-muted small bg-black bg-opacity-25 p-2 rounded-3">Sin foto</div>
+                                        <div class="text-light small bg-black p-2 rounded-3 border border-secondary">Sin foto</div>
                                     {% endif %}
                                     <div>
-                                        <a href="https://www.google.com/maps/search/?api=1&query={{ r.latitud }},{{ r.longitud }}" target="_blank" class="badge badge-gps px-3 py-2 rounded-pill text-decoration-none d-inline-block mb-1">
+                                        <a href="https://www.google.com/maps/search/?api=1&query={{ r.latitud }},{{ r.longitud }}" target="_blank" class="badge badge-gps px-3 py-2 rounded-pill text-decoration-none d-inline-block shadow-sm">
                                             <i class="fa-solid fa-location-dot me-1"></i> Ver en GPS
                                         </a>
-                                        <div class="text-muted" style="font-size: 11px;"><i class="fa-regular fa-clock me-1"></i>{{ r.fecha or 'Reciente' }} - {{ r.hora or '' }}</div>
+                                        <div class="text-light small mt-1" style="font-size: 11px;">Lat/Lon: {{ r.latitud | round(4) }}, {{ r.longitud | round(4) }}</div>
                                     </div>
                                 </div>
 
-                                <button class="btn btn-success rounded-pill px-4 py-2 resolver-btn fw-semibold shadow-sm w-100 w-md-auto mt-2 mt-md-0" data-id="{{ r.id }}" style="background: linear-gradient(135deg, #198754, #157347); border: none;">
+                                <button class="btn btn-success rounded-pill px-4 py-2 resolver-btn fw-bold shadow w-100 mt-2" data-id="{{ r.id }}" style="background: #198754; border: none; font-size: 1rem;">
                                     <i class="fa-solid fa-check me-1"></i> Resolver
                                 </button>
                             </div>
@@ -178,7 +186,7 @@
                 {% endfor %}
             {% else %}
                 <div class="col-12 text-center py-5">
-                    <div class="card-custom p-4 text-muted">No hay incidencias registradas en este momento.</div>
+                    <div class="report-card-mobile p-4 text-light">No hay incidencias registradas en este momento.</div>
                 </div>
             {% endif %}
         </div>
@@ -187,7 +195,7 @@
     <!-- Visor Modal de Fotos -->
     <div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content bg-dark border-1 border-success border-opacity-50 rounded-4 overflow-hidden shadow-lg">
+            <div class="modal-content bg-dark border-1 border-success rounded-4 overflow-hidden shadow-lg">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title text-white fw-bold"><i class="fa-solid fa-image me-2 text-success"></i>Evidencia Fotográfica</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
