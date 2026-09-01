@@ -68,41 +68,51 @@
             z-index: 2;
         }
 
-        /* Diseño de Logo Propio: Hoja con Cruz de Hospital / Salud Ambiental */
-        .eco-hospital-logo {
-            width: 85px;
-            height: 85px;
-            background: linear-gradient(135deg, #198754 0%, #20c997 100%);
-            border-radius: 24px;
-            display: inline-flex;
+        /* Nuevo Logotipo Profesional de Alta Calidad (Escudo Ambiental con Cruz de Salud) */
+        .pro-eco-logo-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .pro-eco-logo {
+            width: 110px;
+            height: 110px;
+            background: linear-gradient(135deg, #134e32 0%, #198754 50%, #20c997 100%);
+            border-radius: 30px;
+            display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            box-shadow: 0 10px 25px rgba(25, 135, 84, 0.4);
+            box-shadow: 0 15px 35px rgba(25, 135, 84, 0.45), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.15);
             animation: logoPulse 3s ease-in-out infinite;
         }
         @keyframes logoPulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 10px 25px rgba(25, 135, 84, 0.4); }
-            50% { transform: scale(1.04); box-shadow: 0 15px 35px rgba(32, 201, 151, 0.6); }
+            0%, 100% { transform: scale(1); box-shadow: 0 15px 35px rgba(25, 135, 84, 0.45); }
+            50% { transform: scale(1.03); box-shadow: 0 20px 45px rgba(32, 201, 151, 0.65); }
         }
-        .eco-hospital-logo i.fa-leaf {
-            font-size: 42px;
-            color: white;
+        .pro-eco-logo .main-icon {
+            font-size: 52px;
+            color: #ffffff;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
         }
-        .eco-hospital-logo .hospital-cross {
+        .pro-eco-logo .badge-cross {
             position: absolute;
-            top: 6px;
-            right: 6px;
+            top: -6px;
+            right: -6px;
             background: #ffffff;
             color: #dc3545;
-            width: 24px;
-            height: 24px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            font-size: 14px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            border: 2px solid #134e32;
             font-weight: bold;
         }
 
@@ -144,13 +154,13 @@
             background: rgba(255, 255, 255, 1);
         }
 
-        /* Desplegable de Información Institucional */
+        /* Panel Desplegable con Botón de Hamburguesa (3 rayitas) */
         .info-dropdown-panel {
             position: absolute;
             top: 55px;
             left: 0;
             width: 320px;
-            background: rgba(255, 255, 255, 0.97);
+            background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(12px);
             border-radius: 16px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
@@ -244,7 +254,7 @@
 </head>
 <body>
 
-    <!-- Pantalla de Inicio Profesional con Animaciones y Logo de Salud Ambiental -->
+    <!-- Pantalla de Inicio / Intro Profesional -->
     <div id="welcomeScreen">
         <!-- Hojas animadas flotando de fondo -->
         <div class="ambient-bg">
@@ -256,12 +266,15 @@
 
         <div class="portal-container py-4">
             <div class="text-center mb-5">
-                <!-- Logotipo Propio: Hoja con Cruz de Hospital -->
-                <div class="eco-hospital-logo mb-3">
-                    <i class="fa-solid fa-leaf"></i>
-                    <div class="hospital-cross"><i class="fa-solid fa-plus"></i></div>
+                <!-- Nuevo Logotipo Profesional de Alta Calidad -->
+                <div class="pro-eco-logo-wrapper mb-3">
+                    <div class="pro-eco-logo">
+                        <i class="fa-solid fa-earth-americas main-icon"></i>
+                        <div class="badge-cross"><i class="fa-solid fa-plus"></i></div>
+                    </div>
                 </div>
-                <h1 class="fw-bold mb-2 display-6 text-white">EcoMapa Fray Bentos</h1>
+                <!-- Título exacto solicitado -->
+                <h1 class="fw-bold mb-2 display-6 text-white tracking-wide">EcoMapa Urbano Fray Bentos</h1>
                 <p class="text-light opacity-75 mx-auto" style="max-width: 650px;">
                     Plataforma de inteligencia ambiental, salud pública y gobernanza participativa para la conservación y bienestar de nuestra ciudad.
                 </p>
@@ -273,7 +286,7 @@
                 <!-- Izquierda: Acción Climática -->
                 <div class="col-lg-4">
                     <div class="eco-card">
-                        <div class="text-success mb-3 fs-4"><i class="fa-solid fa-earth-americas"></i></div>
+                        <div class="text-success mb-3 fs-4"><i class="fa-solid fa-leaf"></i></div>
                         <h5 class="fw-bold text-white mb-2">Acción Climática y Salud</h5>
                         <p class="small mb-0" style="color: #adb5bd !important; line-height: 1.6;">
                             El cuidado de los espacios públicos previene riesgos epidemiológicos y mejora la calidad de vida urbana. Cada reporte activa protocolos de saneamiento municipal.
@@ -330,7 +343,7 @@
     <div id="successScreen">
         <div class="success-card">
             <div class="success-icon-wrapper">
-                <i class="fa-solid fa-leaf"></i>
+                <i class="fa-solid fa-earth-americas"></i>
             </div>
             <h3 class="fw-bold text-success mb-2">¡Reporte Registrado con Éxito!</h3>
             <p class="text-muted small mb-4" style="line-height: 1.5;">
@@ -342,18 +355,18 @@
         </div>
     </div>
 
-    <!-- Cabecera desplegable interactiva (donde hizo clic tu profesora) -->
+    <!-- Cabecera superior con el Botón de Menú Estilo Hamburguesa (3 rayitas) -->
     <div class="header-brand-container">
         <div class="header-brand d-flex align-items-center gap-2 shadow-sm" onclick="toggleInfoDropdown(event)">
-            <div style="width: 26px; height: 26px; background: #198754; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; position: relative;">
-                <i class="fa-solid fa-leaf"></i>
-                <span style="position: absolute; top: -3px; right: -3px; background: #dc3545; color: white; width: 10px; height: 10px; border-radius: 50%; font-size: 6px; display: flex; align-items: center; justify-content: center;">+</span>
+            <!-- Icono de 3 rayitas (menú hamburguesa) característico -->
+            <div style="width: 30px; height: 30px; background: #198754; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
+                <i class="fa-solid fa-bars"></i>
             </div>
             <span class="fw-bold text-dark">EcoMapa Fray Bentos</span>
             <i class="fa-solid fa-chevron-down text-muted ms-1" style="font-size: 0.75rem;" id="dropdownChevron"></i>
         </div>
 
-        <!-- Panel desplegable con la información solicitada -->
+        <!-- Panel Desplegable con la Información Institucional -->
         <div class="info-dropdown-panel" id="infoDropdownPanel">
             <div class="mb-3 border-bottom pb-2">
                 <span class="d-block fw-bold text-success mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-users me-1"></i> ¿Quiénes somos?</span>
@@ -472,7 +485,7 @@
             });
         });
 
-        // Función para alternar el menú desplegable al hacer clic en el título
+        // Función para alternar el menú desplegable al hacer clic en el botón de hamburguesa
         function toggleInfoDropdown(event) {
             event.stopPropagation();
             const panel = document.getElementById('infoDropdownPanel');
