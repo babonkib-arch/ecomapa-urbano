@@ -15,177 +15,177 @@
             overflow: hidden;
         }
 
-        /* Pantalla de carga inicial */
-        #introScreen {
-            position: fixed;
+        /* Fondo ambiental con efecto corporativo y partículas idéntico al sistema público */
+        .login-wrapper {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #09150d;
+            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.45) 0%, rgba(9, 21, 13, 0.98) 75%);
+            overflow: hidden;
+        }
+
+        .ambient-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #09150d;
-            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.5) 0%, rgba(9, 21, 13, 0.99) 70%);
-            z-index: 99999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            transition: opacity 0.8s ease, visibility 0.8s ease;
-        }
-        #introScreen.fade-out {
-            opacity: 0;
-            visibility: hidden;
             pointer-events: none;
+            z-index: 1;
+        }
+        .falling-element {
+            position: absolute;
+            top: -10vh;
+            animation: fallDown linear infinite;
+            opacity: 0.6;
+        }
+        @keyframes fallDown {
+            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
+            15% { opacity: 0.7; }
+            85% { opacity: 0.7; }
+            100% { transform: translateY(110vh) translateX(50px) rotate(360deg); opacity: 0; }
         }
 
-        .loading-bar-container {
-            width: 280px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            margin: 25px auto 0 auto;
-            overflow: hidden;
-            border: 1px solid rgba(32, 201, 151, 0.2);
-        }
-        .loading-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #198754, #20c997);
-            border-radius: 10px;
-            transition: width 0.08s linear;
-        }
-
-        /* Contenedor del Login Profesional */
-        .login-wrapper {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.98) 80%);
-            position: relative;
-        }
+        /* Tarjeta de Login Glassmorphism refinada */
         .login-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(32, 201, 151, 0.3);
-            border-radius: 24px;
-            padding: 40px;
-            width: 100%;
-            max-width: 420px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
-            color: #ffffff;
+            position: relative;
             z-index: 10;
+            background: rgba(13, 33, 20, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(32, 201, 151, 0.3);
+            border-radius: 28px;
+            padding: 45px 35px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+            color: #ffffff;
         }
+
         .login-logo {
-            width: 70px;
-            height: 70px;
-            background: linear-gradient(135deg, #198754, #20c997);
-            border-radius: 20px;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #134e32 0%, #198754 50%, #0f3d27 100%);
+            border-radius: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
-            color: white;
+            font-size: 36px;
+            color: #20c997;
             margin: 0 auto 20px auto;
-            box-shadow: 0 10px 25px rgba(25, 135, 84, 0.4);
+            box-shadow: 0 12px 30px rgba(25, 135, 84, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(32, 201, 151, 0.4);
         }
+
+        .form-label {
+            color: #a8dadc;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
         .form-control {
-            background: rgba(255, 255, 255, 0.07);
+            background: rgba(255, 255, 255, 0.06);
             border: 1px solid rgba(255, 255, 255, 0.15);
             color: #fff;
             border-radius: 12px;
             padding: 12px 16px;
+            transition: all 0.3s ease;
         }
         .form-control:focus {
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.1);
             border-color: #20c997;
             color: #fff;
             box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.25);
         }
         .form-control::placeholder {
-            color: rgba(255, 255, 255, 0.4);
+            color: rgba(255, 255, 255, 0.35);
         }
+
+        .input-group-text {
+            background: rgba(255, 255, 255, 0.06) !important;
+            border-color: rgba(255, 255, 255, 0.15) !important;
+            color: #20c997 !important;
+            border-radius: 12px 0 0 12px !important;
+        }
+
         .btn-success-pro {
             background: linear-gradient(135deg, #198754, #157347);
             border: none;
             border-radius: 12px;
             padding: 12px;
             font-weight: 600;
+            letter-spacing: 0.5px;
+            color: white;
             transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(25, 135, 84, 0.4);
         }
         .btn-success-pro:hover {
             background: linear-gradient(135deg, #157347, #115c37);
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(25, 135, 84, 0.4);
+            box-shadow: 0 10px 25px rgba(25, 135, 84, 0.6);
+            color: white;
         }
     </style>
 </head>
 <body>
 
-    <!-- Pantalla de Carga Inicial -->
-    <div id="introScreen">
-        <div class="text-center">
-            <div class="login-logo mb-3">
-                <i class="fa-solid fa-shield-halved"></i>
-            </div>
-            <h2 class="fw-bold mb-1">EcoMapa Fray Bentos</h2>
-            <p class="text-muted small mb-4">Cargando protocolo de seguridad municipal...</p>
-            <div class="loading-bar-container">
-                <div class="loading-bar-fill" id="loadingBarFill"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Página de Login Profesional -->
     <div class="login-wrapper">
+        <div class="ambient-bg" id="ambientBg"></div>
+
         <div class="login-card">
             <div class="login-logo">
-                <i class="fa-solid fa-user-shield"></i>
+                <i class="fa-solid fa-shield-halved"></i>
             </div>
             <h3 class="text-center fw-bold mb-1">Portal Municipal</h3>
-            <p class="text-center text-muted small mb-4">Identificación de Administrador</p>
+            <p class="text-center text-muted small mb-4" style="color: #a8dadc !important;">EcoMapa Fray Bentos - Seguridad</p>
 
             {% if error %}
-                <div class="alert alert-danger bg-danger text-white border-0 py-2 small rounded-3 mb-3 text-center">
+                <div class="alert alert-danger bg-danger bg-opacity-75 text-white border-0 py-2 small rounded-3 mb-3 text-center">
                     <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ error }}
                 </div>
             {% endif %}
 
             <form method="POST" action="/login">
                 <div class="mb-3">
-                    <label class="form-label small text-muted fw-semibold">Correo Electrónico</label>
+                    <label class="form-label fw-semibold">Correo Electrónico</label>
                     <div class="input-group">
-                        <span class="input-group-text bg-transparent border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: rgba(255,255,255,0.15);"><i class="fa-solid fa-envelope"></i></span>
+                        <span class="input-group-text border-end-0"><i class="fa-solid fa-envelope"></i></span>
                         <input type="email" name="email" class="form-control border-start-0" placeholder="admin@ecomapa.com" required style="border-radius: 0 12px 12px 0;">
                     </div>
                 </div>
                 <div class="mb-4">
-                    <label class="form-label small text-muted fw-semibold">Contraseña</label>
+                    <label class="form-label fw-semibold">Contraseña</label>
                     <div class="input-group">
-                        <span class="input-group-text bg-transparent border-end-0 text-muted" style="border-radius: 12px 0 0 12px; border-color: rgba(255,255,255,0.15);"><i class="fa-solid fa-lock"></i></span>
+                        <span class="input-group-text border-end-0"><i class="fa-solid fa-lock"></i></span>
                         <input type="password" name="password" class="form-control border-start-0" placeholder="••••••••" required style="border-radius: 0 12px 12px 0;">
                     </div>
                 </div>
-                <button type="submit" class="btn btn-success-pro w-100 text-white mb-3">Iniciar Sesión</button>
+                <button type="submit" class="btn btn-success-pro w-100 mb-3">Iniciar Sesión</button>
             </form>
             <div class="text-center">
-                <a href="/" class="text-decoration-none small text-muted"><i class="fa-solid fa-arrow-left me-1"></i> Volver al Mapa Público</a>
+                <a href="/" class="text-decoration-none small" style="color: #20c997;"><i class="fa-solid fa-arrow-left me-1"></i> Volver al Mapa Público</a>
             </div>
         </div>
     </div>
 
     <script>
-        // Animación de la barra de carga inicial antes de mostrar el login
-        window.addEventListener('DOMContentLoaded', () => {
-            let barra = document.getElementById('loadingBarFill');
-            let progreso = 0;
-            let intervalo = setInterval(() => {
-                progreso += 4;
-                barra.style.width = progreso + '%';
-                if (progreso >= 100) {
-                    clearInterval(intervalo);
-                    document.getElementById('introScreen').classList.add('fade-out');
-                }
-            }, 30);
+        // Generador de iconos flotantes en el fondo idénticos al mapa principal
+        document.addEventListener('DOMContentLoaded', () => {
+            const bg = document.getElementById('ambientBg');
+            const iconos = ['fa-leaf', 'fa-plus', 'fa-seedling', 'fa-shield'];
+            for (let i = 0; i < 16; i++) {
+                const el = document.createElement('i');
+                el.className = `fa-solid ${iconos[Math.floor(Math.random() * iconos.length)]} falling-element`;
+                el.style.left = `${Math.random() * 100}%`;
+                el.style.animationDuration = `${7 + Math.random() * 6}s`;
+                el.style.animationDelay = `${Math.random() * 4}s`;
+                el.style.fontSize = `${14 + Math.random() * 14}px`;
+                el.style.color = `rgba(32, 201, 151, ${0.2 + Math.random() * 0.3})`;
+                bg.appendChild(el);
+            }
         });
     </script>
 </body>
