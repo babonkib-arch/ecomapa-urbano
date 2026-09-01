@@ -136,6 +136,9 @@ def init_db():
         if cursor.fetchone()[0] == 0:
             cursor.execute('INSERT INTO usuarios (email, password, es_admin) VALUES (%s, %s, 1)', 
                            (email_admin, pass_hash))
+        else:
+            # Asegurar que si ya existía el usuario, tenga permisos de admin (es_admin = 1)
+            cursor.execute('UPDATE usuarios SET es_admin = 1 WHERE email = %s', (email_admin,))
         
     conn.commit()
     cursor.close()
@@ -152,7 +155,8 @@ def load_user(user_id):
     cursor.close()
     conn.close()
     if user:
-        return Usuario(user['id'], user['email'], bool(user['es_admin']))
+        es_admin_bool = True if user['es_admin'] == 1 or user['es_admin'] is True else False
+        return Usuario(user['id'], user['email'], es_admin_bool)
     return None
 
 # ---------------- RUTAS PÚBLICAS ----------------
@@ -209,7 +213,6 @@ def crear_reporte():
                 unique_filename = f"{int(time.time())}_{filename}"
                 
                 if supabase_cliente and SUPABASE_URL:
-                    # Subida mediante el cliente oficial asegurando la lectura correcta de bytes
                     file_bytes = file.read()
                     supabase_cliente.storage.from_("fotos").upload(
                         path=unique_filename,
@@ -217,7 +220,6 @@ def crear_reporte():
                         file_options={"content-type": file.content_type, "upsert": "true"}
                     )
                     
-                    # Generación estandarizada de la URL pública
                     base_clean = SUPABASE_URL.rstrip('/')
                     foto_path = f"{base_clean}/storage/v1/object/public/fotos/{unique_filename}"
 
@@ -239,6 +241,7 @@ def crear_reporte():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    error_msg = None
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -250,13 +253,25 @@ def login():
         cursor.close()
         conn.close()
 
-        if user_data and check_password_hash(user_data['password'], password):
-            user = Usuario(user_data['id'], user_data['email'], bool(user_data['es_admin']))
-            login_user(user)
-            return redirect(url_for('admin'))
-        
-        flash('Correo o contraseña incorrectos.')
-    return render_template('login.html')
+        if user_data:
+            print("Usuario encontrado en BD:", user_data['email'])
+            print("Es admin (valor bruto):", user_data['es_admin'])
+            
+            if check_password_hash(user_data['password'], password):
+                es_admin_bool = True if user_data['es_admin'] == 1 or user_data['es_admin'] is True else False
+                
+                user = Usuario(user_data['id'], user_data['email'], es_admin_bool)
+                login_user(user)
+                print("Login exitoso. Redirigiendo a /admin...")
+                return redirect(url_for('admin'))
+            else:
+                print("Contraseña incorrecta.")
+                error_msg = "Contraseña incorrecta."
+        else:
+            print("Correo no encontrado en la base de datos.")
+            error_msg = "El correo electrónico no está registrado."
+            
+    return render_template('login.html', error=error_msg)
 
 @app.route('/logout')
 @login_required
