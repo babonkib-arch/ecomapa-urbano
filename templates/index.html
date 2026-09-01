@@ -4,16 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>EcoMapa - Fray Bentos</title>
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body, html { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; background-color: #f4f6f5; }
+        body, html { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; background-color: #09150d; }
         
-        /* Pantalla 1: Intro con barra de carga y caída realista */
+        /* Contenedor absoluto para aislar el mapa por completo hasta el click */
+        #mapContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #map { height: 100%; width: 100%; }
+
+        /* Pantalla 1: Intro con barra de carga y caída exclusiva de cruces y ticks verdes */
         #introScreen {
             position: fixed;
             top: 0;
@@ -21,8 +32,8 @@
             width: 100vw;
             height: 100vh;
             background: #09150d;
-            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.98) 70%);
-            z-index: 20000;
+            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.99) 70%);
+            z-index: 30000;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -43,9 +54,9 @@
             width: 100vw;
             height: 100vh;
             background: #09150d;
-            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.95) 70%);
-            z-index: 10000;
-            display: none; /* Oculto hasta que termine la intro por completo */
+            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.98) 70%);
+            z-index: 20000;
+            display: none; /* Oculto hasta que termine la intro */
             align-items: center;
             justify-content: center;
             color: #ffffff;
@@ -58,7 +69,7 @@
             visibility: hidden;
         }
 
-        /* Animación y Caída Realista de Hojas y Cruces Verdes */
+        /* Animación y Caída Exclusiva de Cruces y Ticks Verdes */
         .ambient-bg {
             position: absolute;
             width: 100%;
@@ -80,10 +91,10 @@
                 transform: translateY(-10vh) translateX(0) rotate(0deg);
                 opacity: 0;
             }
-            15% { opacity: 0.8; }
-            85% { opacity: 0.8; }
+            15% { opacity: 0.85; }
+            85% { opacity: 0.85; }
             100% {
-                transform: translateY(110vh) translateX(80px) rotate(360deg);
+                transform: translateY(110vh) translateX(60px) rotate(360deg);
                 opacity: 0;
             }
         }
@@ -185,14 +196,12 @@
             border-color: rgba(32, 201, 151, 0.35);
             transform: translateY(-3px);
         }
-
-        #map { height: 100vh; width: 100vw; z-index: 1; position: relative; }
         
         .header-brand-container {
             position: fixed;
             top: 15px;
             left: 15px;
-            z-index: 9999;
+            z-index: 15000;
         }
 
         .header-brand {
@@ -221,7 +230,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             padding: 16px;
             display: none;
-            z-index: 10000;
+            z-index: 16000;
             border: 1px solid rgba(25, 135, 84, 0.2);
             animation: fadeInDrop 0.3s ease forwards;
         }
@@ -238,7 +247,7 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 9999;
+            z-index: 15000;
             background: rgba(17, 29, 21, 0.95);
             color: white;
             border: 1px solid rgba(32, 201, 151, 0.3);
@@ -261,7 +270,7 @@
             height: 100vh;
             background: rgba(11, 22, 15, 0.85);
             backdrop-filter: blur(10px);
-            z-index: 11000;
+            z-index: 25000;
             display: none;
             align-items: center;
             justify-content: center;
@@ -302,7 +311,6 @@
 </head>
 <body>
 
-    <!-- Pantalla 1: Intro (Primera página con barra de carga y logo) -->
     <div id="introScreen">
         <div class="ambient-bg" id="introAmbientBg"></div>
         <div class="text-center position-relative z-2">
@@ -317,14 +325,12 @@
             <h1 class="fw-bold mb-2 display-6 text-white">EcoMapa Urbano Fray Bentos</h1>
             <p class="text-light opacity-75 small mb-4">Iniciando sistema de inteligencia ambiental...</p>
             
-            <!-- Barra de carga de 4 segundos -->
             <div class="loading-bar-container">
                 <div class="loading-bar-fill" id="loadingBarFill"></div>
             </div>
         </div>
     </div>
 
-    <!-- Pantalla 2: Segunda página (Bienvenida con apartados completos y botón para entrar al mapa) -->
     <div id="welcomeScreen">
         <div class="ambient-bg" id="welcomeAmbientBg"></div>
 
@@ -346,10 +352,8 @@
                 </p>
             </div>
 
-            <!-- Rejilla con Apartados Laterales y Guía de Semáforos completa -->
             <div class="row g-4 align-items-stretch mb-5">
                 
-                <!-- Izquierda: Acción Climática -->
                 <div class="col-lg-4">
                     <div class="eco-card">
                         <div class="text-success mb-3 fs-4"><i class="fa-solid fa-leaf"></i></div>
@@ -360,7 +364,6 @@
                     </div>
                 </div>
 
-                <!-- Centro: Guía de Uso Rápido Completa + Código de Semáforos -->
                 <div class="col-lg-4">
                     <div class="eco-card border-success border-opacity-50 text-center d-flex flex-column justify-content-between" style="background: rgba(25, 135, 84, 0.08);">
                         <div>
@@ -373,7 +376,6 @@
                                 <li>📸 Captura la evidencia fotográfica.</li>
                             </ul>
                             
-                            <!-- Guía de Colores de Semáforos -->
                             <div class="bg-dark bg-opacity-50 p-3 rounded-4 text-start mb-3 border border-secondary border-opacity-25">
                                 <span class="d-block fw-bold text-success mb-2" style="font-size: 0.8rem;"><i class="fa-solid fa-traffic-light me-1"></i> Sistema de Semáforos:</span>
                                 <div class="d-flex align-items-center gap-2 mb-1 small text-light"><span class="badge rounded-pill bg-success" style="width:12px;height:12px;padding:0;"></span> 🟢 <b>Baja:</b> Poco urgente</div>
@@ -388,7 +390,6 @@
                     </div>
                 </div>
 
-                <!-- Derecha: Transparencia Comunitaria -->
                 <div class="col-lg-4">
                     <div class="eco-card">
                         <div class="text-success mb-3 fs-4"><i class="fa-solid fa-shield-halved"></i></div>
@@ -407,7 +408,6 @@
         </div>
     </div>
 
-    <!-- Pantalla de Éxito Ambiental Animada -->
     <div id="successScreen">
         <div class="success-card">
             <div class="success-icon-wrapper">
@@ -423,7 +423,6 @@
         </div>
     </div>
 
-    <!-- Cabecera superior con el Botón de Menú Estilo Hamburguesa (3 rayitas) -->
     <div class="header-brand-container">
         <div class="header-brand d-flex align-items-center gap-2 shadow-sm" onclick="toggleInfoDropdown(event)">
             <div style="width: 30px; height: 30px; background: #198754; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
@@ -433,7 +432,6 @@
             <i class="fa-solid fa-chevron-down text-muted ms-1" style="font-size: 0.75rem;" id="dropdownChevron"></i>
         </div>
 
-        <!-- Panel Desplegable Institucional -->
         <div class="info-dropdown-panel" id="infoDropdownPanel">
             <div class="mb-3 border-bottom pb-2">
                 <span class="d-block fw-bold text-success mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-users me-1"></i> ¿Quiénes somos?</span>
@@ -462,9 +460,10 @@
         <i class="fa-solid fa-hand-pointer me-1"></i> Toca el mapa para reportar un problema
     </div>
 
-    <div id="map"></div>
+    <div id="mapContainer">
+        <div id="map"></div>
+    </div>
 
-    <!-- Modal Formulario de Reporte -->
     <div class="modal fade" id="modalReporte" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content shadow-lg">
@@ -526,7 +525,6 @@
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
@@ -536,11 +534,7 @@
         let modalReporte;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Inicializamos los elementos visuales y el mapa por debajo (sin renderizar visualmente el mapa todavía)
-            initMap();
-            cargarReportesPublicos();
-            
-            // Generar caídas ambientales en ambas pantallas
+            // Inicializamos caídas ambientales exclusivamente con cruces y checks verdes
             generarCaidaAmbiental('introAmbientBg');
             generarCaidaAmbiental('welcomeAmbientBg');
 
@@ -550,7 +544,7 @@
             let barra = document.getElementById('loadingBarFill');
             let progreso = 0;
             let intervalo = setInterval(() => {
-                progreso += 2.5; // Llega al 100% en exactamente 4 segundos (40 * 100ms)
+                progreso += 2.5; // Llega al 100% en 4 segundos exactos
                 barra.style.width = progreso + '%';
                 if (progreso >= 100) {
                     clearInterval(intervalo);
@@ -570,7 +564,7 @@
             });
         });
 
-        // Transición de la Intro (Página 1) a la Segunda Página (Bienvenida / Apartados)
+        // Transición de la Intro (Página 1) a la Segunda Página (Bienvenida)
         function transicionarAsegundaPagina() {
             const intro = document.getElementById('introScreen');
             const welcome = document.getElementById('welcomeScreen');
@@ -578,14 +572,14 @@
             intro.classList.add('fade-out');
             setTimeout(() => {
                 intro.style.display = 'none';
-                welcome.style.display = 'flex'; // Muestra la segunda página limpia sin ver el mapa de fondo
+                welcome.style.display = 'flex'; // Muestra la segunda página limpia
             }, 800);
         }
 
-        // Generar mezcla realista de hojas cayendo y cruces verdes de salud
+        // Generar caídas exclusivas de cruces médicas y ticks de correcto en tono verde
         function generarCaidaAmbiental(containerId) {
             const bg = document.getElementById(containerId);
-            const iconos = ['fa-leaf', 'fa-plus', 'fa-seedling', 'fa-hospital'];
+            const iconos = ['fa-plus', 'fa-check']; // Exclusivamente cruces y tildes/ticks verdes
             const cantidad = 22;
 
             for (let i = 0; i < cantidad; i++) {
@@ -594,16 +588,16 @@
                 el.className = `fa-solid ${tipoIcono} falling-element`;
                 
                 const leftPos = Math.random() * 100;
-                const duracion = 7 + Math.random() * 8; 
+                const duracion = 7 + Math.random() * 7; 
                 const retraso = Math.random() * 5;
-                const tamano = 14 + Math.random() * 18;
+                const tamano = 16 + Math.random() * 16;
                 
-                const colorOpac = 0.2 + Math.random() * 0.4;
+                const colorOpac = 0.3 + Math.random() * 0.4;
                 el.style.left = `${leftPos}%`;
                 el.style.animationDuration = `${duracion}s`;
                 el.style.animationDelay = `${retraso}s`;
                 el.style.fontSize = `${tamano}px`;
-                el.style.color = tipoIcono === 'fa-plus' || tipoIcono === 'fa-hospital' ? `rgba(32, 201, 151, ${colorOpac + 0.1})` : `rgba(25, 135, 84, ${colorOpac})`;
+                el.style.color = `rgba(32, 201, 151, ${colorOpac})`; // Tonalidad verde unificada
 
                 bg.appendChild(el);
             }
@@ -622,17 +616,27 @@
             }
         }
 
-        // Botón "Entrar al Mapa" de la segunda página
+        // Botón "Entrar al Mapa" de la segunda página: Aquí se inicializa el mapa por primera vez
         function entrarAlMapa() {
             const welcome = document.getElementById('welcomeScreen');
             if (welcome && welcome.style.display !== 'none') {
                 welcome.classList.add('fade-out');
                 setTimeout(() => {
                     welcome.style.display = 'none';
-                    if (map) { 
+                    
+                    // Revelar el contenedor del mapa
+                    const mapContainer = document.getElementById('mapContainer');
+                    mapContainer.style.visibility = 'visible';
+                    mapContainer.style.opacity = '1';
+
+                    // Inicializar mapa si no existe e invalidar tamaño
+                    if (!map) {
+                        initMap();
+                        cargarReportesPublicos();
+                    } else {
                         map.invalidateSize();
-                        solicitarUbicacionUsuario(); 
                     }
+                    solicitarUbicacionUsuario();
                 }, 800);
             }
         }
@@ -735,7 +739,7 @@
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <span class="badge border text-dark" style="font-size: 0.75rem;">${r.gravedad}</span>
                                     <small class="text-muted" style="font-size: 0.7rem;"><i class="fa-regular fa-clock me-1"></i>${haceCuanto}</small>
-                                }
+                                </div>
                                 <strong style="color:#198754; font-size: 0.95rem; display:block; margin-bottom:2px;">${r.categoria}</strong>
                                 <p style="font-size: 0.85rem; color:#495057; margin-bottom:6px; line-height:1.3;">${r.descripcion}</p>
                                 <div style="font-size: 0.7rem; color: #6c757d; margin-bottom: 4px;">
