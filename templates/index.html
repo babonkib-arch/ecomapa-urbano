@@ -13,6 +13,29 @@
     <style>
         body, html { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; background-color: #f4f6f5; }
         
+        /* Pantalla 1: Intro con barra de carga y caída realista */
+        #introScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #09150d;
+            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.98) 70%);
+            z-index: 20000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+            padding: 20px;
+        }
+        #introScreen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Pantalla 2: Interfaz Principal (Bienvenida / Mapa) */
         #welcomeScreen {
             position: fixed;
             top: 0;
@@ -22,7 +45,7 @@
             background: #09150d;
             background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.95) 70%);
             z-index: 10000;
-            display: flex;
+            display: none; /* Se muestra después de la intro */
             align-items: center;
             justify-content: center;
             color: #ffffff;
@@ -57,12 +80,8 @@
                 transform: translateY(-10vh) translateX(0) rotate(0deg);
                 opacity: 0;
             }
-            15% {
-                opacity: 0.8;
-            }
-            85% {
-                opacity: 0.8;
-            }
+            15% { opacity: 0.8; }
+            85% { opacity: 0.8; }
             100% {
                 transform: translateY(110vh) translateX(80px) rotate(360deg);
                 opacity: 0;
@@ -107,7 +126,6 @@
             color: #20c997;
             filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
         }
-        /* Cruz médica verde combinada dentro/superpuesta */
         .pro-eco-logo .logo-cross-badge {
             position: absolute;
             bottom: -6px;
@@ -124,7 +142,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.35);
             border: 2px solid #134e32;
         }
-        /* Burbujas de agua decorativas flotando alrededor del logo */
         .water-bubble {
             position: absolute;
             background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(32, 201, 151, 0.4));
@@ -135,6 +152,24 @@
         @keyframes bubbleFloat {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-6px); }
+        }
+
+        /* Barra de carga de la Intro */
+        .loading-bar-container {
+            width: 260px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin: 25px auto 0 auto;
+            overflow: hidden;
+            border: 1px solid rgba(32, 201, 151, 0.2);
+        }
+        .loading-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #198754, #20c997);
+            border-radius: 10px;
+            transition: width 0.1s linear;
         }
 
         .eco-card {
@@ -267,28 +302,44 @@
 </head>
 <body>
 
-    <!-- Pantalla de Inicio / Intro con 3 segundos de duración automática -->
-    <div id="welcomeScreen">
-        <!-- Fondo ambiental interactivo con caída realista de hojas y cruces verdes de salud -->
-        <div class="ambient-bg" id="ambientBg">
-            <!-- Generadas dinámicamente o por defecto con JS para realismo fluido -->
+    <!-- Pantalla 1: Intro (Primera página con barra de carga y logo) -->
+    <div id="introScreen">
+        <div class="ambient-bg" id="introAmbientBg"></div>
+        <div class="text-center position-relative z-2">
+            <div class="pro-eco-logo-wrapper mb-4">
+                <div class="pro-eco-logo">
+                    <i class="fa-solid fa-leaf main-leaf-icon"></i>
+                    <div class="logo-cross-badge"><i class="fa-solid fa-plus"></i></div>
+                    <div class="water-bubble" style="width: 12px; height: 12px; top: -8px; left: 20px; animation-delay: 0s;"></div>
+                    <div class="water-bubble" style="width: 8px; height: 8px; top: 15px; right: -6px; animation-delay: 1s;"></div>
+                </div>
+            </div>
+            <h1 class="fw-bold mb-2 display-6 text-white">EcoMapa Urbano Fray Bentos</h1>
+            <p class="text-light opacity-75 small mb-4">Iniciando sistema de inteligencia ambiental...</p>
+            
+            <!-- Barra de carga de 4 segundos -->
+            <div class="loading-bar-container">
+                <div class="loading-bar-fill" id="loadingBarFill"></div>
+            </div>
         </div>
+    </div>
+
+    <!-- Pantalla 2: Segunda página (Bienvenida con apartados y botón para entrar al mapa) -->
+    <div id="welcomeScreen">
+        <div class="ambient-bg" id="welcomeAmbientBg"></div>
 
         <div class="portal-container py-4">
             <div class="text-center mb-5">
-                <!-- Logotipo Profesional: Hoja + Burbujas de Agua + Cruz Verde Combinada -->
                 <div class="pro-eco-logo-wrapper mb-3">
                     <div class="pro-eco-logo">
                         <i class="fa-solid fa-leaf main-leaf-icon"></i>
                         <div class="logo-cross-badge"><i class="fa-solid fa-plus"></i></div>
-                        <!-- Burbujas de agua simulando frescura -->
                         <div class="water-bubble" style="width: 12px; height: 12px; top: -8px; left: 20px; animation-delay: 0s;"></div>
                         <div class="water-bubble" style="width: 8px; height: 8px; top: 15px; right: -6px; animation-delay: 1s;"></div>
                         <div class="water-bubble" style="width: 10px; height: 10px; bottom: 10px; left: -6px; animation-delay: 0.5s;"></div>
                     </div>
                 </div>
                 
-                <!-- Título exacto solicitado -->
                 <h1 class="fw-bold mb-2 display-6 text-white tracking-wide">EcoMapa Urbano Fray Bentos</h1>
                 <p class="text-light opacity-75 mx-auto" style="max-width: 650px;">
                     Plataforma de inteligencia ambiental, salud pública y gobernanza participativa para la conservación y bienestar de nuestra ciudad.
@@ -485,13 +536,24 @@
         document.addEventListener('DOMContentLoaded', () => {
             initMap();
             cargarReportesPublicos();
-            generarCaidaAmbiental();
+            
+            // Generar caídas ambientales en ambas pantallas
+            generarCaidaAmbiental('introAmbientBg');
+            generarCaidaAmbiental('welcomeAmbientBg');
+
             modalReporte = new bootstrap.Modal(document.getElementById('modalReporte'));
 
-            // Temporizador automático de 3 segundos para mostrar la pantalla principal manteniendo efectos
-            setTimeout(() => {
-                entrarAlMapa();
-            }, 3000);
+            // Control de la barra de carga de 4 segundos en la primera página (Intro)
+            let barra = document.getElementById('loadingBarFill');
+            let progreso = 0;
+            let intervalo = setInterval(() => {
+                progreso += 2.5; // Llega al 100% en 4 segundos (40 * 100ms)
+                barra.style.width = progreso + '%';
+                if (progreso >= 100) {
+                    clearInterval(intervalo);
+                    transicionarAsegundaPagina();
+                }
+            }, 100);
 
             // Cerrar el menú desplegable si se hace clic fuera de él
             document.addEventListener('click', (e) => {
@@ -505,9 +567,21 @@
             });
         });
 
+        // Transición de la Intro (Página 1) a la Segunda Página (Bienvenida / Apartados)
+        function transicionarAsegundaPagina() {
+            const intro = document.getElementById('introScreen');
+            const welcome = document.getElementById('welcomeScreen');
+            
+            intro.classList.add('fade-out');
+            setTimeout(() => {
+                intro.style.display = 'none';
+                welcome.style.display = 'flex';
+            }, 800);
+        }
+
         // Generar mezcla realista de hojas cayendo y cruces verdes de salud
-        function generarCaidaAmbiental() {
-            const bg = document.getElementById('ambientBg');
+        function generarCaidaAmbiental(containerId) {
+            const bg = document.getElementById(containerId);
             const iconos = ['fa-leaf', 'fa-plus', 'fa-seedling', 'fa-hospital'];
             const cantidad = 22;
 
@@ -517,11 +591,10 @@
                 el.className = `fa-solid ${tipoIcono} falling-element`;
                 
                 const leftPos = Math.random() * 100;
-                const duracion = 7 + Math.random() * 8; // entre 7 y 15 segundos
+                const duracion = 7 + Math.random() * 8; 
                 const retraso = Math.random() * 5;
                 const tamano = 14 + Math.random() * 18;
                 
-                // Darle color esmeralda / salud diferenciado
                 const colorOpac = 0.2 + Math.random() * 0.4;
                 el.style.left = `${leftPos}%`;
                 el.style.animationDuration = `${duracion}s`;
@@ -546,6 +619,7 @@
             }
         }
 
+        // Botón "Entrar al Mapa" de la segunda página
         function entrarAlMapa() {
             const welcome = document.getElementById('welcomeScreen');
             if (welcome && welcome.style.display !== 'none') {
