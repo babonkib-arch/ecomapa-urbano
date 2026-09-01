@@ -35,7 +35,7 @@
             visibility: hidden;
         }
 
-        /* Pantalla 2: Interfaz Principal (Bienvenida / Mapa) */
+        /* Pantalla 2: Interfaz Principal (Bienvenida / Apartados) */
         #welcomeScreen {
             position: fixed;
             top: 0;
@@ -45,7 +45,7 @@
             background: #09150d;
             background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.95) 70%);
             z-index: 10000;
-            display: none; /* Se muestra después de la intro */
+            display: none; /* Oculto hasta que termine la intro por completo */
             align-items: center;
             justify-content: center;
             color: #ffffff;
@@ -324,7 +324,7 @@
         </div>
     </div>
 
-    <!-- Pantalla 2: Segunda página (Bienvenida con apartados y botón para entrar al mapa) -->
+    <!-- Pantalla 2: Segunda página (Bienvenida con apartados completos y botón para entrar al mapa) -->
     <div id="welcomeScreen">
         <div class="ambient-bg" id="welcomeAmbientBg"></div>
 
@@ -346,7 +346,7 @@
                 </p>
             </div>
 
-            <!-- Rejilla con Apartados Laterales y Guía de Semáforos -->
+            <!-- Rejilla con Apartados Laterales y Guía de Semáforos completa -->
             <div class="row g-4 align-items-stretch mb-5">
                 
                 <!-- Izquierda: Acción Climática -->
@@ -360,14 +360,16 @@
                     </div>
                 </div>
 
-                <!-- Centro: Guía de Uso + Código de Semáforos -->
+                <!-- Centro: Guía de Uso Rápido Completa + Código de Semáforos -->
                 <div class="col-lg-4">
                     <div class="eco-card border-success border-opacity-50 text-center d-flex flex-column justify-content-between" style="background: rgba(25, 135, 84, 0.08);">
                         <div>
                             <div class="text-success mb-2 fs-4"><i class="fa-solid fa-compass"></i></div>
-                            <h5 class="fw-bold text-white mb-3">Guía y Códigos de Alerta</h5>
+                            <h5 class="fw-bold text-white mb-3">Guía de Uso Rápido</h5>
                             <ul class="text-start small text-light ps-3 mb-3" style="line-height: 1.6; opacity: 0.9;">
                                 <li>📍 Selecciona un punto exacto en el mapa.</li>
+                                <li>🏷️ Elige el tipo de problema a reportar.</li>
+                                <li>📝 Escribe una descripción corta.</li>
                                 <li>📸 Captura la evidencia fotográfica.</li>
                             </ul>
                             
@@ -534,6 +536,7 @@
         let modalReporte;
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Inicializamos los elementos visuales y el mapa por debajo (sin renderizar visualmente el mapa todavía)
             initMap();
             cargarReportesPublicos();
             
@@ -547,7 +550,7 @@
             let barra = document.getElementById('loadingBarFill');
             let progreso = 0;
             let intervalo = setInterval(() => {
-                progreso += 2.5; // Llega al 100% en 4 segundos (40 * 100ms)
+                progreso += 2.5; // Llega al 100% en exactamente 4 segundos (40 * 100ms)
                 barra.style.width = progreso + '%';
                 if (progreso >= 100) {
                     clearInterval(intervalo);
@@ -575,7 +578,7 @@
             intro.classList.add('fade-out');
             setTimeout(() => {
                 intro.style.display = 'none';
-                welcome.style.display = 'flex';
+                welcome.style.display = 'flex'; // Muestra la segunda página limpia sin ver el mapa de fondo
             }, 800);
         }
 
@@ -732,7 +735,7 @@
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <span class="badge border text-dark" style="font-size: 0.75rem;">${r.gravedad}</span>
                                     <small class="text-muted" style="font-size: 0.7rem;"><i class="fa-regular fa-clock me-1"></i>${haceCuanto}</small>
-                                </div>
+                                }
                                 <strong style="color:#198754; font-size: 0.95rem; display:block; margin-bottom:2px;">${r.categoria}</strong>
                                 <p style="font-size: 0.85rem; color:#495057; margin-bottom:6px; line-height:1.3;">${r.descripcion}</p>
                                 <div style="font-size: 0.7rem; color: #6c757d; margin-bottom: 4px;">
