@@ -63,7 +63,7 @@ function cargarReportes() {
             data.forEach(rep => {
                 const icon = rep.estado === 'Resuelto' ? greenIcon : redIcon;
                 const badgeColor = rep.estado === 'Resuelto' ? 'bg-success' : 'bg-danger';
-                const imgHtml = rep.foto_path ? `<img src="/static/${rep.foto_path}" class="img-fluid rounded-3 mt-2 shadow-sm" style="max-height:130px; width:100%; object-fit:cover;">` : '';
+                const imgHtml = rep.foto_path ? `<img src="${rep.foto_path}" class="img-fluid rounded-3 mt-2 shadow-sm" style="max-height:130px; width:100%; object-fit:cover;">` : '';
                 
                 L.marker([rep.latitud, rep.longitud], { icon: icon })
                     .bindPopup(`

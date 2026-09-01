@@ -196,8 +196,8 @@
                             <tr>
                                 <td>
                                     {% if r.foto_path %}
-                                        <a href="/static/{{ r.foto_path }}" target="_blank">
-                                            <img src="/static/{{ r.foto_path }}" class="report-img shadow-sm" alt="Evidencia">
+                                        <a href="{{ r.foto_path }}" target="_blank">
+                                            <img src="{{ r.foto_path }}" class="report-img shadow-sm" alt="Evidencia">
                                         </a>
                                     {% else %}
                                         <span class="text-muted small">Sin foto</span>
@@ -256,8 +256,8 @@
                     <div class="card-custom p-3 position-relative">
                         <div class="d-flex align-items-start gap-3 mb-2">
                             {% if r.foto_path %}
-                                <a href="/static/{{ r.foto_path }}" target="_blank">
-                                    <img src="/static/{{ r.foto_path }}" class="report-img shadow-sm flex-shrink-0" alt="Evidencia">
+                                <a href="{{ r.foto_path }}" target="_blank">
+                                    <img src="{{ r.foto_path }}" class="report-img shadow-sm flex-shrink-0" alt="Evidencia">
                                 </a>
                             {% else %}
                                 <div class="bg-light rounded-3 d-flex align-items-center justify-content-center text-muted flex-shrink-0" style="width: 60px; height: 60px; font-size: 0.7rem;">
