@@ -208,17 +208,16 @@ def crear_reporte():
                 filename = secure_filename(file.filename)
                 unique_filename = f"{int(time.time())}_{filename}"
                 
-                # Sube la foto directamente a Supabase Storage (Bucket: "fotos")
                 if supabase_cliente and SUPABASE_URL:
+                    # Subida mediante el cliente oficial asegurando la lectura correcta de bytes
                     file_bytes = file.read()
                     supabase_cliente.storage.from_("fotos").upload(
                         path=unique_filename,
                         file=file_bytes,
-                        file_options={"content-type": file.content_type}
+                        file_options={"content-type": file.content_type, "upsert": "true"}
                     )
                     
-                    # Construcción limpia y directa de la URL pública estándar de Supabase Storage
-                    # Formato: https://<tu-proyecto>.supabase.co/storage/v1/object/public/fotos/<archivo>
+                    # Generación estandarizada de la URL pública
                     base_clean = SUPABASE_URL.rstrip('/')
                     foto_path = f"{base_clean}/storage/v1/object/public/fotos/{unique_filename}"
 
@@ -304,7 +303,6 @@ def admin_eliminar(id):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Elimina la foto de Supabase Storage al resolver el reporte
         if supabase_cliente:
             cursor.execute('SELECT foto_path FROM reportes WHERE id = %s', (id,))
             reporte = cursor.fetchone()
@@ -317,7 +315,6 @@ def admin_eliminar(id):
                 except Exception as error_storage:
                     print("Error borrando foto en Supabase:", error_storage)
         
-        # Borra el registro de la base de datos
         cursor.execute('DELETE FROM reportes WHERE id = %s', (id,))
         conn.commit()
         cursor.close()
