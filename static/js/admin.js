@@ -3,11 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     botonesResolver.forEach(boton => {
         boton.addEventListener('click', async (e) => {
-            const idReporte = e.currentTarget.getAttribute('data-id');
-
-            if (!confirm('¿Estás seguro de marcar esta incidencia como resuelta?')) {
-                return;
-            }
+            const btn = e.currentTarget;
+            const idReporte = btn.getAttribute('data-id');
+            const fila = btn.closest('tr');
 
             try {
                 const response = await fetch(`/admin/eliminar/${idReporte}`, {
@@ -20,24 +18,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
 
                 if (data.status === 'success') {
-                    // Mostrar popup animado profesional
-                    const popup = document.getElementById('successPopup');
-                    if (popup) {
-                        popup.style.display = 'block';
-                        popup.style.animation = 'fadeInUp 0.4s ease-out forwards';
-                        
-                        setTimeout(() => {
-                            popup.style.opacity = '0';
-                            popup.style.transition = 'opacity 0.4s ease';
-                            setTimeout(() => {
-                                popup.style.display = 'none';
-                                popup.style.opacity = '1';
-                            }, 400);
-                        }, 3000);
-                    }
+                    // Mostrar modal visual idéntico al de registro de usuario
+                    const successModalEl = document.getElementById('successModal');
+                    const successModal = new bootstrap.Modal(successModalEl);
+                    successModal.show();
 
-                    // Eliminar visualmente la fila de la tabla sin recargar la página
-                    const fila = e.currentTarget.closest('tr');
+                    // Animar y eliminar la fila de la tabla limpiamente
                     fila.style.transition = 'all 0.4s ease';
                     fila.style.transform = 'scale(0.95)';
                     fila.style.opacity = '0';
@@ -46,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         fila.remove();
                         const tbody = document.getElementById('tabla-admin-body');
                         if (tbody && tbody.children.length === 0) {
-                            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">No hay incidencias registradas en este momento.</td></tr>`;
+                            tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-muted">No hay incidencias registradas en este momento.</td></tr>`;
                         }
                     }, 400);
 
