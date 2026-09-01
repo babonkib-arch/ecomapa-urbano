@@ -216,8 +216,13 @@ def crear_reporte():
                         file=file_bytes,
                         file_options={"content-type": file.content_type}
                     )
-                    # Guarda el enlace público completo en la base de datos
-                    foto_path = supabase_cliente.storage.from_("fotos").get_public_url(unique_filename)
+                    
+                    # Obtener la URL pública de forma segura
+                    res_url = supabase_cliente.storage.from_("fotos").get_public_url(unique_filename)
+                    if isinstance(res_url, dict):
+                        foto_path = res_url.get("publicUrl") or res_url.get("public_url")
+                    else:
+                        foto_path = str(res_url)
 
         conn = get_db_connection()
         cursor = conn.cursor()
