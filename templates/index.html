@@ -19,9 +19,9 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: #111d15;
-            background-image: radial-gradient(circle at 10% 20%, rgba(25, 135, 84, 0.15) 0%, transparent 40%),
-                              radial-gradient(circle at 90% 80%, rgba(32, 201, 151, 0.1) 0%, transparent 40%);
+            background: #0d1b12;
+            background-image: radial-gradient(circle at 10% 20%, rgba(25, 135, 84, 0.2) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(32, 201, 151, 0.15) 0%, transparent 40%);
             z-index: 10000;
             display: flex;
             align-items: center;
@@ -36,10 +36,74 @@
             visibility: hidden;
         }
 
+        /* Animaciones ambientales de hojas flotantes de fondo */
+        .ambient-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .floating-leaf {
+            position: absolute;
+            color: rgba(32, 201, 151, 0.15);
+            animation: floatUp 12s linear infinite;
+            bottom: -50px;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(-105vh) rotate(360deg); opacity: 0; }
+        }
+
         .portal-container {
             width: 100%;
             max-width: 1150px;
             margin: auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Diseño de Logo Propio: Hoja con Cruz de Hospital / Salud Ambiental */
+        .eco-hospital-logo {
+            width: 85px;
+            height: 85px;
+            background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+            border-radius: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(25, 135, 84, 0.4);
+            animation: logoPulse 3s ease-in-out infinite;
+        }
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 10px 25px rgba(25, 135, 84, 0.4); }
+            50% { transform: scale(1.04); box-shadow: 0 15px 35px rgba(32, 201, 151, 0.6); }
+        }
+        .eco-hospital-logo i.fa-leaf {
+            font-size: 42px;
+            color: white;
+        }
+        .eco-hospital-logo .hospital-cross {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: #ffffff;
+            color: #dc3545;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            font-weight: bold;
         }
 
         .eco-card {
@@ -53,6 +117,7 @@
         }
         .eco-card:hover {
             border-color: rgba(32, 201, 151, 0.3);
+            transform: translateY(-3px);
         }
 
         #map { height: 100vh; width: 100vw; z-index: 1; position: relative; }
@@ -90,7 +155,7 @@
             max-width: 380px;
         }
 
-        /* Pantalla de Éxito Ambiental con Animación Realista */
+        /* Pantalla de Éxito Ambiental con Animación */
         #successScreen {
             position: fixed;
             top: 0;
@@ -142,25 +207,30 @@
 
         .modal-content { border-radius: 20px !important; border: none; }
         .form-control, .form-select { padding: 12px 15px; font-size: 1rem; border-radius: 12px; }
-        
-        /* Semáforo badge estilos */
-        .badge-semaforo-baja { background-color: #198754; color: white; }
-        .badge-semaforo-media { background-color: #ffc107; color: #000; }
-        .badge-semaforo-alta { background-color: #dc3545; color: white; }
     </style>
 </head>
 <body>
 
-    <!-- Pantalla de Inicio Profesional con Semáforos Ambientales -->
+    <!-- Pantalla de Inicio Profesional con Animaciones y Logo de Salud Ambiental -->
     <div id="welcomeScreen">
+        <!-- Hojas animadas flotando de fondo -->
+        <div class="ambient-bg">
+            <i class="fa-solid fa-leaf floating-leaf" style="left: 10%; font-size: 24px; animation-duration: 9s; animation-delay: 0s;"></i>
+            <i class="fa-solid fa-seedling floating-leaf" style="left: 30%; font-size: 18px; animation-duration: 12s; animation-delay: 2s;"></i>
+            <i class="fa-solid fa-tree floating-leaf" style="left: 65%; font-size: 30px; animation-duration: 14s; animation-delay: 1s;"></i>
+            <i class="fa-solid fa-leaf floating-leaf" style="left: 85%; font-size: 22px; animation-duration: 10s; animation-delay: 4s;"></i>
+        </div>
+
         <div class="portal-container py-4">
             <div class="text-center mb-5">
-                <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success p-3 rounded-circle mb-3" style="width: 70px; height: 70px;">
-                    <i class="fa-solid fa-seedling fs-2"></i>
+                <!-- Logotipo Propio: Hoja con Cruz de Hospital -->
+                <div class="eco-hospital-logo mb-3">
+                    <i class="fa-solid fa-leaf"></i>
+                    <div class="hospital-cross"><i class="fa-solid fa-plus"></i></div>
                 </div>
                 <h1 class="fw-bold mb-2 display-6 text-white">EcoMapa Fray Bentos</h1>
                 <p class="text-light opacity-75 mx-auto" style="max-width: 650px;">
-                    Plataforma de inteligencia ambiental y gobernanza participativa para la conservación, monitoreo y desarrollo sostenible de nuestra ciudad.
+                    Plataforma de inteligencia ambiental, salud pública y gobernanza participativa para la conservación y bienestar de nuestra ciudad.
                 </p>
             </div>
 
@@ -171,9 +241,9 @@
                 <div class="col-lg-4">
                     <div class="eco-card">
                         <div class="text-success mb-3 fs-4"><i class="fa-solid fa-earth-americas"></i></div>
-                        <h5 class="fw-bold text-white mb-2">Acción Climática Local</h5>
+                        <h5 class="fw-bold text-white mb-2">Acción Climática y Salud</h5>
                         <p class="small mb-0" style="color: #adb5bd !important; line-height: 1.6;">
-                            El cuidado de los espacios públicos y la gestión de residuos definen la resiliencia ecológica de Fray Bentos. Cada reporte activa protocolos de saneamiento municipal.
+                            El cuidado de los espacios públicos previene riesgos epidemiológicos y mejora la calidad de vida urbana. Cada reporte activa protocolos de saneamiento municipal.
                         </p>
                     </div>
                 </div>
@@ -240,7 +310,11 @@
     </div>
 
     <div class="header-brand d-flex align-items-center gap-2">
-        <i class="fa-solid fa-leaf text-success fs-5"></i>
+        <!-- Logotipo mini para la barra superior -->
+        <div style="width: 26px; height: 26px; background: #198754; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; position: relative;">
+            <i class="fa-solid fa-leaf"></i>
+            <span style="position: absolute; top: -3px; right: -3px; background: #dc3545; color: white; width: 10px; height: 10px; border-radius: 50%; font-size: 6px; display: flex; align-items: center; justify-content: center;">+</span>
+        </div>
         <span class="fw-bold text-dark">EcoMapa Fray Bentos</span>
     </div>
 
@@ -332,8 +406,41 @@
             welcome.classList.add('fade-out');
             setTimeout(() => {
                 welcome.style.display = 'none';
-                if (map) { map.invalidateSize(); }
+                if (map) { 
+                    map.invalidateSize();
+                    solicitarUbicacionUsuario(); // Pide la ubicación al entrar al mapa
+                }
             }, 600);
+        }
+
+        function solicitarUbicacionUsuario() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+
+                        // Centrar mapa en la ubicación exacta del usuario con zoom cercano
+                        map.setView([userLat, userLng], 16);
+
+                        // Crear marcador especial de la ubicación del usuario
+                        const userIcon = L.divIcon({
+                            className: 'user-location-pin',
+                            html: `<div style="background-color: #0d6efd; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(13,110,253,0.8); animation: pulseUser 1.5s infinite;"></div>`,
+                            iconSize: [18, 18],
+                            iconAnchor: [9, 9]
+                        });
+
+                        L.marker([userLat, userLng], { icon: userIcon })
+                         .addTo(map)
+                         .bindPopup("<b>¡Estás aquí!</b><br>Tu ubicación actual.");
+                    },
+                    (error) => {
+                        console.warn("Geolocalización denegada o no disponible:", error.message);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            }
         }
 
         function cerrarPantallaExito() {
@@ -396,7 +503,6 @@
                             iconAnchor: [11, 11]
                         });
 
-                        // CAMBIO APLICADO: Se usa directamente r.foto_path sin el prefijo /static/
                         const fotoHtml = r.foto_path ? `<a href="${r.foto_path}" target="_blank"><img src="${r.foto_path}" style="width:100%; max-height:120px; object-fit:cover; border-radius:8px; margin-top:6px; box-shadow:0 2px 5px rgba(0,0,0,0.1);"></a>` : '<small class="text-muted d-block mt-2">Sin imagen adjunta</small>';
                         
                         const fechaFormateada = r.fecha_creacion ? r.fecha_creacion : 'Fecha no registrada';
