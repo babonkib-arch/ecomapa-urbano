@@ -384,13 +384,11 @@
                 .then(res => res.json())
                 .then(reportes => {
                     reportes.forEach(r => {
-                        // Determinar color de pin según gravedad
-                        let colorHex = '#ffc107'; // Amarillo por defecto
+                        let colorHex = '#ffc107'; 
                         if (r.gravedad && r.gravedad.includes('Baja')) colorHex = '#198754';
                         if (r.gravedad && r.gravedad.includes('Alta')) colorHex = '#dc3545';
                         if (r.gravedad && r.gravedad.includes('Media')) colorHex = '#ffc107';
 
-                        // Crear marcador personalizado con círculo de color semáforo
                         const pinIcon = L.divIcon({
                             className: 'custom-semaforo-pin',
                             html: `<div style="background-color: ${colorHex}; width: 22px; height: 22px; border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.4);"></div>`,
