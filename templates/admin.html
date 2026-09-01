@@ -16,7 +16,6 @@
             position: relative;
         }
 
-        /* Fondo ambiental con hojas cayendo */
         .ambient-bg {
             position: fixed;
             width: 100vw;
@@ -50,7 +49,6 @@
             border-bottom: 1px solid rgba(32, 201, 151, 0.25);
         }
 
-        /* Tarjeta estilo app pública pero integrada al diseño verde del admin */
         .report-card-mobile {
             background: rgba(13, 33, 20, 0.85);
             backdrop-filter: blur(16px);
@@ -61,10 +59,10 @@
         }
 
         .badge-gps { 
-            background-color: rgba(13, 110, 253, 0.2); 
-            color: #9ec5fe; 
-            border: 1px solid rgba(13, 110, 253, 0.4); 
-            font-weight: 500; 
+            background-color: rgba(13, 110, 253, 0.3); 
+            color: #ffffff; 
+            border: 1px solid rgba(13, 110, 253, 0.5); 
+            font-weight: 600; 
         }
         .badge-gps:hover { 
             background-color: #0d6efd; 
@@ -80,7 +78,6 @@
             border: 1px solid rgba(32, 201, 151, 0.4);
         }
 
-        /* Modal de Éxito Estilo App */
         .success-modal-content {
             background: #ffffff;
             color: #198754;
@@ -106,7 +103,6 @@
 </head>
 <body>
 
-    <!-- Fondo ambiental con hojas -->
     <div class="ambient-bg" id="ambientBg"></div>
 
     <nav class="navbar navbar-dark navbar-custom px-3 py-3 shadow-sm">
@@ -114,7 +110,7 @@
             <span class="navbar-brand fw-bold fs-6"><i class="fa-solid fa-shield-halved text-success me-2"></i>Admin EcoMapa</span>
             <div class="d-flex align-items-center">
                 {% if user %}
-                    <span class="small me-2 d-none d-md-inline text-info fw-semibold"><i class="fa-solid fa-user-circle me-1 text-success"></i> {{ user.email }}</span>
+                    <span class="small me-2 d-none d-md-inline text-white fw-semibold"><i class="fa-solid fa-user-circle me-1 text-success"></i> {{ user.email }}</span>
                 {% endif %}
                 <a href="/logout" class="btn btn-outline-danger btn-sm rounded-pill px-2 me-1">Salir</a>
                 <a href="/" class="btn btn-outline-light btn-sm rounded-pill px-2">Mapa</a>
@@ -128,13 +124,11 @@
             <span class="badge bg-success bg-opacity-25 text-success px-3 py-2 rounded-pill fw-semibold border border-success border-opacity-25">Sistema Activo</span>
         </div>
 
-        <!-- Contenedor de Tarjetas Estilo App Pública -->
         <div id="tabla-admin-body" class="row g-3">
             {% if reportes %}
                 {% for r in reportes %}
                     <div class="col-12 reporte-item" data-id="{{ r.id }}">
                         <div class="report-card-mobile p-4">
-                            <!-- Cabecera de la tarjeta: Gravedad/Estado a la izquierda y tiempo transcurrido a la derecha -->
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="d-flex gap-1 align-items-center">
                                     <span class="badge 
@@ -143,37 +137,32 @@
                                         {% else %}bg-secondary{% endif %}">
                                         {{ r.gravedad or 'Normal' }}
                                     </span>
-                                    <span class="badge bg-info text-dark">{{ r.estado }}</span>
+                                    <span class="badge bg-info text-dark fw-bold">{{ r.estado }}</span>
                                 </div>
-                                <div class="text-muted small text-light opacity-75">
-                                    <i class="fa-regular fa-clock me-1"></i>{{ r.hace_cuanto or r.tiempo_transcurrido or 'Hace un momento' }}
+                                <div class="small text-white fw-semibold">
+                                    <i class="fa-regular fa-clock me-1 text-success"></i>{{ r.hace_cuanto or r.tiempo_transcurrido or 'Hace un momento' }}
                                 </div>
                             </div>
 
-                            <!-- Categoría -->
                             <h4 class="fw-bold text-success mb-2" style="color: #20c997 !important; font-size: 1.25rem;">
                                 {{ r.categoria }}
                             </h4>
 
-                            <!-- Descripción -->
-                            <p class="text-light mb-2 fs-6 opacity-90">{{ r.descripcion }}</p>
+                            <p class="text-white mb-2 fs-6">{{ r.descripcion }}</p>
 
-                            <!-- Fecha y Hora exacta -->
-                            <div class="text-muted small text-light opacity-75 mb-3">
-                                <i class="fa-regular fa-calendar-days me-1"></i>{{ r.fecha or r.fecha_creacion or 'Fecha no disponible' }}
+                            <div class="small text-white mb-3 fw-semibold">
+                                <i class="fa-regular fa-calendar-days me-1 text-success"></i>{{ r.fecha or r.fecha_creacion or 'Fecha no disponible' }}
                             </div>
 
-                            <!-- Imagen de Evidencia (si existe) -->
                             {% if r.foto_path %}
                                 <div class="mb-3">
                                     <img src="{{ r.foto_path }}" alt="Evidencia" class="img-preview-mobile shadow-sm" data-bs-toggle="modal" data-bs-target="#imgModal" onclick="document.getElementById('modalImageContainer').src='{{ r.foto_path }}'">
                                 </div>
                             {% endif %}
 
-                            <!-- GPS y Botón Resolver -->
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top border-success border-opacity-25 mt-3">
                                 <div>
-                                    <a href="https://www.google.com/maps/search/?api=1&query={{ r.latitud }},{{ r.longitud }}" target="_blank" class="badge badge-gps px-3 py-2 rounded-pill text-decoration-none d-inline-block">
+                                    <a href="https://www.google.com/maps/search/?api=1&query={{ r.latitud }},{{ r.longitud }}" target="_blank" class="badge badge-gps px-3 py-2 rounded-pill text-decoration-none d-inline-block text-white">
                                         <i class="fa-solid fa-location-dot me-1"></i> Ver en GPS
                                     </a>
                                 </div>
@@ -187,7 +176,7 @@
                 {% endfor %}
             {% else %}
                 <div class="col-12 text-center py-5">
-                    <div class="report-card-mobile p-4 text-muted">No hay incidencias registradas en este momento.</div>
+                    <div class="report-card-mobile p-4 text-white">No hay incidencias registradas en este momento.</div>
                 </div>
             {% endif %}
         </div>
@@ -225,7 +214,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
     <script>
-        // Animación de hojas cayendo de fondo
         document.addEventListener('DOMContentLoaded', () => {
             const bg = document.getElementById('ambientBg');
             const iconos = ['fa-leaf', 'fa-seedling', 'fa-tree'];
