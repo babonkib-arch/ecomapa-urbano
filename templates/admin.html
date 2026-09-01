@@ -17,7 +17,7 @@
             position: relative;
         }
 
-        /* Fondo ambiental con hojas cayendo idéntico al mapa público */
+        /* Fondo ambiental con hojas cayendo */
         .ambient-bg {
             position: fixed;
             width: 100vw;
@@ -40,41 +40,25 @@
             100% { transform: translateY(110vh) translateX(40px) rotate(360deg); opacity: 0; }
         }
 
-        .navbar-custom, .container {
+        .navbar-custom, .container-mobile {
             position: relative;
             z-index: 10;
         }
 
         .navbar-custom {
-            background: rgba(13, 33, 20, 0.85) !important;
+            background: rgba(13, 33, 20, 0.9) !important;
             backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(32, 201, 151, 0.25);
         }
 
-        .card-custom { 
-            background: rgba(13, 33, 20, 0.8);
+        /* Tarjetas estilo app móvil para cada reporte */
+        .report-card-mobile {
+            background: rgba(13, 33, 20, 0.85);
             backdrop-filter: blur(16px);
             border: 1px solid rgba(32, 201, 151, 0.3);
-            border-radius: 24px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6); 
-        }
-
-        /* Alta legibilidad en textos para móviles */
-        .table { color: #ffffff; }
-        .table th { 
-            font-weight: 600; 
-            color: #20c997; 
-            background-color: rgba(0, 0, 0, 0.3) !important; 
-            border-bottom: 1px solid rgba(32, 201, 151, 0.3);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .table td {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            vertical-align: middle;
-            color: #e9ecef;
-            font-size: 0.92rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.2s ease;
         }
 
         .badge-gps { 
@@ -88,20 +72,16 @@
             color: #fff; 
         }
 
-        .img-thumbnail-preview { 
-            width: 50px; 
-            height: 50px; 
+        .img-preview-mobile { 
+            width: 70px; 
+            height: 70px; 
             object-fit: cover; 
-            border-radius: 12px; 
+            border-radius: 14px; 
             cursor: pointer; 
-            border: 1px solid rgba(32, 201, 151, 0.5);
-            transition: transform 0.2s; 
-        }
-        .img-thumbnail-preview:hover { 
-            transform: scale(1.1); 
+            border: 2px solid rgba(32, 201, 151, 0.5);
         }
 
-        /* Modal de Éxito Estilo Usuario */
+        /* Modal de Éxito Estilo App */
         .success-modal-content {
             background: #ffffff;
             color: #198754;
@@ -127,7 +107,7 @@
 </head>
 <body>
 
-    <!-- Fondo ambiental con hojas cayendo -->
+    <!-- Fondo ambiental con hojas -->
     <div class="ambient-bg" id="ambientBg"></div>
 
     <nav class="navbar navbar-dark navbar-custom px-3 py-3 shadow-sm">
@@ -143,77 +123,64 @@
         </div>
     </nav>
 
-    <div class="container my-4 px-2 px-md-3">
-        <div class="card card-custom p-3 p-md-4">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
-                <h4 class="fw-bold text-white m-0 fs-5"><i class="fa-solid fa-list-check me-2 text-success"></i>Gestión de Incidencias</h4>
-                <span class="badge bg-success bg-opacity-25 text-success px-3 py-2 rounded-pill fw-semibold border border-success border-opacity-25 align-self-start align-self-md-auto">Sistema Activo</span>
-            </div>
+    <div class="container container-mobile my-4 px-3" style="max-width: 800px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold text-white m-0 fs-5"><i class="fa-solid fa-list-check me-2 text-success"></i>Gestión de Incidencias</h4>
+            <span class="badge bg-success bg-opacity-25 text-success px-3 py-2 rounded-pill fw-semibold border border-success border-opacity-25">Sistema Activo</span>
+        </div>
 
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Categoría</th>
-                            <th>Descripción</th>
-                            <th>Evidencia</th>
-                            <th>Ubicación GPS</th>
-                            <th>Fecha y Hora</th>
-                            <th>Gravedad</th>
-                            <th>Estado</th>
-                            <th class="text-end">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-admin-body">
-                        {% if reportes %}
-                            {% for r in reportes %}
-                                <tr>
-                                    <td class="fw-bold text-muted">#{{ r.id }}</td>
-                                    <td class="fw-semibold text-white">{{ r.categoria }}</td>
-                                    <td style="max-width: 200px;" class="text-truncate text-light" title="{{ r.descripcion }}">{{ r.descripcion }}</td>
-                                    <td>
-                                        {% if r.foto_path %}
-                                            <img src="{{ r.foto_path }}" alt="Evidencia" class="img-thumbnail-preview shadow-sm" data-bs-toggle="modal" data-bs-target="#imgModal" onclick="document.getElementById('modalImageContainer').src='{{ r.foto_path }}'">
-                                        {% else %}
-                                            <span class="text-muted small">Sin foto</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <a href="https://www.google.com/maps/search/?api=1&query={{ r.latitud }},{{ r.longitud }}" target="_blank" class="badge badge-gps px-3 py-2 rounded-pill text-decoration-none d-inline-block">
-                                            <i class="fa-solid fa-location-dot me-1"></i> Ver GPS
+        <!-- Contenedor de Tarjetas Móviles -->
+        <div id="tabla-admin-body" class="row g-3">
+            {% if reportes %}
+                {% for r in reportes %}
+                    <div class="col-12 reporte-item" data-id="{{ r.id }}">
+                        <div class="card-custom report-card-mobile p-3 p-md-4">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <span class="badge bg-secondary mb-1">#{{ r.id }}</span>
+                                    <h5 class="fw-bold text-white mb-0" style="color: #20c997 !important;">{{ r.categoria }}</h5>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    {% if r.gravedad == 'Alta' %}
+                                        <span class="badge bg-danger">Alta</span>
+                                    {% elif r.gravedad == 'Media' %}
+                                        <span class="badge bg-warning text-dark">Media</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Baja</span>
+                                    {% endif %}
+                                    <span class="badge bg-warning text-dark">{{ r.estado }}</span>
+                                </div>
+                            </div>
+
+                            <p class="text-light opacity-80 small mb-3">{{ r.descripcion }}</p>
+
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top border-success border-opacity-25">
+                                <div class="d-flex align-items-center gap-3">
+                                    {% if r.foto_path %}
+                                        <img src="{{ r.foto_path }}" alt="Evidencia" class="img-preview-mobile shadow-sm" data-bs-toggle="modal" data-bs-target="#imgModal" onclick="document.getElementById('modalImageContainer').src='{{ r.foto_path }}'">
+                                    {% else %}
+                                        <div class="text-muted small bg-black bg-opacity-25 p-2 rounded-3">Sin foto</div>
+                                    {% endif %}
+                                    <div>
+                                        <a href="https://www.google.com/maps/search/?api=1&query={{ r.latitud }},{{ r.longitud }}" target="_blank" class="badge badge-gps px-3 py-2 rounded-pill text-decoration-none d-inline-block mb-1">
+                                            <i class="fa-solid fa-location-dot me-1"></i> Ver en GPS
                                         </a>
-                                        <div class="text-muted" style="font-size: 10px; margin-top: 2px;">{{ r.latitud | round(4) }}, {{ r.longitud | round(4) }}</div>
-                                    </td>
-                                    <td>
-                                        <div class="fw-semibold text-light" style="font-size: 0.85rem;"><i class="fa-regular fa-calendar-days me-1 text-success"></i>{{ r.fecha or 'Reciente' }}</div>
-                                        <div class="text-muted" style="font-size: 0.75rem;"><i class="fa-regular fa-clock me-1"></i>{{ r.hora or 'Hace un momento' }}</div>
-                                    </td>
-                                    <td>
-                                        {% if r.gravedad == 'Alta' %}
-                                            <span class="badge bg-danger">Alta</span>
-                                        {% elif r.gravedad == 'Media' %}
-                                            <span class="badge bg-warning text-dark">Media</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">Baja</span>
-                                        {% endif %}
-                                    </td>
-                                    <td><span class="badge bg-warning text-dark px-2 py-1">{{ r.estado }}</span></td>
-                                    <td class="text-end">
-                                        <button class="btn btn-sm btn-success rounded-pill px-3 resolver-btn fw-semibold shadow-sm" data-id="{{ r.id }}">
-                                            <i class="fa-solid fa-check me-1"></i> Resolver
-                                        </button>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        {% else %}
-                            <tr>
-                                <td colspan="9" class="text-center py-4 text-muted">No hay incidencias registradas en este momento.</td>
-                            </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
-            </div>
+                                        <div class="text-muted" style="font-size: 11px;"><i class="fa-regular fa-clock me-1"></i>{{ r.fecha or 'Reciente' }} - {{ r.hora or '' }}</div>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-success rounded-pill px-4 py-2 resolver-btn fw-semibold shadow-sm w-100 w-md-auto mt-2 mt-md-0" data-id="{{ r.id }}" style="background: linear-gradient(135deg, #198754, #157347); border: none;">
+                                    <i class="fa-solid fa-check me-1"></i> Resolver
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12 text-center py-5">
+                    <div class="card-custom p-4 text-muted">No hay incidencias registradas en este momento.</div>
+                </div>
+            {% endif %}
         </div>
     </div>
 
@@ -232,7 +199,7 @@
         </div>
     </div>
 
-    <!-- Modal de Éxito Estilo Usuario (Reemplaza al popup feo del navegador) -->
+    <!-- Modal de Éxito Estilo App -->
     <div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content success-modal-content">
@@ -241,7 +208,7 @@
                 </div>
                 <h3 class="fw-bold mb-2" style="color: #198754;">¡Incidencia Resuelta con Éxito!</h3>
                 <p class="text-muted small mb-4 px-3">El reporte ha sido solucionado y actualizado correctamente en el sistema ambiental de Fray Bentos.</p>
-                <button type="button" class="btn btn-success w-150 rounded-pill py-2 px-4 fw-semibold shadow-sm" data-bs-dismiss="modal" style="background: #198754; border: none;">Aceptar</button>
+                <button type="button" class="btn btn-success rounded-pill py-2 px-4 fw-semibold shadow-sm" data-bs-dismiss="modal" style="background: #198754; border: none;">Aceptar</button>
             </div>
         </div>
     </div>
