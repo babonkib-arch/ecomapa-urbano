@@ -3,344 +3,323 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Panel de Administración - EcoMapa Fray Bentos</title>
-    <!-- Bootstrap 5 -->
+    <title>Panel Admin - EcoMapa Fray Bentos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            background-color: #f4f6f5;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            color: #2c3e50;
-        }
-        .admin-header {
-            background: #111d15;
-            color: white;
-            padding: 22px 0;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        }
-        .card-custom {
-            border: none;
-            border-radius: 18px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.05);
-            background: white;
-        }
-        .badge-gravedad {
-            font-size: 0.75rem;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-        .badge-baja { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
-        .badge-media { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
-        .badge-alta { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+        body, html { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; background-color: #09150d; }
 
-        .btn-action {
-            border-radius: 50px;
-            padding: 6px 16px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-        .report-img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .report-img:hover {
-            transform: scale(1.08);
-        }
-
-        /* Pantalla de Éxito Ambiental Idéntica a la del Usuario */
-        #adminSuccessScreen {
+        /* Pantalla 1: Intro Admin con barra de carga y caída combinada */
+        #adminIntroScreen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(11, 22, 15, 0.85);
-            backdrop-filter: blur(10px);
-            z-index: 11000;
-            display: none;
+            background: #09150d;
+            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.99) 70%);
+            z-index: 30000;
+            display: flex;
             align-items: center;
             justify-content: center;
+            color: #ffffff;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
             padding: 20px;
         }
-        .success-card {
-            background: #ffffff;
+        #adminIntroScreen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Pantalla 2: Login de Administrador (Oculto hasta que termina la intro) */
+        #adminLoginScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #09150d;
+            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.98) 70%);
+            z-index: 20000;
+            display: none; 
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        #adminLoginScreen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Animación y Caída Ambiental de Hojas, Cruces y Ticks Verdes */
+        .ambient-bg {
+            position: absolute;
             width: 100%;
-            max-width: 420px;
-            border-radius: 28px;
-            padding: 40px 30px;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .falling-element {
+            position: absolute;
+            top: -10vh;
+            animation: fallDown linear infinite;
+            opacity: 0.75;
+        }
+        @keyframes fallDown {
+            0% {
+                transform: translateY(-10vh) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            15% { opacity: 0.85; }
+            85% { opacity: 0.85; }
+            100% {
+                transform: translateY(110vh) translateX(60px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .portal-container {
+            width: 100%;
+            max-width: 450px;
+            margin: auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Logotipo Profesional */
+        .pro-eco-logo-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
-        @keyframes bounceIn {
-            0% { transform: scale(0.4); opacity: 0; }
-            70% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
+        .pro-eco-logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(145deg, #134e32 0%, #198754 50%, #0f3d27 100%);
+            border-radius: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 15px 40px rgba(25, 135, 84, 0.5), inset 0 3px 6px rgba(255, 255, 255, 0.35);
+            border: 2px solid rgba(32, 201, 151, 0.4);
+            animation: logoPulse 3.5s ease-in-out infinite;
         }
-        .success-icon-wrapper {
-            width: 90px;
-            height: 90px;
-            background: #d1e7dd;
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 15px 40px rgba(25, 135, 84, 0.5); }
+            50% { transform: scale(1.04); box-shadow: 0 20px 50px rgba(32, 201, 151, 0.75); }
+        }
+        .pro-eco-logo .main-leaf-icon {
+            font-size: 56px;
+            color: #20c997;
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
+        }
+        .pro-eco-logo .logo-cross-badge {
+            position: absolute;
+            bottom: -6px;
+            right: -6px;
+            background: #ffffff;
             color: #198754;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 42px;
-            margin: 0 auto 24px auto;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+            border: 2px solid #134e32;
+        }
+        .water-bubble {
+            position: absolute;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(32, 201, 151, 0.4));
+            border-radius: 50%;
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.2);
+            animation: bubbleFloat 3s ease-in-out infinite;
+        }
+        @keyframes bubbleFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
         }
 
-        @media (max-width: 768px) {
-            .desktop-table { display: none; }
-            .mobile-card-report { display: block; }
+        /* Barra de carga */
+        .loading-bar-container {
+            width: 260px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin: 25px auto 0 auto;
+            overflow: hidden;
+            border: 1px solid rgba(32, 201, 151, 0.2);
         }
-        @media (min-width: 769px) {
-            .desktop-table { display: block; }
-            .mobile-card-report { display: none; }
+        .loading-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #198754, #20c997);
+            border-radius: 10px;
+            transition: width 0.1s linear;
+        }
+
+        .eco-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            padding: 12px 15px;
+            border-radius: 12px;
+        }
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: #20c997;
+            color: #ffffff;
+            box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.25);
+        }
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.4);
         }
     </style>
 </head>
 <body>
 
-    <!-- Pantalla de Éxito Ambiental Animada para Admin -->
-    <div id="adminSuccessScreen">
-        <div class="success-card">
-            <div class="success-icon-wrapper">
-                <i class="fa-solid fa-seedling"></i>
-            </div>
-            <h3 class="fw-bold text-success mb-3" style="font-size: 1.5rem; color: #198754 !important;">
-                ¡Incidencia Resuelta con Éxito!
-            </h3>
-            <p class="text-muted small mb-4" style="line-height: 1.6; font-size: 0.9rem;">
-                El área ha sido marcada como saneada y el reporte se ha archivado correctamente del mapa activo de Fray Bentos.
-            </p>
-            <button onclick="recargarPanelAdmin()" class="btn btn-success btn-lg w-100 rounded-pill py-3 fw-bold shadow border-0" style="background-color: #198754;">
-                Continuar en el Panel
-            </button>
-        </div>
-    </div>
-
-    <!-- Cabecera de Administración / HUD -->
-    <div class="admin-header mb-4">
-        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-            <div class="d-flex align-items-center gap-3 text-center text-md-start">
-                <div class="bg-success bg-opacity-20 text-success p-2 rounded-circle d-flex align-items-center justify-content-center mx-auto mx-md-0" style="width: 48px; height: 48px;">
-                    <i class="fa-solid fa-shield-halved fs-5"></i>
-                </div>
-                <div>
-                    <h4 class="fw-bold mb-0 fs-5 text-white">Panel de Gestión Municipal</h4>
-                    <p class="text-muted small mb-0 text-light opacity-75">EcoMapa Fray Bentos • Moderación y Saneamiento</p>
+    <div id="adminIntroScreen">
+        <div class="ambient-bg" id="introAmbientBg"></div>
+        <div class="text-center position-relative z-2">
+            <div class="pro-eco-logo-wrapper mb-4">
+                <div class="pro-eco-logo">
+                    <i class="fa-solid fa-shield-halved main-leaf-icon" style="font-size: 48px;"></i>
+                    <div class="logo-cross-badge"><i class="fa-solid fa-lock"></i></div>
+                    <div class="water-bubble" style="width: 12px; height: 12px; top: -8px; left: 20px; animation-delay: 0s;"></div>
+                    <div class="water-bubble" style="width: 8px; height: 8px; top: 15px; right: -6px; animation-delay: 1s;"></div>
                 </div>
             </div>
-            <div class="d-flex gap-2">
-                <a href="/" class="btn btn-outline-light btn-action rounded-pill px-3">
-                    <i class="fa-solid fa-map me-1"></i> Ver Mapa
-                </a>
-                <a href="/logout" class="btn btn-danger btn-action rounded-pill px-3">
-                    <i class="fa-solid fa-right-from-bracket me-1"></i> Salir
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Contenido Principal -->
-    <div class="container pb-5">
-        
-        <!-- Tarjeta HUD de Estadísticas -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card-custom p-4 bg-white d-flex flex-row align-items-center justify-content-between">
-                    <div>
-                        <span class="text-muted small text-uppercase fw-bold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Estado del Sistema</span>
-                        <h3 class="fw-bold text-success mb-0 mt-1">{{ reportes|length }} Incidencias Totales</h3>
-                    </div>
-                    <div class="fs-1 text-success opacity-25">
-                        <i class="fa-solid fa-chart-line"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Vista Escritorio (Tabla Clásica) -->
-        <div class="card-custom p-4 desktop-table">
-            <h5 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-list-check me-2 text-success"></i>Gestión de Incidentes Registrados</h5>
+            <h1 class="fw-bold mb-2 display-6 text-white">Panel de Administrador</h1>
+            <p class="text-light opacity-75 small mb-4">Cargando credenciales y sistema de gestión...</p>
             
-            {% if reportes|length == 0 %}
-                <div class="text-center py-5 text-muted">
-                    <i class="fa-solid fa-folder-open display-4 mb-3 opacity-50"></i>
-                    <p class="mb-0">No hay reportes registrados en el sistema.</p>
-                </div>
-            {% else %}
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="py-3">Evidencia</th>
-                                <th class="py-3">Categoría / Detalle</th>
-                                <th class="py-3">Descripción</th>
-                                <th class="py-3">Gravedad</th>
-                                <th class="py-3">Fecha y Hora</th>
-                                <th class="py-3">Ubicación</th>
-                                <th class="py-3 text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for r in reportes %}
-                            <tr>
-                                <td>
-                                    {% if r.foto_path %}
-                                        <a href="{{ r.foto_path }}" target="_blank">
-                                            <img src="{{ r.foto_path }}" class="report-img shadow-sm" alt="Evidencia">
-                                        </a>
-                                    {% else %}
-                                        <span class="text-muted small">Sin foto</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <strong class="text-dark">{{ r.categoria_nombre or r.categoria }}</strong>
-                                </td>
-                                <td>
-                                    <div style="max-width: 200px; font-size: 0.9rem;" class="text-secondary">
-                                        {{ r.descripcion }}
-                                    </div>
-                                </td>
-                                <td>
-                                    {% set badge_class = 'badge-media' %}
-                                    {% if 'Baja' in r.gravedad %}{% set badge_class = 'badge-baja' %}{% endif %}
-                                    {% if 'Alta' in r.gravedad %}{% set badge_class = 'badge-alta' %}{% endif %}
-                                    <span class="badge badge-gravedad {{ badge_class }}">{{ r.gravedad }}</span>
-                                </td>
-                                <td>
-                                    <div style="font-size: 0.85rem;" class="fw-semibold text-dark">{{ r.fecha_creacion }}</div>
-                                    <div style="font-size: 0.75rem;" class="text-muted"><i class="fa-regular fa-clock me-1"></i>{{ r.tiempo_transcurrido }}</div>
-                                </td>
-                                <td>
-                                    <a href="https://maps.google.com/?q={{ r.latitud }},{{ r.longitud }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3">
-                                        <i class="fa-solid fa-location-dot me-1"></i> GPS
-                                    </a>
-                                </td>
-                                <td class="text-center">
-                                    <form action="/admin/eliminar/{{ r.id }}" method="POST" class="d-inline form-resolver" onsubmit="resolverIncidencia(event, this);">
-                                        <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm">
-                                            <i class="fa-solid fa-check-circle me-1"></i> Resolver
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% endif %}
+            <div class="loading-bar-container">
+                <div class="loading-bar-fill" id="loadingBarFill"></div>
+            </div>
         </div>
-
-        <!-- Vista Celulares (Tarjetas Verticales Óptimas) -->
-        <div class="mobile-card-report">
-            <h5 class="fw-bold mb-3 text-dark px-1"><i class="fa-solid fa-list-check me-2 text-success"></i>Incidencias Activas</h5>
-            
-            {% if reportes|length == 0 %}
-                <div class="card-custom text-center py-5 text-muted p-4">
-                    <i class="fa-solid fa-folder-open display-4 mb-3 opacity-50"></i>
-                    <p class="mb-0">No hay reportes registrados en el sistema.</p>
-                </div>
-            {% else %}
-                <div class="d-flex flex-column gap-3">
-                    {% for r in reportes %}
-                    <div class="card-custom p-3 position-relative">
-                        <div class="d-flex align-items-start gap-3 mb-2">
-                            {% if r.foto_path %}
-                                <a href="{{ r.foto_path }}" target="_blank">
-                                    <img src="{{ r.foto_path }}" class="report-img shadow-sm flex-shrink-0" alt="Evidencia">
-                                </a>
-                            {% else %}
-                                <div class="bg-light rounded-3 d-flex align-items-center justify-content-center text-muted flex-shrink-0" style="width: 60px; height: 60px; font-size: 0.7rem;">
-                                    Sin foto
-                                </div>
-                            {% endif %}
-                            <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <h6 class="fw-bold text-success mb-0" style="font-size: 0.95rem;">{{ r.categoria_nombre or r.categoria }}</h6>
-                                    {% set badge_class = 'badge-media' %}
-                                    {% if 'Baja' in r.gravedad %}{% set badge_class = 'badge-baja' %}{% endif %}
-                                    {% if 'Alta' in r.gravedad %}{% set badge_class = 'badge-alta' %}{% endif %}
-                                    <span class="badge badge-gravedad {{ badge_class }}">{{ r.gravedad }}</span>
-                                </div>
-                                <p class="text-secondary small mb-1" style="font-size: 0.85rem; line-height: 1.4;">
-                                    {{ r.descripcion }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="bg-light p-2 rounded-3 mb-2 d-flex justify-content-between align-items-center text-muted" style="font-size: 0.75rem;">
-                            <span><i class="fa-regular fa-calendar-days me-1"></i>{{ r.fecha_creacion }}</span>
-                            <span class="fw-bold text-success"><i class="fa-regular fa-clock me-1"></i>{{ r.tiempo_transcurrido }}</span>
-                        </div>
-
-                        <hr class="my-2 opacity-10">
-
-                        <!-- Acciones Móviles -->
-                        <div class="d-flex align-items-center justify-content-between pt-1">
-                            <a href="https://maps.google.com/?q={{ r.latitud }},{{ r.longitud }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3" style="font-size: 0.8rem;">
-                                <i class="fa-solid fa-location-dot me-1"></i> Ver GPS
-                            </a>
-                            
-                            <form action="/admin/eliminar/{{ r.id }}" method="POST" class="d-inline form-resolver" onsubmit="resolverIncidencia(event, this);">
-                                <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm" style="font-size: 0.8rem;">
-                                    <i class="fa-solid fa-check-circle me-1"></i> Resolver Incidente
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-
     </div>
 
-    <!-- Script para activar la animación moderna de éxito al resolver -->
+    <div id="adminLoginScreen">
+        <div class="ambient-bg" id="loginAmbientBg"></div>
+
+        <div class="portal-container py-4">
+            <div class="text-center mb-4">
+                <div class="pro-eco-logo-wrapper mb-3">
+                    <div class="pro-eco-logo">
+                        <i class="fa-solid fa-shield-halved main-leaf-icon" style="font-size: 48px;"></i>
+                        <div class="logo-cross-badge"><i class="fa-solid fa-lock"></i></div>
+                        <div class="water-bubble" style="width: 12px; height: 12px; top: -8px; left: 20px; animation-delay: 0s;"></div>
+                        <div class="water-bubble" style="width: 8px; height: 8px; top: 15px; right: -6px; animation-delay: 1s;"></div>
+                        <div class="water-bubble" style="width: 10px; height: 10px; bottom: 10px; left: -6px; animation-delay: 0.5s;"></div>
+                    </div>
+                </div>
+                
+                <h2 class="fw-bold text-white tracking-wide">Acceso Restringido</h2>
+                <p class="text-light opacity-75 small">
+                    EcoMapa Urbano Fray Bentos • Gestión Municipal
+                </p>
+            </div>
+
+            <div class="eco-card">
+                <form id="formAdminLogin" action="/admin/login" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-light mb-1"><i class="fa-solid fa-user me-1 text-success"></i> Usuario</label>
+                        <input type="text" name="username" class="form-control" placeholder="Ingrese usuario administrador" required autocomplete="username">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-light mb-1"><i class="fa-solid fa-key me-1 text-success"></i> Contraseña</label>
+                        <input type="password" name="password" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-lg fw-bold py-3 shadow rounded-pill w-100 fs-6">
+                        <i class="fa-solid fa-right-to-bracket me-2"></i> Ingresar al Panel
+                    </button>
+                </form>
+            </div>
+
+            <div class="text-center text-muted small opacity-50 mt-4">
+                Municipio de Fray Bentos • Río Negro, Uruguay
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function resolverIncidencia(event, formElement) {
-            event.preventDefault();
-            const btn = formElement.querySelector('button');
-            const textoOriginal = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Saneando...';
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializamos caídas ambientales con hojas, cruces y ticks verdes en ambas capas
+            generarCaidaAmbiental('introAmbientBg');
+            generarCaidaAmbiental('loginAmbientBg');
 
-            fetch(formElement.action, {
-                method: 'POST'
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    document.getElementById('adminSuccessScreen').style.display = 'flex';
-                } else {
-                    alert('Error al resolver: ' + data.message);
-                    btn.disabled = false;
-                    btn.innerHTML = textoOriginal;
+            // Control de la barra de carga de 4 segundos en la intro del admin
+            let barra = document.getElementById('loadingBarFill');
+            let progreso = 0;
+            let intervalo = setInterval(() => {
+                progreso += 2.5; // Llega al 100% en 4 segundos exactos
+                barra.style.width = progreso + '%';
+                if (progreso >= 100) {
+                    clearInterval(intervalo);
+                    transicionarAlogin();
                 }
-            })
-            .catch(err => {
-                alert('Ocurrió un error al procesar la solicitud.');
-                btn.disabled = false;
-                btn.innerHTML = textoOriginal;
-            });
+            }, 100);
+        });
+
+        // Transición de la Intro Admin al Login de Administrador
+        function transicionarAlogin() {
+            const intro = document.getElementById('adminIntroScreen');
+            const login = document.getElementById('adminLoginScreen');
+            
+            intro.classList.add('fade-out');
+            setTimeout(() => {
+                intro.style.display = 'none';
+                login.style.display = 'flex'; // Muestra la pantalla de login limpia
+            }, 800);
         }
 
-        function recargarPanelAdmin() {
-            document.getElementById('adminSuccessScreen').style.display = 'none';
-            location.reload();
+        // Generar caídas combinadas de hojas, cruces y ticks en tono verde unificado
+        function generarCaidaAmbiental(containerId) {
+            const bg = document.getElementById(containerId);
+            const iconos = ['fa-leaf', 'fa-plus', 'fa-check', 'fa-seedling'];
+            const cantidad = 22;
+
+            for (let i = 0; i < cantidad; i++) {
+                const el = document.createElement('i');
+                const tipoIcono = iconos[Math.floor(Math.random() * iconos.length)];
+                el.className = `fa-solid ${tipoIcono} falling-element`;
+                
+                const leftPos = Math.random() * 100;
+                const duracion = 7 + Math.random() * 7; 
+                const retraso = Math.random() * 5;
+                const tamano = 15 + Math.random() * 16;
+                
+                const colorOpac = 0.3 + Math.random() * 0.4;
+                el.style.left = `${leftPos}%`;
+                el.style.animationDuration = `${duracion}s`;
+                el.style.animationDelay = `${retraso}s`;
+                el.style.fontSize = `${tamano}px`;
+                el.style.color = `rgba(32, 201, 151, ${colorOpac})`;
+
+                bg.appendChild(el);
+            }
         }
     </script>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

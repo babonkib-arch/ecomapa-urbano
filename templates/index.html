@@ -24,7 +24,7 @@
         }
         #map { height: 100%; width: 100%; }
 
-        /* Pantalla 1: Intro con barra de carga y caída combinada de hojas, cruces y ticks verdes */
+        /* Pantalla 1: Intro con barra de carga y caída exclusiva de elementos ambientales */
         #introScreen {
             position: fixed;
             top: 0;
@@ -46,7 +46,7 @@
             visibility: hidden;
         }
 
-        /* Pantalla 2: Interfaz Principal (Bienvenida / Apartados) */
+        /* Pantalla 2: Segunda página (Bienvenida / Apartados) */
         #welcomeScreen {
             position: fixed;
             top: 0;
@@ -56,7 +56,7 @@
             background: #09150d;
             background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.98) 70%);
             z-index: 20000;
-            display: none; /* Oculto hasta que termine la intro */
+            display: none; 
             align-items: center;
             justify-content: center;
             color: #ffffff;
@@ -197,11 +197,13 @@
             transform: translateY(-3px);
         }
         
+        /* Oculto inicialmente para evitar el parpadeo durante los 4s de carga */
         .header-brand-container {
             position: fixed;
             top: 15px;
             left: 15px;
             z-index: 15000;
+            display: none; 
         }
 
         .header-brand {
@@ -260,6 +262,7 @@
             font-weight: 500;
             width: 90%;
             max-width: 380px;
+            display: none; /* Oculto en la pantalla de bienvenida, se muestra al entrar al mapa */
         }
 
         #successScreen {
@@ -423,7 +426,7 @@
         </div>
     </div>
 
-    <div class="header-brand-container">
+    <div class="header-brand-container" id="headerBrandContainer">
         <div class="header-brand d-flex align-items-center gap-2 shadow-sm" onclick="toggleInfoDropdown(event)">
             <div style="width: 30px; height: 30px; background: #198754; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
                 <i class="fa-solid fa-bars"></i>
@@ -456,7 +459,7 @@
         </div>
     </div>
 
-    <div class="instruction-banner">
+    <div class="instruction-banner" id="instructionBanner">
         <i class="fa-solid fa-hand-pointer me-1"></i> Toca el mapa para reportar un problema
     </div>
 
@@ -572,14 +575,14 @@
             intro.classList.add('fade-out');
             setTimeout(() => {
                 intro.style.display = 'none';
-                welcome.style.display = 'flex'; // Muestra la segunda página limpia
+                welcome.style.display = 'flex'; // Muestra la segunda página limpia (sin hamburguesa)
             }, 800);
         }
 
         // Generar caídas combinadas de hojas, cruces y ticks en tono verde unificado
         function generarCaidaAmbiental(containerId) {
             const bg = document.getElementById(containerId);
-            const iconos = ['fa-leaf', 'fa-plus', 'fa-check', 'fa-seedling']; // Hojas, cruces y tildes verdes
+            const iconos = ['fa-leaf', 'fa-plus', 'fa-check', 'fa-seedling'];
             const cantidad = 24;
 
             for (let i = 0; i < cantidad; i++) {
@@ -597,7 +600,7 @@
                 el.style.animationDuration = `${duracion}s`;
                 el.style.animationDelay = `${retraso}s`;
                 el.style.fontSize = `${tamano}px`;
-                el.style.color = `rgba(32, 201, 151, ${colorOpac})`; // Tonalidad verde unificada
+                el.style.color = `rgba(32, 201, 151, ${colorOpac})`;
 
                 bg.appendChild(el);
             }
@@ -616,7 +619,7 @@
             }
         }
 
-        // Botón "Entrar al Mapa" de la segunda página: Aquí se inicializa el mapa por primera vez
+        // Botón "Entrar al Mapa" de la segunda página: Aquí se revela el menú hamburguesa y el mapa
         function entrarAlMapa() {
             const welcome = document.getElementById('welcomeScreen');
             if (welcome && welcome.style.display !== 'none') {
@@ -624,10 +627,13 @@
                 setTimeout(() => {
                     welcome.style.display = 'none';
                     
-                    // Revelar el contenedor del mapa
+                    // Revelar el contenedor del mapa, la hamburguesa y el banner de instrucción
                     const mapContainer = document.getElementById('mapContainer');
                     mapContainer.style.visibility = 'visible';
                     mapContainer.style.opacity = '1';
+
+                    document.getElementById('headerBrandContainer').style.display = 'block';
+                    document.getElementById('instructionBanner').style.display = 'block';
 
                     // Inicializar mapa si no existe e invalidar tamaño
                     if (!map) {
