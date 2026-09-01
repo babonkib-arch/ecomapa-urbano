@@ -122,17 +122,50 @@
 
         #map { height: 100vh; width: 100vw; z-index: 1; position: relative; }
         
-        .header-brand {
+        .header-brand-container {
             position: fixed;
             top: 15px;
             left: 15px;
             z-index: 9999;
+        }
+
+        .header-brand {
             background: rgba(255, 255, 255, 0.95);
             padding: 8px 16px;
             border-radius: 30px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             backdrop-filter: blur(5px);
             font-size: 0.9rem;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+        .header-brand:hover {
+            background: rgba(255, 255, 255, 1);
+        }
+
+        /* Desplegable de Información Institucional */
+        .info-dropdown-panel {
+            position: absolute;
+            top: 55px;
+            left: 0;
+            width: 320px;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 16px;
+            display: none;
+            z-index: 10000;
+            border: 1px solid rgba(25, 135, 84, 0.2);
+            animation: fadeInDrop 0.3s ease forwards;
+        }
+        @keyframes fadeInDrop {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .info-dropdown-panel.show {
+            display: block;
         }
 
         .instruction-banner {
@@ -309,13 +342,40 @@
         </div>
     </div>
 
-    <div class="header-brand d-flex align-items-center gap-2">
-        <!-- Logotipo mini para la barra superior -->
-        <div style="width: 26px; height: 26px; background: #198754; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; position: relative;">
-            <i class="fa-solid fa-leaf"></i>
-            <span style="position: absolute; top: -3px; right: -3px; background: #dc3545; color: white; width: 10px; height: 10px; border-radius: 50%; font-size: 6px; display: flex; align-items: center; justify-content: center;">+</span>
+    <!-- Cabecera desplegable interactiva (donde hizo clic tu profesora) -->
+    <div class="header-brand-container">
+        <div class="header-brand d-flex align-items-center gap-2 shadow-sm" onclick="toggleInfoDropdown(event)">
+            <div style="width: 26px; height: 26px; background: #198754; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; position: relative;">
+                <i class="fa-solid fa-leaf"></i>
+                <span style="position: absolute; top: -3px; right: -3px; background: #dc3545; color: white; width: 10px; height: 10px; border-radius: 50%; font-size: 6px; display: flex; align-items: center; justify-content: center;">+</span>
+            </div>
+            <span class="fw-bold text-dark">EcoMapa Fray Bentos</span>
+            <i class="fa-solid fa-chevron-down text-muted ms-1" style="font-size: 0.75rem;" id="dropdownChevron"></i>
         </div>
-        <span class="fw-bold text-dark">EcoMapa Fray Bentos</span>
+
+        <!-- Panel desplegable con la información solicitada -->
+        <div class="info-dropdown-panel" id="infoDropdownPanel">
+            <div class="mb-3 border-bottom pb-2">
+                <span class="d-block fw-bold text-success mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-users me-1"></i> ¿Quiénes somos?</span>
+                <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.4;">
+                    Somos una iniciativa de participación ciudadana y desarrollo tecnológico comprometida con la preservación del entorno y la salud ambiental de nuestra comunidad.
+                </p>
+            </div>
+
+            <div class="mb-3 border-bottom pb-2">
+                <span class="d-block fw-bold text-success mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-circle-question me-1"></i> ¿Para qué sirve EcoMapa Urbano?</span>
+                <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.4;">
+                    Sirve como herramienta de mapeo y reporte rápido para geolocalizar microbasurales, riesgos ecológicos o problemas urbanos, facilitando soluciones eficaces.
+                </p>
+            </div>
+
+            <div>
+                <span class="d-block fw-bold text-success mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-bullseye me-1"></i> ¿Qué fines tiene la app web?</span>
+                <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.4;">
+                    Es una aplicación <b>sin fines de lucro</b>, creada exclusivamente para ayudar a proteger, cuidar y mejorar el medio ambiente en Fray Bentos mediante la colaboración comunitaria.
+                </p>
+            </div>
+        </div>
     </div>
 
     <div class="instruction-banner">
@@ -399,7 +459,31 @@
             initMap();
             cargarReportesPublicos();
             modalReporte = new bootstrap.Modal(document.getElementById('modalReporte'));
+
+            // Cerrar el menú desplegable si se hace clic fuera de él
+            document.addEventListener('click', (e) => {
+                const container = document.querySelector('.header-brand-container');
+                const panel = document.getElementById('infoDropdownPanel');
+                const chevron = document.getElementById('dropdownChevron');
+                if (container && !container.contains(e.target)) {
+                    panel.classList.remove('show');
+                    chevron.style.transform = 'rotate(0deg)';
+                }
+            });
         });
+
+        // Función para alternar el menú desplegable al hacer clic en el título
+        function toggleInfoDropdown(event) {
+            event.stopPropagation();
+            const panel = document.getElementById('infoDropdownPanel');
+            const chevron = document.getElementById('dropdownChevron');
+            panel.classList.toggle('show');
+            if (panel.classList.contains('show')) {
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
 
         function entrarAlMapa() {
             const welcome = document.getElementById('welcomeScreen');
@@ -408,7 +492,7 @@
                 welcome.style.display = 'none';
                 if (map) { 
                     map.invalidateSize();
-                    solicitarUbicacionUsuario(); // Pide la ubicación al entrar al mapa
+                    solicitarUbicacionUsuario(); 
                 }
             }, 600);
         }
@@ -420,13 +504,11 @@
                         const userLat = position.coords.latitude;
                         const userLng = position.coords.longitude;
 
-                        // Centrar mapa en la ubicación exacta del usuario con zoom cercano
                         map.setView([userLat, userLng], 16);
 
-                        // Crear marcador especial de la ubicación del usuario
                         const userIcon = L.divIcon({
                             className: 'user-location-pin',
-                            html: `<div style="background-color: #0d6efd; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(13,110,253,0.8); animation: pulseUser 1.5s infinite;"></div>`,
+                            html: `<div style="background-color: #0d6efd; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(13,110,253,0.8);"></div>`,
                             iconSize: [18, 18],
                             iconAnchor: [9, 9]
                         });
