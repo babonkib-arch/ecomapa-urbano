@@ -7,15 +7,18 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import psycopg2.extras
+from supabase import create_client, Client
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'clave-super-secreta-eco-mapa-2026'
 
-UPLOAD_FOLDER = os.path.join('static', 'uploads')
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+# --- CONFIGURACIÓN DE SUPABASE STORAGE ---
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase_cliente = None
+if SUPABASE_URL and SUPABASE_KEY:
+    supabase_cliente = create_client(SUPABASE_URL, SUPABASE_KEY)
+# ----------------------------------------
 
 # Configuración de Flask-Login
 login_manager = LoginManager()
@@ -35,11 +38,11 @@ def get_db_connection():
             database_url = database_url.replace("postgres://", "postgresql://", 1)
         conn = psycopg2.connect(database_url, cursor_factory=psycopg2.extras.DictCursor)
     else:
-        # En caso de emergencia local si no hay variable de entorno definida
         raise Exception("No se encontró la variable de entorno DATABASE_URL.")
     return conn
 
 def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def calcular_tiempo_transcurrido(fecha_str):
@@ -70,7 +73,7 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Tabla de categorías (PostgreSQL usa SERIAL para auto-incrementar)
+    # Tabla de categorías
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS categorias (
             id SERIAL PRIMARY KEY,
@@ -104,7 +107,7 @@ def init_db():
         )
     ''')
     
-    # Verificar e insertar categorías predeterminadas si está vacío
+    # Verificar e insertar categorías predeterminadas
     cursor.execute('SELECT COUNT(*) FROM categorias')
     if cursor.fetchone()[0] == 0:
         categorias = [
@@ -203,10 +206,18 @@ def crear_reporte():
             file = request.files['foto']
             if file and file.filename != '' and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                filename = f"{int(time.time())}_{filename}"
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(filepath)
-                foto_path = f"uploads/{filename}"
+                unique_filename = f"{int(time.time())}_{filename}"
+                
+                # Sube la foto directamente a Supabase Storage (Bucket: "fotos")
+                if supabase_cliente:
+                    file_bytes = file.read()
+                    supabase_cliente.storage.from_("fotos").upload(
+                        path=unique_filename,
+                        file=file_bytes,
+                        file_options={"content-type": file.content_type}
+                    )
+                    # Guarda el enlace público completo en la base de datos
+                    foto_path = supabase_cliente.storage.from_("fotos").get_public_url(unique_filename)
 
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -289,11 +300,27 @@ def admin_eliminar(id):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        
+        # Elimina la foto de Supabase Storage para liberar espacio al resolver
+        if supabase_cliente:
+            cursor.execute('SELECT foto_path FROM reportes WHERE id = %s', (id,))
+            reporte = cursor.fetchone()
+            
+            if reporte and reporte['foto_path']:
+                foto_url = reporte['foto_path']
+                filename_to_delete = foto_url.split('/')[-1]
+                try:
+                    supabase_cliente.storage.from_("fotos").remove([filename_to_delete])
+                except Exception as error_storage:
+                    print("Error borrando foto en Supabase:", error_storage)
+        
+        # Borra el registro de la base de datos
         cursor.execute('DELETE FROM reportes WHERE id = %s', (id,))
         conn.commit()
         cursor.close()
         conn.close()
-        return jsonify({'status': 'success', 'message': 'Incidencia resuelta correctamente.'})
+        
+        return jsonify({'status': 'success', 'message': 'Incidencia resuelta y foto eliminada correctamente.'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
