@@ -24,7 +24,7 @@
         }
         #map { height: 100%; width: 100%; }
 
-        /* Pantalla 1: Intro con barra de carga y caída exclusiva de cruces y ticks verdes */
+        /* Pantalla 1: Intro con barra de carga y caída combinada de hojas, cruces y ticks verdes */
         #introScreen {
             position: fixed;
             top: 0;
@@ -69,7 +69,7 @@
             visibility: hidden;
         }
 
-        /* Animación y Caída Exclusiva de Cruces y Ticks Verdes */
+        /* Animación y Caída de Hojas, Cruces y Ticks Verdes */
         .ambient-bg {
             position: absolute;
             width: 100%;
@@ -107,7 +107,7 @@
             z-index: 2;
         }
 
-        /* Logotipo Profesional: Hoja + Burbujas de Agua + Cruz Verde Combinada */
+        /* Logotipo Profesional */
         .pro-eco-logo-wrapper {
             display: flex;
             flex-direction: column;
@@ -534,7 +534,7 @@
         let modalReporte;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Inicializamos caídas ambientales exclusivamente con cruces y checks verdes
+            // Inicializamos caídas ambientales con hojas, cruces y ticks verdes
             generarCaidaAmbiental('introAmbientBg');
             generarCaidaAmbiental('welcomeAmbientBg');
 
@@ -576,11 +576,11 @@
             }, 800);
         }
 
-        // Generar caídas exclusivas de cruces médicas y ticks de correcto en tono verde
+        // Generar caídas combinadas de hojas, cruces y ticks en tono verde unificado
         function generarCaidaAmbiental(containerId) {
             const bg = document.getElementById(containerId);
-            const iconos = ['fa-plus', 'fa-check']; // Exclusivamente cruces y tildes/ticks verdes
-            const cantidad = 22;
+            const iconos = ['fa-leaf', 'fa-plus', 'fa-check', 'fa-seedling']; // Hojas, cruces y tildes verdes
+            const cantidad = 24;
 
             for (let i = 0; i < cantidad; i++) {
                 const el = document.createElement('i');
@@ -590,7 +590,7 @@
                 const leftPos = Math.random() * 100;
                 const duracion = 7 + Math.random() * 7; 
                 const retraso = Math.random() * 5;
-                const tamano = 16 + Math.random() * 16;
+                const tamano = 15 + Math.random() * 16;
                 
                 const colorOpac = 0.3 + Math.random() * 0.4;
                 el.style.left = `${leftPos}%`;
