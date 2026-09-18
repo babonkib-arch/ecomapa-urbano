@@ -137,7 +137,6 @@ def init_db():
             cursor.execute('INSERT INTO usuarios (email, password, es_admin) VALUES (%s, %s, 1)', 
                            (email_admin, pass_hash))
         else:
-            # Asegurar que si ya existía el usuario, tenga permisos de admin (es_admin = 1)
             cursor.execute('UPDATE usuarios SET es_admin = 1 WHERE email = %s', (email_admin,))
         
     conn.commit()
@@ -226,22 +225,21 @@ def crear_reporte():
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO reportes (id_categoria, descripcion, gravedad, latitud, longitud, foto_path, fecha_creacion)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO reportes (id_categoria, descripcion, gravedad, latitud, longitud, foto_path, fecha_creacion, estado)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, 'Pendiente')
         ''', (id_categoria, descripcion, gravedad, latitud, longitud, foto_path, fecha_creacion))
         conn.commit()
         cursor.close()
         conn.close()
 
-        return jsonify({'status': 'success', 'message': 'Reporte guardado.'})
+        return jsonify({'success': True, 'message': 'Reporte creado exitosamente'})
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-# ---------------- AUTENTICACIÓN Y ADMIN ----------------
+# ---------------- RUTAS DE AUTENTICACIÓN / ADMIN ----------------
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    error_msg = None
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -252,43 +250,37 @@ def login():
         user_data = cursor.fetchone()
         cursor.close()
         conn.close()
-
-        if user_data:
-            print("Usuario encontrado en BD:", user_data['email'])
-            print("Es admin (valor bruto):", user_data['es_admin'])
-            
-            if check_password_hash(user_data['password'], password):
-                es_admin_bool = True if user_data['es_admin'] == 1 or user_data['es_admin'] is True else False
-                
-                user = Usuario(user_data['id'], user_data['email'], es_admin_bool)
-                login_user(user)
-                print("Login exitoso. Redirigiendo a /admin...")
-                return redirect(url_for('admin'))
-            else:
-                print("Contraseña incorrecta.")
-                error_msg = "Contraseña incorrecta."
+        
+        if user_data and check_password_hash(user_data['password'], password):
+            es_admin_bool = True if user_data['es_admin'] == 1 or user_data['es_admin'] is True else False
+            user_obj = Usuario(user_data['id'], user_data['email'], es_admin_bool)
+            login_user(user_obj)
+            flash('Sesión iniciada correctamente.', 'success')
+            return redirect(url_for('admin_panel'))
         else:
-            print("Correo no encontrado en la base de datos.")
-            error_msg = "El correo electrónico no está registrado."
+            flash('Credenciales inválidas. Por favor, verifica tus datos.', 'danger')
             
-    return render_template('login.html', error=error_msg)
+    return render_template('login.html')
 
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    flash('Has cerrado sesión exitosamente.', 'info')
+    return redirect(url_for('index'))
 
 @app.route('/admin')
 @login_required
-def admin():
+def admin_panel():
     if not current_user.es_admin:
-        return "Acceso denegado.", 403
-
+        flash('Acceso denegado. No tienes permisos de administrador.', 'danger')
+        return redirect(url_for('index'))
+        
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        SELECT r.id, COALESCE(c.nombre, 'Incidencia General') as categoria, 
+        SELECT r.id, 
+               COALESCE(c.nombre, 'Incidencia General') as categoria, 
                r.descripcion, r.gravedad, r.estado, r.latitud, r.longitud, r.foto_path, r.fecha_creacion
         FROM reportes r 
         LEFT JOIN categorias c ON r.id_categoria = c.id
@@ -298,46 +290,25 @@ def admin():
     cursor.close()
     conn.close()
     
-    lista_reportes = []
-    for r in reportes:
-        dic = dict(r)
-        if not dic.get('fecha_creacion'):
-            dic['fecha_creacion'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        dic['tiempo_transcurrido'] = calcular_tiempo_transcurrido(dic.get('fecha_creacion'))
-        lista_reportes.append(dic)
-    
-    return render_template('admin.html', reportes=lista_reportes, user=current_user)
+    return render_template('admin.html', reportes=reportes)
 
-@app.route('/admin/eliminar/<int:id>', methods=['POST'])
+@app.route('/admin/reporte/<int:reporte_id>/estado', methods=['POST'])
 @login_required
-def admin_eliminar(id):
+def actualizar_estado_reporte(reporte_id):
     if not current_user.es_admin:
-        return jsonify({'status': 'error', 'message': 'Acceso denegado.'}), 403
+        return jsonify({'success': False, 'error': 'No autorizado'}), 403
         
-    try:
+    nuevo_estado = request.form.get('estado')
+    if nuevo_estado in ['Pendiente', 'En proceso', 'Resuelto']:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
-        if supabase_cliente:
-            cursor.execute('SELECT foto_path FROM reportes WHERE id = %s', (id,))
-            reporte = cursor.fetchone()
-            
-            if reporte and reporte['foto_path']:
-                foto_url = reporte['foto_path']
-                filename_to_delete = foto_url.split('/')[-1]
-                try:
-                    supabase_cliente.storage.from_("fotos").remove([filename_to_delete])
-                except Exception as error_storage:
-                    print("Error borrando foto en Supabase:", error_storage)
-        
-        cursor.execute('DELETE FROM reportes WHERE id = %s', (id,))
+        cursor.execute('UPDATE reportes SET estado = %s WHERE id = %s', (nuevo_estado, reporte_id))
         conn.commit()
         cursor.close()
         conn.close()
-        
-        return jsonify({'status': 'success', 'message': 'Incidencia resuelta y foto eliminada correctamente.'})
-    except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return jsonify({'success': True})
+    
+    return jsonify({'success': False, 'error': 'Estado no válido'}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)

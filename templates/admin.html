@@ -56,6 +56,7 @@
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             color: #ffffff;
+            transition: all 0.3s ease;
         }
 
         .badge-gps { 
@@ -175,7 +176,7 @@
                     </div>
                 {% endfor %}
             {% else %}
-                <div class="col-12 text-center py-5">
+                <div class="col-12 text-center py-5" id="no-reports-msg">
                     <div class="report-card-mobile p-4 text-white">No hay incidencias registradas en este momento.</div>
                 </div>
             {% endif %}
@@ -215,6 +216,7 @@
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Fondo animado de elementos ecológicos
             const bg = document.getElementById('ambientBg');
             const iconos = ['fa-leaf', 'fa-seedling', 'fa-tree'];
             for (let i = 0; i < 14; i++) {
@@ -227,6 +229,67 @@
                 el.style.color = `rgba(32, 201, 151, ${0.15 + Math.random() * 0.25})`;
                 bg.appendChild(el);
             }
+
+            // Lógica para resolver incidencias correctamente
+            const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+
+            document.querySelectorAll('.resolver-btn').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const reporteId = this.getAttribute('data-id');
+                    
+                    // Deshabilitar botón temporalmente para evitar doble clic
+                    this.disabled = true;
+                    const originalHTML = this.innerHTML;
+                    this.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Guardando...';
+
+                    try {
+                        // Realiza la petición POST a tu backend de Flask
+                        const response = await fetch(`/resolver_reporte/${reporteId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            // Buscar y desvanecer la tarjeta del reporte correspondiente
+                            const tarjetaItem = document.querySelector(`.reporte-item[data-id="${reporteId}"]`);
+                            if (tarjetaItem) {
+                                tarjetaItem.style.transition = 'all 0.5s ease';
+                                tarjetaItem.style.transform = 'scale(0.9)';
+                                tarjetaItem.style.opacity = '0';
+                                setTimeout(() => {
+                                    tarjetaItem.remove();
+                                    
+                                    // Verificar si ya no quedan reportes para mostrar el mensaje de vacío
+                                    const contenedor = document.getElementById('tabla-admin-body');
+                                    if (contenedor && contenedor.querySelectorAll('.reporte-item').length === 0) {
+                                        contenedor.innerHTML = `
+                                            <div class="col-12 text-center py-5">
+                                                <div class="report-card-mobile p-4 text-white">No hay incidencias registradas en este momento.</div>
+                                            </div>
+                                        `;
+                                    }
+                                }, 500);
+                            }
+
+                            // Mostrar modal de éxito estilizado
+                            successModal.show();
+                        } else {
+                            alert('Hubo un error al procesar la solicitud: ' + (data.message || 'Error desconocido'));
+                            this.disabled = false;
+                            this.innerHTML = originalHTML;
+                        }
+                    } catch (error) {
+                        console.error('Error de red:', error);
+                        alert('No se pudo conectar con el servidor.');
+                        this.disabled = false;
+                        this.innerHTML = originalHTML;
+                    }
+                });
+            });
         });
     </script>
 </body>

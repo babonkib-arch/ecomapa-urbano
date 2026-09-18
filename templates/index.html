@@ -10,7 +10,6 @@
     <style>
         body, html { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; background-color: #09150d; }
         
-        /* Contenedor absoluto para aislar el mapa por completo hasta el click */
         #mapContainer {
             position: fixed;
             top: 0;
@@ -24,7 +23,6 @@
         }
         #map { height: 100%; width: 100%; }
 
-        /* Pantalla 1: Intro con barra de carga y caída exclusiva de elementos ambientales */
         #introScreen {
             position: fixed;
             top: 0;
@@ -41,12 +39,8 @@
             transition: opacity 0.8s ease, visibility 0.8s ease;
             padding: 20px;
         }
-        #introScreen.fade-out {
-            opacity: 0;
-            visibility: hidden;
-        }
+        #introScreen.fade-out { opacity: 0; visibility: hidden; }
 
-        /* Pantalla 2: Segunda página (Bienvenida / Apartados) */
         #welcomeScreen {
             position: fixed;
             top: 0;
@@ -64,12 +58,8 @@
             padding: 20px;
             overflow-y: auto;
         }
-        #welcomeScreen.fade-out {
-            opacity: 0;
-            visibility: hidden;
-        }
+        #welcomeScreen.fade-out { opacity: 0; visibility: hidden; }
 
-        /* Animación y Caída de Hojas, Cruces y Ticks Verdes */
         .ambient-bg {
             position: absolute;
             width: 100%;
@@ -87,16 +77,10 @@
             opacity: 0.75;
         }
         @keyframes fallDown {
-            0% {
-                transform: translateY(-10vh) translateX(0) rotate(0deg);
-                opacity: 0;
-            }
+            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
             15% { opacity: 0.85; }
             85% { opacity: 0.85; }
-            100% {
-                transform: translateY(110vh) translateX(60px) rotate(360deg);
-                opacity: 0;
-            }
+            100% { transform: translateY(110vh) translateX(60px) rotate(360deg); opacity: 0; }
         }
 
         .portal-container {
@@ -107,7 +91,6 @@
             z-index: 2;
         }
 
-        /* Logotipo Profesional */
         .pro-eco-logo-wrapper {
             display: flex;
             flex-direction: column;
@@ -165,7 +148,6 @@
             50% { transform: translateY(-6px); }
         }
 
-        /* Barra de carga de la Intro */
         .loading-bar-container {
             width: 260px;
             height: 8px;
@@ -197,7 +179,6 @@
             transform: translateY(-3px);
         }
         
-        /* Oculto inicialmente para evitar el parpadeo durante los 4s de carga */
         .header-brand-container {
             position: fixed;
             top: 15px;
@@ -217,9 +198,7 @@
             user-select: none;
             transition: background-color 0.2s;
         }
-        .header-brand:hover {
-            background: rgba(255, 255, 255, 1);
-        }
+        .header-brand:hover { background: rgba(255, 255, 255, 1); }
 
         .info-dropdown-panel {
             position: absolute;
@@ -240,9 +219,7 @@
             from { opacity: 0; transform: translateY(-8px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .info-dropdown-panel.show {
-            display: block;
-        }
+        .info-dropdown-panel.show { display: block; }
 
         .instruction-banner {
             position: fixed;
@@ -262,7 +239,7 @@
             font-weight: 500;
             width: 90%;
             max-width: 380px;
-            display: none; /* Oculto en la pantalla de bienvenida, se muestra al entrar al mapa */
+            display: none;
         }
 
         #successScreen {
@@ -284,7 +261,7 @@
             width: 100%;
             max-width: 420px;
             border-radius: 28px;
-            padding: 40px 30px;
+            padding: 35px 25px;
             text-align: center;
             box-shadow: 0 20px 50px rgba(0,0,0,0.4);
             animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
@@ -295,18 +272,43 @@
             100% { transform: scale(1); opacity: 1; }
         }
         .success-icon-wrapper {
-            width: 90px;
-            height: 90px;
+            width: 80px;
+            height: 80px;
             background: linear-gradient(135deg, #d1e7dd 0%, #a3cfbb 100%);
             color: #198754;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 45px;
-            margin: 0 auto 20px auto;
-            box-shadow: 0 0 0 12px rgba(25, 135, 84, 0.12);
+            font-size: 40px;
+            margin: 0 auto 15px auto;
+            box-shadow: 0 0 0 10px rgba(25, 135, 84, 0.12);
         }
+
+        .social-share-btns {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .btn-social {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            text-decoration: none;
+            transition: transform 0.2s ease, opacity 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .btn-social:hover { transform: scale(1.1); color: white; opacity: 0.9; }
+        .bg-whatsapp { background-color: #25d366; }
+        .bg-facebook { background-color: #1877f2; }
+        .bg-twitter { background-color: #000000; }
+        .bg-copy { background-color: #6c757d; }
 
         .modal-content { border-radius: 20px !important; border: none; }
         .form-control, .form-select { padding: 12px 15px; font-size: 1rem; border-radius: 12px; }
@@ -356,7 +358,6 @@
             </div>
 
             <div class="row g-4 align-items-stretch mb-5">
-                
                 <div class="col-lg-4">
                     <div class="eco-card">
                         <div class="text-success mb-3 fs-4"><i class="fa-solid fa-leaf"></i></div>
@@ -398,11 +399,10 @@
                         <div class="text-success mb-3 fs-4"><i class="fa-solid fa-shield-halved"></i></div>
                         <h5 class="fw-bold text-white mb-2">Comunidad y Control</h5>
                         <p class="small mb-0" style="color: #adb5bd !important; line-height: 1.6;">
-                            Haz clic sobre cualquier marcador en el mapa para ver la foto, fecha exacta, hora y nivel de gravedad de los incidentes subidos por otros ciudadanos.
+                            Haz clic sobre cualquier marcador en el mapa para ver los detalles, foto, fecha y compartir reportes individuales con tus redes sociales.
                         </p>
                     </div>
                 </div>
-
             </div>
 
             <div class="text-center text-muted small opacity-50">
@@ -411,15 +411,27 @@
         </div>
     </div>
 
+    <!-- Pantalla de Éxito General -->
     <div id="successScreen">
         <div class="success-card">
             <div class="success-icon-wrapper">
                 <i class="fa-solid fa-earth-americas"></i>
             </div>
-            <h3 class="fw-bold text-success mb-2">¡Reporte Registrado con Éxito!</h3>
-            <p class="text-muted small mb-4" style="line-height: 1.5;">
-                Tu aporte ha sido sincronizado en el sistema ambiental de Fray Bentos. Juntos protegemos nuestros espacios naturales y urbanos.
+            <h3 class="fw-bold text-success mb-2">¡Reporte Registrado!</h3>
+            <p class="text-muted small mb-3" style="line-height: 1.5;">
+                Tu aporte ha sido sincronizado en el sistema ambiental de Fray Bentos. ¡Ayúdanos a difundir compartiendo este espacio!
             </p>
+
+            <div class="mb-3">
+                <span class="d-block small fw-bold text-secondary mb-2">Compartir EcoMapa:</span>
+                <div class="social-share-btns">
+                    <a href="#" id="shareWhatsapp" class="btn-social bg-whatsapp" title="Compartir en WhatsApp" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+                    <a href="#" id="shareFacebook" class="btn-social bg-facebook" title="Compartir en Facebook" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" id="shareTwitter" class="btn-social bg-twitter" title="Compartir en X (Twitter)" target="_blank"><i class="fa-brands fa-x-twitter"></i></a>
+                    <button onclick="copiarEnlace()" class="btn-social bg-copy border-0" title="Copiar Enlace"><i class="fa-solid fa-link"></i></button>
+                </div>
+            </div>
+
             <button onclick="cerrarPantallaExito()" class="btn btn-success btn-lg w-100 rounded-pill py-3 fw-bold shadow">
                 Volver al EcoMapa
             </button>
@@ -450,11 +462,21 @@
                 </p>
             </div>
 
-            <div>
+            <div class="mb-3 border-bottom pb-2">
                 <span class="d-block fw-bold text-success mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-bullseye me-1"></i> ¿Qué fines tiene la app web?</span>
                 <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.4;">
                     Es una aplicación <b>sin fines de lucro</b>, creada exclusivamente para ayudar a proteger, cuidar y mejorar el medio ambiente en Fray Bentos mediante la colaboración comunitaria.
                 </p>
+            </div>
+
+            <div>
+                <span class="d-block fw-bold text-success mb-2" style="font-size: 0.85rem;"><i class="fa-solid fa-share-nodes me-1"></i> Compartir plataforma:</span>
+                <div class="social-share-btns mb-0">
+                    <a href="#" id="menuShareWhatsapp" class="btn-social bg-whatsapp" style="width:36px;height:36px;font-size:15px;" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+                    <a href="#" id="menuShareFacebook" class="btn-social bg-facebook" style="width:36px;height:36px;font-size:15px;" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" id="menuShareTwitter" class="btn-social bg-twitter" style="width:36px;height:36px;font-size:15px;" target="_blank"><i class="fa-brands fa-x-twitter"></i></a>
+                    <button onclick="copiarEnlace()" class="btn-social bg-copy border-0" style="width:36px;height:36px;font-size:15px;" title="Copiar Enlace"><i class="fa-solid fa-link"></i></button>
+                </div>
             </div>
         </div>
     </div>
@@ -467,6 +489,7 @@
         <div id="map"></div>
     </div>
 
+    <!-- Modal de Reporte -->
     <div class="modal fade" id="modalReporte" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content shadow-lg">
@@ -476,7 +499,6 @@
                 </div>
                 <form id="formReporte" enctype="multipart/form-data">
                     <div class="modal-body p-4">
-                        
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-secondary">🏷️ TIPO DE PROBLEMA</label>
                             <select name="id_categoria" id="selectCategoria" class="form-select" required onchange="verificarOtroCategoria()">
@@ -537,17 +559,26 @@
         let modalReporte;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Inicializamos caídas ambientales con hojas, cruces y ticks verdes
             generarCaidaAmbiental('introAmbientBg');
             generarCaidaAmbiental('welcomeAmbientBg');
 
             modalReporte = new bootstrap.Modal(document.getElementById('modalReporte'));
 
-            // Control de la barra de carga de 4 segundos en la primera página (Intro)
+            const currentUrl = encodeURIComponent(window.location.href);
+            const shareText = encodeURIComponent("¡Mirá EcoMapa Fray Bentos! Una plataforma ciudadana para reportar y mejorar el medio ambiente de nuestra ciudad.");
+            
+            document.getElementById('shareWhatsapp').href = `https://api.whatsapp.com/send?text=${shareText}%20${currentUrl}`;
+            document.getElementById('shareFacebook').href = `https://www.facebook.com/sharer/sharer.php?u=${currentUrl}`;
+            document.getElementById('shareTwitter').href = `https://twitter.com/intent/tweet?text=${shareText}&url=${currentUrl}`;
+
+            document.getElementById('menuShareWhatsapp').href = `https://api.whatsapp.com/send?text=${shareText}%20${currentUrl}`;
+            document.getElementById('menuShareFacebook').href = `https://www.facebook.com/sharer/sharer.php?u=${currentUrl}`;
+            document.getElementById('menuShareTwitter').href = `https://twitter.com/intent/tweet?text=${shareText}&url=${currentUrl}`;
+
             let barra = document.getElementById('loadingBarFill');
             let progreso = 0;
             let intervalo = setInterval(() => {
-                progreso += 2.5; // Llega al 100% en 4 segundos exactos
+                progreso += 2.5;
                 barra.style.width = progreso + '%';
                 if (progreso >= 100) {
                     clearInterval(intervalo);
@@ -555,7 +586,6 @@
                 }
             }, 100);
 
-            // Cerrar el menú desplegable si se hace clic fuera de él
             document.addEventListener('click', (e) => {
                 const container = document.querySelector('.header-brand-container');
                 const panel = document.getElementById('infoDropdownPanel');
@@ -565,9 +595,46 @@
                     chevron.style.transform = 'rotate(0deg)';
                 }
             });
+
+            document.getElementById('formReporte').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const btnEnviar = document.getElementById('btnEnviar');
+                btnEnviar.disabled = true;
+                btnEnviar.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Enviando...';
+
+                const formData = new FormData(this);
+
+                fetch('/api/reportes', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        modalReporte.hide();
+                        document.getElementById('successScreen').style.display = 'flex';
+                    } else {
+                        alert('Error al guardar reporte: ' + (data.message || 'Desconocido'));
+                        btnEnviar.disabled = false;
+                        btnEnviar.innerHTML = '🚀 Enviar Reporte';
+                    }
+                })
+                .catch(err => {
+                    alert('Ocurrió un error al enviar el reporte.');
+                    btnEnviar.disabled = false;
+                    btnEnviar.innerHTML = '🚀 Enviar Reporte';
+                });
+            });
         });
 
-        // Transición de la Intro (Página 1) a la Segunda Página (Bienvenida)
+        function copiarEnlace() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('¡Enlace copiado al portapapeles!');
+            }).catch(err => {
+                console.error('Error al copiar enlace: ', err);
+            });
+        }
+
         function transicionarAsegundaPagina() {
             const intro = document.getElementById('introScreen');
             const welcome = document.getElementById('welcomeScreen');
@@ -575,11 +642,10 @@
             intro.classList.add('fade-out');
             setTimeout(() => {
                 intro.style.display = 'none';
-                welcome.style.display = 'flex'; // Muestra la segunda página limpia (sin hamburguesa)
+                welcome.style.display = 'flex';
             }, 800);
         }
 
-        // Generar caídas combinadas de hojas, cruces y ticks en tono verde unificado
         function generarCaidaAmbiental(containerId) {
             const bg = document.getElementById(containerId);
             const iconos = ['fa-leaf', 'fa-plus', 'fa-check', 'fa-seedling'];
@@ -606,7 +672,6 @@
             }
         }
 
-        // Función para alternar el menú desplegable (3 rayitas)
         function toggleInfoDropdown(event) {
             event.stopPropagation();
             const panel = document.getElementById('infoDropdownPanel');
@@ -619,7 +684,6 @@
             }
         }
 
-        // Botón "Entrar al Mapa" de la segunda página: Aquí se revela el menú hamburguesa y el mapa
         function entrarAlMapa() {
             const welcome = document.getElementById('welcomeScreen');
             if (welcome && welcome.style.display !== 'none') {
@@ -627,7 +691,6 @@
                 setTimeout(() => {
                     welcome.style.display = 'none';
                     
-                    // Revelar el contenedor del mapa, la hamburguesa y el banner de instrucción
                     const mapContainer = document.getElementById('mapContainer');
                     mapContainer.style.visibility = 'visible';
                     mapContainer.style.opacity = '1';
@@ -635,7 +698,6 @@
                     document.getElementById('headerBrandContainer').style.display = 'block';
                     document.getElementById('instructionBanner').style.display = 'block';
 
-                    // Inicializar mapa si no existe e invalidar tamaño
                     if (!map) {
                         initMap();
                         cargarReportesPublicos();
@@ -653,7 +715,6 @@
                     (position) => {
                         const userLat = position.coords.latitude;
                         const userLng = position.coords.longitude;
-
                         map.setView([userLat, userLng], 16);
 
                         const userIcon = L.divIcon({
@@ -698,7 +759,10 @@
                 if (tempMarker) {
                     map.removeLayer(tempMarker);
                 }
-                tempMarker = L.marker([lat, lng]).addTo(map);
+
+                tempMarker = L.marker([lat, lng]).addTo(map)
+                    .bindPopup("Ubicación seleccionada para el reporte").openPopup();
+
                 modalReporte.show();
             });
         }
@@ -735,23 +799,37 @@
                             iconAnchor: [11, 11]
                         });
 
-                        const fotoHtml = r.foto_path ? `<a href="${r.foto_path}" target="_blank"><img src="${r.foto_path}" style="width:100%; max-height:120px; object-fit:cover; border-radius:8px; margin-top:6px; box-shadow:0 2px 5px rgba(0,0,0,0.1);"></a>` : '<small class="text-muted d-block mt-2">Sin imagen adjunta</small>';
+                        const fotoHtml = r.foto_path ? `<a href="${r.foto_path}" target="_blank"><img src="${r.foto_path}" style="width:100%; max-height:110px; object-fit:cover; border-radius:8px; margin-top:6px; box-shadow:0 2px 5px rgba(0,0,0,0.1);"></a>` : '<small class="text-muted d-block mt-2">Sin imagen adjunta</small>';
                         
                         const fechaFormateada = r.fecha_creacion ? r.fecha_creacion : 'Fecha no registrada';
                         const haceCuanto = r.tiempo_transcurrido ? r.tiempo_transcurrido : 'Recientemente';
 
+                        // Textos y URLs específicos para compartir este reporte individual
+                        const reportUrl = encodeURIComponent(window.location.href);
+                        const reportShareText = encodeURIComponent(`[Reporte EcoMapa Fray Bentos] ${r.categoria}: "${r.descripcion}"`);
+
                         const popupContent = `
-                            <div style="width: 210px; font-family: 'Segoe UI', sans-serif;">
+                            <div style="width: 220px; font-family: 'Segoe UI', sans-serif;">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="badge border text-dark" style="font-size: 0.75rem;">${r.gravedad}</span>
+                                    <span class="badge border text-dark" style="font-size: 0.75rem;">${r.gravedad || 'Media'}</span>
                                     <small class="text-muted" style="font-size: 0.7rem;"><i class="fa-regular fa-clock me-1"></i>${haceCuanto}</small>
                                 </div>
                                 <strong style="color:#198754; font-size: 0.95rem; display:block; margin-bottom:2px;">${r.categoria}</strong>
                                 <p style="font-size: 0.85rem; color:#495057; margin-bottom:6px; line-height:1.3;">${r.descripcion}</p>
-                                <div style="font-size: 0.7rem; color: #6c757d; margin-bottom: 4px;">
+                                <div style="font-size: 0.7rem; color: #6c757d; margin-bottom: 6px;">
                                     <i class="fa-regular fa-calendar-days me-1"></i>${fechaFormateada}
                                 </div>
                                 ${fotoHtml}
+                                
+                                <hr class="my-2" style="opacity: 0.15;">
+                                <div class="text-center">
+                                    <span class="d-block text-secondary mb-1" style="font-size: 0.7rem; font-weight: bold;"><i class="fa-solid fa-share-nodes me-1"></i> Compartir reporte:</span>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a href="https://api.whatsapp.com/send?text=${reportShareText}%20${reportUrl}" class="btn-social bg-whatsapp" style="width:30px;height:30px;font-size:13px;" target="_blank" title="Compartir en WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+                                        <a href="https://www.facebook.com/sharer/sharer.php?u=${reportUrl}" class="btn-social bg-facebook" style="width:30px;height:30px;font-size:13px;" target="_blank" title="Compartir en Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                                        <a href="https://twitter.com/intent/tweet?text=${reportShareText}&url=${reportUrl}" class="btn-social bg-twitter" style="width:30px;height:30px;font-size:13px;" target="_blank" title="Compartir en X"><i class="fa-brands fa-x-twitter"></i></a>
+                                    </div>
+                                </div>
                             </div>`;
 
                         L.marker([r.latitud, r.longitud], { icon: pinIcon }).addTo(map).bindPopup(popupContent);
@@ -759,36 +837,6 @@
                 })
                 .catch(err => console.error("Error al cargar reportes:", err));
         }
-
-        document.getElementById('formReporte').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const btnEnviar = document.getElementById('btnEnviar');
-            btnEnviar.disabled = true;
-            btnEnviar.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Enviando...';
-
-            const formData = new FormData(this);
-
-            fetch('/api/reportes', {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    modalReporte.hide();
-                    document.getElementById('successScreen').style.display = 'flex';
-                } else {
-                    alert('Error al guardar reporte: ' + data.message);
-                    btnEnviar.disabled = false;
-                    btnEnviar.innerHTML = '🚀 Enviar Reporte';
-                }
-            })
-            .catch(err => {
-                alert('Ocurrió un error al enviar el reporte.');
-                btnEnviar.disabled = false;
-                btnEnviar.innerHTML = '🚀 Enviar Reporte';
-            });
-        });
     </script>
 </body>
 </html>
