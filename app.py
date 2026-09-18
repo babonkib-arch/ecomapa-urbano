@@ -183,7 +183,13 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html') 
+
+@app.route('/admin')
+def admin_panel():
+    # Aquí va tu lógica para verificar si el usuario es administrador y obtener los reportes
+    # ...
+    return render_template('admin.html', reportes=reportes, user=current_user)
 
 @app.route('/api/reportes', methods=['GET'])
 def obtener_reportes():
