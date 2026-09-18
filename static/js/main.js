@@ -88,27 +88,27 @@ function cargarReportes() {
                                 <div class="d-flex justify-content-center gap-2">
                                     <!-- WhatsApp -->
                                     <a href="https://api.whatsapp.com/send?text=${textoCompartir}" target="_blank" title="Compartir en WhatsApp" 
-                                       style="width: 35px; height: 35px; background: #25d366; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.2s;">
+                                       style="width: 35px; height: 35px; background: #25d366; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
                                         <i class="fa-brands fa-whatsapp"></i>
                                     </a>
                                     <!-- Facebook -->
                                     <a href="https://www.facebook.com/sharer/sharer.php?u=${urlActual}" target="_blank" title="Compartir en Facebook" 
-                                       style="width: 35px; height: 35px; background: #1877f2; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.2s;">
+                                       style="width: 35px; height: 35px; background: #1877f2; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
                                         <i class="fa-brands fa-facebook-f"></i>
                                     </a>
                                     <!-- Twitter / X -->
                                     <a href="https://twitter.com/intent/tweet?text=${textoCompartir}&url=${urlActual}" target="_blank" title="Compartir en X" 
-                                       style="width: 35px; height: 35px; background: #000000; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.2s;">
+                                       style="width: 35px; height: 35px; background: #000000; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
                                         <i class="fa-brands fa-x-twitter"></i>
                                     </a>
                                     <!-- Telegram -->
                                     <a href="https://t.me/share/url?url=${urlActual}&text=${textoCompartir}" target="_blank" title="Compartir en Telegram" 
-                                       style="width: 35px; height: 35px; background: #229ed9; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.2s;">
+                                       style="width: 35px; height: 35px; background: #229ed9; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
                                         <i class="fa-brands fa-telegram"></i>
                                     </a>
                                     <!-- Copiar Enlace -->
                                     <button onclick="navigator.clipboard.writeText(window.location.href); alert('¡Enlace copiado al portapapeles!');" title="Copiar Enlace" 
-                                            style="width: 35px; height: 35px; background: #6c757d; color: white; border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: transform 0.2s;">
+                                            style="width: 35px; height: 35px; background: #6c757d; color: white; border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
                                         <i class="fa-solid fa-link"></i>
                                     </button>
                                 </div>
@@ -130,7 +130,7 @@ map.on('click', (e) => {
     if (modalElement) modalElement.show();
 });
 
-// Envío del Formulario con Alerta SweetAlert2
+// Envío del Formulario con Alerta SweetAlert2 y Tick Verde
 const formReporte = document.getElementById('formReporte');
 if (formReporte) {
     formReporte.addEventListener('submit', function(e) {
@@ -150,19 +150,26 @@ if (formReporte) {
         })
         .then(res => res.json())
         .then(data => {
-            if (data.status === 'success') {
+            if (data.status === 'success' || (data.message && data.message.includes('exitosamente'))) {
                 if (modalElement) modalElement.hide();
                 this.reset();
                 if (divOtroProblema) divOtroProblema.classList.add('d-none');
                 cargarReportes();
+                
                 Swal.fire({
                     icon: 'success',
                     title: '¡Reporte Enviado!',
                     text: 'El incidente fue registrado exitosamente en el mapa.',
-                    confirmButtonColor: '#0d9488',
+                    confirmButtonColor: '#198754',
                     customClass: { popup: 'rounded-4' }
                 });
+            } else {
+                alert('Error al guardar reporte: ' + (data.message || 'Error desconocido'));
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Hubo un error al conectar con el servidor.');
         });
     });
 }
