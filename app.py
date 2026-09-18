@@ -296,7 +296,6 @@ def logout():
     flash('Has cerrado sesión exitosamente.', 'info')
     return redirect(url_for('index'))
 
-@app.route('/admin')
 @login_required
 def admin_panel():
     if not current_user.es_admin:
