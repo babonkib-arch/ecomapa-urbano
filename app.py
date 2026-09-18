@@ -7,7 +7,27 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import psycopg2.extras
-from supabase import create_client, Client
+from supabase import create_client, Client from flask import Flask, render_template, request, jsonify, redirect, url_for
+# (Mantén aquí el resto de tus importaciones, inicialización de DB, etc.)
+
+app = Flask(__name__)
+
+# --- RUTA PARA RESOLVER INCIDENCIAS ---
+@app.route('/resolver_reporte/<int:reporte_id>', methods=['POST'])
+def resolver_reporte(reporte_id):
+    try:
+        # Busca el reporte en tu base de datos (Ejemplo usando Flask-SQLAlchemy)
+        reporte = Reporte.query.get_or_404(reporte_id)
+        
+        # Actualiza el estado de la incidencia
+        reporte.estado = 'Resuelto'
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Incidencia resuelta correctamente'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+# (Aquí continúa el resto de tu código y rutas de Flask habituales)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'clave-super-secreta-eco-mapa-2026'

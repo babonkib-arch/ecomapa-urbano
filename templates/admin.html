@@ -2,295 +2,841 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Profesional - EcoMapa Fray Bentos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EcoMapa - Fray Bentos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { 
-            background-color: #050d08; 
-            color: #ffffff;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-        }
-
-        .ambient-bg {
+        body, html { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; background-color: #09150d; }
+        
+        #mapContainer {
             position: fixed;
-            width: 100vw;
-            height: 100vh;
             top: 0;
             left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #map { height: 100%; width: 100%; }
+
+        #introScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #09150d;
+            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.99) 70%);
+            z-index: 30000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+            padding: 20px;
+        }
+        #introScreen.fade-out { opacity: 0; visibility: hidden; }
+
+        #welcomeScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #09150d;
+            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.98) 70%);
+            z-index: 20000;
+            display: none; 
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        #welcomeScreen.fade-out { opacity: 0; visibility: hidden; }
+
+        .ambient-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: hidden;
             pointer-events: none;
-            z-index: 0;
+            z-index: 1;
         }
         .falling-element {
             position: absolute;
             top: -10vh;
             animation: fallDown linear infinite;
-            opacity: 0.5;
+            opacity: 0.75;
         }
         @keyframes fallDown {
             0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
-            15% { opacity: 0.6; }
-            85% { opacity: 0.6; }
-            100% { transform: translateY(110vh) translateX(40px) rotate(360deg); opacity: 0; }
+            15% { opacity: 0.85; }
+            85% { opacity: 0.85; }
+            100% { transform: translateY(110vh) translateX(60px) rotate(360deg); opacity: 0; }
         }
 
-        .navbar-custom, .container-mobile {
+        .portal-container {
+            width: 100%;
+            max-width: 1150px;
+            margin: auto;
             position: relative;
-            z-index: 10;
+            z-index: 2;
         }
 
-        .navbar-custom {
-            background: rgba(13, 33, 20, 0.9) !important;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(32, 201, 151, 0.25);
+        .pro-eco-logo-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
-
-        .report-card-mobile {
-            background: rgba(13, 33, 20, 0.85);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(32, 201, 151, 0.35);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            color: #ffffff;
-            transition: all 0.3s ease;
+        .pro-eco-logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(145deg, #134e32 0%, #198754 50%, #0f3d27 100%);
+            border-radius: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 15px 40px rgba(25, 135, 84, 0.5), inset 0 3px 6px rgba(255, 255, 255, 0.35);
+            border: 2px solid rgba(32, 201, 151, 0.4);
+            animation: logoPulse 3.5s ease-in-out infinite;
         }
-
-        .badge-gps { 
-            background-color: rgba(13, 110, 253, 0.3); 
-            color: #ffffff; 
-            border: 1px solid rgba(13, 110, 253, 0.5); 
-            font-weight: 600; 
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 15px 40px rgba(25, 135, 84, 0.5); }
+            50% { transform: scale(1.04); box-shadow: 0 20px 50px rgba(32, 201, 151, 0.75); }
         }
-        .badge-gps:hover { 
-            background-color: #0d6efd; 
-            color: #fff; 
+        .pro-eco-logo .main-leaf-icon {
+            font-size: 56px;
+            color: #20c997;
+            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
         }
-
-        .img-preview-mobile { 
-            width: 100%; 
-            max-height: 220px; 
-            object-fit: cover; 
-            border-radius: 14px; 
-            cursor: pointer; 
-            border: 1px solid rgba(32, 201, 151, 0.4);
-        }
-
-        .success-modal-content {
+        .pro-eco-logo .logo-cross-badge {
+            position: absolute;
+            bottom: -6px;
+            right: -6px;
             background: #ffffff;
             color: #198754;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+            border: 2px solid #134e32;
+        }
+        .water-bubble {
+            position: absolute;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(32, 201, 151, 0.4));
+            border-radius: 50%;
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.2);
+            animation: bubbleFloat 3s ease-in-out infinite;
+        }
+        @keyframes bubbleFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .loading-bar-container {
+            width: 260px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin: 25px auto 0 auto;
+            overflow: hidden;
+            border: 1px solid rgba(32, 201, 151, 0.2);
+        }
+        .loading-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #198754, #20c997);
+            border-radius: 10px;
+            transition: width 0.1s linear;
+        }
+
+        .eco-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 25px;
+            height: 100%;
+            transition: transform 0.3s ease;
+        }
+        .eco-card:hover {
+            border-color: rgba(32, 201, 151, 0.35);
+            transform: translateY(-3px);
+        }
+        
+        .header-brand-container {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 15000;
+            display: none; 
+        }
+
+        .header-brand {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 16px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            backdrop-filter: blur(5px);
+            font-size: 0.9rem;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+        .header-brand:hover { background: rgba(255, 255, 255, 1); }
+
+        .info-dropdown-panel {
+            position: absolute;
+            top: 55px;
+            left: 0;
+            width: 320px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 16px;
+            display: none;
+            z-index: 16000;
+            border: 1px solid rgba(25, 135, 84, 0.2);
+            animation: fadeInDrop 0.3s ease forwards;
+        }
+        @keyframes fadeInDrop {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .info-dropdown-panel.show { display: block; }
+
+        .instruction-banner {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15000;
+            background: rgba(17, 29, 21, 0.95);
+            color: white;
+            border: 1px solid rgba(32, 201, 151, 0.3);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            text-align: center;
+            pointer-events: none;
+            font-weight: 500;
+            width: 90%;
+            max-width: 380px;
+            display: none;
+        }
+
+        #successScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(11, 22, 15, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 25000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .success-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 420px;
             border-radius: 28px;
             padding: 35px 25px;
             text-align: center;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
-        .success-icon-box {
-            width: 75px;
-            height: 75px;
-            background: rgba(25, 135, 84, 0.12);
+        @keyframes bounceIn {
+            0% { transform: scale(0.4); opacity: 0; }
+            70% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .success-icon-wrapper {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #d1e7dd 0%, #a3cfbb 100%);
             color: #198754;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 34px;
-            margin: 0 auto 20px auto;
-            border: 2px solid rgba(25, 135, 84, 0.2);
+            font-size: 40px;
+            margin: 0 auto 15px auto;
+            box-shadow: 0 0 0 10px rgba(25, 135, 84, 0.12);
         }
+
+        .social-share-btns {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .btn-social {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            text-decoration: none;
+            transition: transform 0.2s ease, opacity 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+        .btn-social:hover { transform: scale(1.1); color: white; opacity: 0.9; }
+        .bg-whatsapp { background-color: #25d366; }
+        .bg-facebook { background-color: #1877f2; }
+        .bg-twitter { background-color: #000000; }
+        .bg-copy { background-color: #6c757d; }
+
+        .modal-content { border-radius: 20px !important; border: none; }
+        .form-control, .form-select { padding: 12px 15px; font-size: 1rem; border-radius: 12px; }
     </style>
 </head>
 <body>
 
-    <div class="ambient-bg" id="ambientBg"></div>
-
-    <nav class="navbar navbar-dark navbar-custom px-3 py-3 shadow-sm">
-        <div class="container-fluid">
-            <span class="navbar-brand fw-bold fs-6"><i class="fa-solid fa-shield-halved text-success me-2"></i>Admin EcoMapa</span>
-            <div class="d-flex align-items-center">
-                {% if user %}
-                    <span class="small me-2 d-none d-md-inline text-white fw-semibold"><i class="fa-solid fa-user-circle me-1 text-success"></i> {{ user.email }}</span>
-                {% endif %}
-                <a href="/logout" class="btn btn-outline-danger btn-sm rounded-pill px-2 me-1">Salir</a>
-                <a href="/" class="btn btn-outline-light btn-sm rounded-pill px-2">Mapa</a>
+    <div id="introScreen">
+        <div class="ambient-bg" id="introAmbientBg"></div>
+        <div class="text-center position-relative z-2">
+            <div class="pro-eco-logo-wrapper mb-4">
+                <div class="pro-eco-logo">
+                    <i class="fa-solid fa-leaf main-leaf-icon"></i>
+                    <div class="logo-cross-badge"><i class="fa-solid fa-plus"></i></div>
+                    <div class="water-bubble" style="width: 12px; height: 12px; top: -8px; left: 20px; animation-delay: 0s;"></div>
+                    <div class="water-bubble" style="width: 8px; height: 8px; top: 15px; right: -6px; animation-delay: 1s;"></div>
+                </div>
+            </div>
+            <h1 class="fw-bold mb-2 display-6 text-white">EcoMapa Urbano Fray Bentos</h1>
+            <p class="text-light opacity-75 small mb-4">Iniciando sistema de inteligencia ambiental...</p>
+            
+            <div class="loading-bar-container">
+                <div class="loading-bar-fill" id="loadingBarFill"></div>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <div class="container container-mobile my-4 px-3" style="max-width: 650px;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold text-white m-0 fs-5"><i class="fa-solid fa-list-check me-2 text-success"></i>Gestión de Incidencias</h4>
-            <span class="badge bg-success bg-opacity-25 text-success px-3 py-2 rounded-pill fw-semibold border border-success border-opacity-25">Sistema Activo</span>
-        </div>
+    <div id="welcomeScreen">
+        <div class="ambient-bg" id="welcomeAmbientBg"></div>
 
-        <div id="tabla-admin-body" class="row g-3">
-            {% if reportes %}
-                {% for r in reportes %}
-                    <div class="col-12 reporte-item" data-id="{{ r.id }}">
-                        <div class="report-card-mobile p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="d-flex gap-1 align-items-center">
-                                    <span class="badge 
-                                        {% if r.gravedad == 'Alta' %}bg-danger
-                                        {% elif r.gravedad == 'Media' %}bg-warning text-dark
-                                        {% else %}bg-secondary{% endif %}">
-                                        {{ r.gravedad or 'Normal' }}
-                                    </span>
-                                    <span class="badge bg-info text-dark fw-bold">{{ r.estado }}</span>
-                                </div>
-                                <div class="small text-white fw-semibold">
-                                    <i class="fa-regular fa-clock me-1 text-success"></i>{{ r.hace_cuanto or r.tiempo_transcurrido or 'Hace un momento' }}
-                                </div>
-                            </div>
+        <div class="portal-container py-4">
+            <div class="text-center mb-5">
+                <div class="pro-eco-logo-wrapper mb-3">
+                    <div class="pro-eco-logo">
+                        <i class="fa-solid fa-leaf main-leaf-icon"></i>
+                        <div class="logo-cross-badge"><i class="fa-solid fa-plus"></i></div>
+                        <div class="water-bubble" style="width: 12px; height: 12px; top: -8px; left: 20px; animation-delay: 0s;"></div>
+                        <div class="water-bubble" style="width: 8px; height: 8px; top: 15px; right: -6px; animation-delay: 1s;"></div>
+                        <div class="water-bubble" style="width: 10px; height: 10px; bottom: 10px; left: -6px; animation-delay: 0.5s;"></div>
+                    </div>
+                </div>
+                
+                <h1 class="fw-bold mb-2 display-6 text-white tracking-wide">EcoMapa Urbano Fray Bentos</h1>
+                <p class="text-light opacity-75 mx-auto" style="max-width: 650px;">
+                    Plataforma de inteligencia ambiental, salud pública y gobernanza participativa para la conservación y bienestar de nuestra ciudad.
+                </p>
+            </div>
 
-                            <h4 class="fw-bold text-success mb-2" style="color: #20c997 !important; font-size: 1.25rem;">
-                                {{ r.categoria }}
-                            </h4>
+            <div class="row g-4 align-items-stretch mb-5">
+                <div class="col-lg-4">
+                    <div class="eco-card">
+                        <div class="text-success mb-3 fs-4"><i class="fa-solid fa-leaf"></i></div>
+                        <h5 class="fw-bold text-white mb-2">Acción Climática y Salud</h5>
+                        <p class="small mb-0" style="color: #adb5bd !important; line-height: 1.6;">
+                            El cuidado de los espacios públicos previene riesgos epidemiológicos y mejora la calidad de vida urbana. Cada reporte activa protocolos de saneamiento municipal.
+                        </p>
+                    </div>
+                </div>
 
-                            <p class="text-white mb-2 fs-6">{{ r.descripcion }}</p>
-
-                            <div class="small text-white mb-3 fw-semibold">
-                                <i class="fa-regular fa-calendar-days me-1 text-success"></i>{{ r.fecha or r.fecha_creacion or 'Fecha no disponible' }}
-                            </div>
-
-                            {% if r.foto_path %}
-                                <div class="mb-3">
-                                    <img src="{{ r.foto_path }}" alt="Evidencia" class="img-preview-mobile shadow-sm" data-bs-toggle="modal" data-bs-target="#imgModal" onclick="document.getElementById('modalImageContainer').src='{{ r.foto_path }}'">
-                                </div>
-                            {% endif %}
-
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top border-success border-opacity-25 mt-3">
-                                <div>
-                                    <a href="https://www.google.com/maps/search/?api=1&query={{ r.latitud }},{{ r.longitud }}" target="_blank" class="badge badge-gps px-3 py-2 rounded-pill text-decoration-none d-inline-block text-white">
-                                        <i class="fa-solid fa-location-dot me-1"></i> Ver en GPS
-                                    </a>
-                                </div>
-
-                                <button class="btn btn-success rounded-pill px-4 py-2 resolver-btn fw-semibold shadow-sm" data-id="{{ r.id }}" style="background: #198754; border: none;">
-                                    <i class="fa-solid fa-check me-1"></i> Resolver
-                                </button>
+                <div class="col-lg-4">
+                    <div class="eco-card border-success border-opacity-50 text-center d-flex flex-column justify-content-between" style="background: rgba(25, 135, 84, 0.08);">
+                        <div>
+                            <div class="text-success mb-2 fs-4"><i class="fa-solid fa-compass"></i></div>
+                            <h5 class="fw-bold text-white mb-3">Guía de Uso Rápido</h5>
+                            <ul class="text-start small text-light ps-3 mb-3" style="line-height: 1.6; opacity: 0.9;">
+                                <li>📍 Selecciona un punto exacto en el mapa.</li>
+                                <li>🏷️ Elige el tipo de problema a reportar.</li>
+                                <li>📝 Escribe una descripción corta.</li>
+                                <li>📸 Captura la evidencia fotográfica.</li>
+                            </ul>
+                            
+                            <div class="bg-dark bg-opacity-50 p-3 rounded-4 text-start mb-3 border border-secondary border-opacity-25">
+                                <span class="d-block fw-bold text-success mb-2" style="font-size: 0.8rem;"><i class="fa-solid fa-traffic-light me-1"></i> Sistema de Semáforos:</span>
+                                <div class="d-flex align-items-center gap-2 mb-1 small text-light"><span class="badge rounded-pill bg-success" style="width:12px;height:12px;padding:0;"></span> 🟢 <b>Baja:</b> Poco urgente</div>
+                                <div class="d-flex align-items-center gap-2 mb-1 small text-light"><span class="badge rounded-pill bg-warning" style="width:12px;height:12px;padding:0;"></span> 🟡 <b>Media:</b> Moderada</div>
+                                <div class="d-flex align-items-center gap-2 small text-light"><span class="badge rounded-pill bg-danger" style="width:12px;height:12px;padding:0;"></span> 🔴 <b>Alta:</b> Urgente / Peligro</div>
                             </div>
                         </div>
+                        
+                        <button onclick="entrarAlMapa()" class="btn btn-success btn-lg fw-bold py-3 shadow rounded-pill w-100 fs-6">
+                            <i class="fa-solid fa-map-location-dot me-2"></i> Entrar al Mapa
+                        </button>
                     </div>
-                {% endfor %}
-            {% else %}
-                <div class="col-12 text-center py-5" id="no-reports-msg">
-                    <div class="report-card-mobile p-4 text-white">No hay incidencias registradas en este momento.</div>
                 </div>
-            {% endif %}
+
+                <div class="col-lg-4">
+                    <div class="eco-card">
+                        <div class="text-success mb-3 fs-4"><i class="fa-solid fa-shield-halved"></i></div>
+                        <h5 class="fw-bold text-white mb-2">Comunidad y Control</h5>
+                        <p class="small mb-0" style="color: #adb5bd !important; line-height: 1.6;">
+                            Haz clic sobre cualquier marcador en el mapa para ver los detalles, foto, fecha y compartir reportes individuales con tus redes sociales.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center text-muted small opacity-50">
+                Municipio de Fray Bentos • Río Negro, Uruguay
+            </div>
         </div>
     </div>
 
-    <!-- Visor Modal de Fotos -->
-    <div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content bg-dark border-1 border-success border-opacity-50 rounded-4 overflow-hidden shadow-lg">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title text-white fw-bold"><i class="fa-solid fa-image me-2 text-success"></i>Evidencia Fotográfica</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Pantalla de Éxito General -->
+    <div id="successScreen">
+        <div class="success-card">
+            <div class="success-icon-wrapper">
+                <i class="fa-solid fa-earth-americas"></i>
+            </div>
+            <h3 class="fw-bold text-success mb-2">¡Reporte Registrado!</h3>
+            <p class="text-muted small mb-3" style="line-height: 1.5;">
+                Tu aporte ha sido sincronizado en el sistema ambiental de Fray Bentos. ¡Ayúdanos a difundir compartiendo este espacio!
+            </p>
+
+            <div class="mb-3">
+                <span class="d-block small fw-bold text-secondary mb-2">Compartir EcoMapa:</span>
+                <div class="social-share-btns">
+                    <a href="#" id="shareWhatsapp" class="btn-social bg-whatsapp" title="Compartir en WhatsApp" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+                    <a href="#" id="shareFacebook" class="btn-social bg-facebook" title="Compartir en Facebook" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" id="shareTwitter" class="btn-social bg-twitter" title="Compartir en X (Twitter)" target="_blank"><i class="fa-brands fa-x-twitter"></i></a>
+                    <button onclick="copiarEnlace()" class="btn-social bg-copy border-0" title="Copiar Enlace"><i class="fa-solid fa-link"></i></button>
                 </div>
-                <div class="modal-body text-center p-4">
-                    <img id="modalImageContainer" src="" class="img-fluid rounded-3 shadow" style="max-height: 75vh;" alt="Evidencia Ampliada">
+            </div>
+
+            <button onclick="cerrarPantallaExito()" class="btn btn-success btn-lg w-100 rounded-pill py-3 fw-bold shadow">
+                Volver al EcoMapa
+            </button>
+        </div>
+    </div>
+
+    <div class="header-brand-container" id="headerBrandContainer">
+        <div class="header-brand d-flex align-items-center gap-2 shadow-sm" onclick="toggleInfoDropdown(event)">
+            <div style="width: 30px; height: 30px; background: #198754; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <span class="fw-bold text-dark">EcoMapa Fray Bentos</span>
+            <i class="fa-solid fa-chevron-down text-muted ms-1" style="font-size: 0.75rem;" id="dropdownChevron"></i>
+        </div>
+
+        <div class="info-dropdown-panel" id="infoDropdownPanel">
+            <div class="mb-3 border-bottom pb-2">
+                <span class="d-block fw-bold text-success mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-users me-1"></i> ¿Quiénes somos?</span>
+                <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.4;">
+                    Somos una iniciativa de participación ciudadana y desarrollo tecnológico comprometida con la preservación del entorno y la salud ambiental de nuestra comunidad.
+                </p>
+            </div>
+
+            <div class="mb-3 border-bottom pb-2">
+                <span class="d-block fw-bold text-success mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-circle-question me-1"></i> ¿Para qué sirve EcoMapa Urbano?</span>
+                <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.4;">
+                    Sirve como herramienta de mapeo y reporte rápido para geolocalizar microbasurales, riesgos ecológicos o problemas urbanos, facilitando soluciones eficaces.
+                </p>
+            </div>
+
+            <div class="mb-3 border-bottom pb-2">
+                <span class="d-block fw-bold text-success mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-bullseye me-1"></i> ¿Qué fines tiene la app web?</span>
+                <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.4;">
+                    Es una aplicación <b>sin fines de lucro</b>, creada exclusivamente para ayudar a proteger, cuidar y mejorar el medio ambiente en Fray Bentos mediante la colaboración comunitaria.
+                </p>
+            </div>
+
+            <div>
+                <span class="d-block fw-bold text-success mb-2" style="font-size: 0.85rem;"><i class="fa-solid fa-share-nodes me-1"></i> Compartir plataforma:</span>
+                <div class="social-share-btns mb-0">
+                    <a href="#" id="menuShareWhatsapp" class="btn-social bg-whatsapp" style="width:36px;height:36px;font-size:15px;" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+                    <a href="#" id="menuShareFacebook" class="btn-social bg-facebook" style="width:36px;height:36px;font-size:15px;" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" id="menuShareTwitter" class="btn-social bg-twitter" style="width:36px;height:36px;font-size:15px;" target="_blank"><i class="fa-brands fa-x-twitter"></i></a>
+                    <button onclick="copiarEnlace()" class="btn-social bg-copy border-0" style="width:36px;height:36px;font-size:15px;" title="Copiar Enlace"><i class="fa-solid fa-link"></i></button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Éxito Estilo App -->
-    <div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content success-modal-content">
-                <div class="success-icon-box">
-                    <i class="fa-solid fa-check"></i>
+    <div class="instruction-banner" id="instructionBanner">
+        <i class="fa-solid fa-hand-pointer me-1"></i> Toca el mapa para reportar un problema
+    </div>
+
+    <div id="mapContainer">
+        <div id="map"></div>
+    </div>
+
+    <!-- Modal de Reporte -->
+    <div class="modal fade" id="modalReporte" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-success text-white px-4 py-3" style="border-top-left-radius: 20px; border-top-right-radius: 20px;">
+                    <h5 class="modal-title fw-bold fs-6"><i class="fa-solid fa-triangle-exclamation me-2"></i>Nuevo Reporte Ciudadano</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <h3 class="fw-bold mb-2" style="color: #198754;">¡Incidencia Resuelta con Éxito!</h3>
-                <p class="text-muted small mb-4 px-3">El reporte ha sido solucionado y actualizado correctamente en el sistema ambiental de Fray Bentos.</p>
-                <button type="button" class="btn btn-success rounded-pill py-2 px-4 fw-semibold shadow-sm" data-bs-dismiss="modal" style="background: #198754; border: none;">Aceptar</button>
+                <form id="formReporte" enctype="multipart/form-data">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">🏷️ TIPO DE PROBLEMA</label>
+                            <select name="id_categoria" id="selectCategoria" class="form-select" required onchange="verificarOtroCategoria()">
+                                <option value="1">🗑️ Microbasural / Residuos</option>
+                                <option value="2">🌳 Poda indebida / Árbol en riesgo</option>
+                                <option value="3">🌊 Aguas servidas / Contaminación</option>
+                                <option value="4">💡 Falta de iluminación pública</option>
+                                <option value="5">💨 Humo / Contaminación de aire</option>
+                                <option value="6">🔊 Ruidos molestos</option>
+                                <option value="7">🐕 Animales sueltos / Plagas</option>
+                                <option value="otro">✏️ Otro (Escribir incidente)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3 d-none" id="divOtraCategoria">
+                            <label class="form-label fw-bold small text-secondary">✏️ ESPECIFICAR INCIDENTE</label>
+                            <input type="text" id="otra_categoria_texto" name="otra_categoria_texto" class="form-control" placeholder="Escribe cuál es el problema...">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">📝 DESCRIPCIÓN CORTA</label>
+                            <textarea name="descripcion" class="form-control" rows="2" placeholder="Detalla brevemente el problema..." required></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">⚠️ NIVEL DE GRAVEDAD (SEMÁFORO)</label>
+                            <select name="gravedad" class="form-select" required>
+                                <option value="🟢 Baja">🟢 Baja (Poco urgente)</option>
+                                <option value="🟡 Media" selected>🟡 Media (Moderada)</option>
+                                <option value="🔴 Alta">🔴 Alta (Urgente / Peligro)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-secondary">📸 FOTO DE EVIDENCIA</label>
+                            <input type="file" id="foto" name="foto" accept="image/*" capture="environment" class="form-control" required>
+                            <div class="form-text text-muted" style="font-size: 0.75rem;">Se abrirá la cámara directamente para capturar la foto.</div>
+                        </div>
+
+                        <input type="hidden" id="latitud" name="latitud">
+                        <input type="hidden" id="longitud" name="longitud">
+                    </div>
+                    <div class="modal-footer border-0 px-4 pb-4 pt-0">
+                        <button type="button" class="btn btn-light rounded-pill px-3 py-2 fw-semibold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" id="btnEnviar" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm">🚀 Enviar Reporte</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        let map, tempMarker;
+        const defaultLat = -33.1307;
+        const defaultLng = -58.3006;
+        let modalReporte;
+
         document.addEventListener('DOMContentLoaded', () => {
-            // Fondo animado de elementos ecológicos
-            const bg = document.getElementById('ambientBg');
-            const iconos = ['fa-leaf', 'fa-seedling', 'fa-tree'];
-            for (let i = 0; i < 14; i++) {
-                const el = document.createElement('i');
-                el.className = `fa-solid ${iconos[Math.floor(Math.random() * iconos.length)]} falling-element`;
-                el.style.left = `${Math.random() * 100}%`;
-                el.style.animationDuration = `${8 + Math.random() * 6}s`;
-                el.style.animationDelay = `${Math.random() * 5}s`;
-                el.style.fontSize = `${14 + Math.random() * 14}px`;
-                el.style.color = `rgba(32, 201, 151, ${0.15 + Math.random() * 0.25})`;
-                bg.appendChild(el);
-            }
+            generarCaidaAmbiental('introAmbientBg');
+            generarCaidaAmbiental('welcomeAmbientBg');
 
-            // Lógica para resolver incidencias correctamente
-            const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+            modalReporte = new bootstrap.Modal(document.getElementById('modalReporte'));
 
-            document.querySelectorAll('.resolver-btn').forEach(button => {
-                button.addEventListener('click', async function() {
-                    const reporteId = this.getAttribute('data-id');
-                    
-                    // Deshabilitar botón temporalmente para evitar doble clic
-                    this.disabled = true;
-                    const originalHTML = this.innerHTML;
-                    this.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Guardando...';
+            const currentUrl = encodeURIComponent(window.location.href);
+            const shareText = encodeURIComponent("¡Mirá EcoMapa Fray Bentos! Una plataforma ciudadana para reportar y mejorar el medio ambiente de nuestra ciudad.");
+            
+            document.getElementById('shareWhatsapp').href = `https://api.whatsapp.com/send?text=${shareText}%20${currentUrl}`;
+            document.getElementById('shareFacebook').href = `https://www.facebook.com/sharer/sharer.php?u=${currentUrl}`;
+            document.getElementById('shareTwitter').href = `https://twitter.com/intent/tweet?text=${shareText}&url=${currentUrl}`;
 
-                    try {
-                        // Realiza la petición POST a tu backend de Flask
-                        const response = await fetch(`/resolver_reporte/${reporteId}`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        });
+            document.getElementById('menuShareWhatsapp').href = `https://api.whatsapp.com/send?text=${shareText}%20${currentUrl}`;
+            document.getElementById('menuShareFacebook').href = `https://www.facebook.com/sharer/sharer.php?u=${currentUrl}`;
+            document.getElementById('menuShareTwitter').href = `https://twitter.com/intent/tweet?text=${shareText}&url=${currentUrl}`;
 
-                        const data = await response.json();
+            let barra = document.getElementById('loadingBarFill');
+            let progreso = 0;
+            let intervalo = setInterval(() => {
+                progreso += 2.5;
+                barra.style.width = progreso + '%';
+                if (progreso >= 100) {
+                    clearInterval(intervalo);
+                    transicionarAsegundaPagina();
+                }
+            }, 100);
 
-                        if (response.ok && data.success) {
-                            // Buscar y desvanecer la tarjeta del reporte correspondiente
-                            const tarjetaItem = document.querySelector(`.reporte-item[data-id="${reporteId}"]`);
-                            if (tarjetaItem) {
-                                tarjetaItem.style.transition = 'all 0.5s ease';
-                                tarjetaItem.style.transform = 'scale(0.9)';
-                                tarjetaItem.style.opacity = '0';
-                                setTimeout(() => {
-                                    tarjetaItem.remove();
-                                    
-                                    // Verificar si ya no quedan reportes para mostrar el mensaje de vacío
-                                    const contenedor = document.getElementById('tabla-admin-body');
-                                    if (contenedor && contenedor.querySelectorAll('.reporte-item').length === 0) {
-                                        contenedor.innerHTML = `
-                                            <div class="col-12 text-center py-5">
-                                                <div class="report-card-mobile p-4 text-white">No hay incidencias registradas en este momento.</div>
-                                            </div>
-                                        `;
-                                    }
-                                }, 500);
-                            }
+            document.addEventListener('click', (e) => {
+                const container = document.querySelector('.header-brand-container');
+                const panel = document.getElementById('infoDropdownPanel');
+                const chevron = document.getElementById('dropdownChevron');
+                if (container && !container.contains(e.target)) {
+                    panel.classList.remove('show');
+                    chevron.style.transform = 'rotate(0deg)';
+                }
+            });
 
-                            // Mostrar modal de éxito estilizado
-                            successModal.show();
-                        } else {
-                            alert('Hubo un error al procesar la solicitud: ' + (data.message || 'Error desconocido'));
-                            this.disabled = false;
-                            this.innerHTML = originalHTML;
-                        }
-                    } catch (error) {
-                        console.error('Error de red:', error);
-                        alert('No se pudo conectar con el servidor.');
-                        this.disabled = false;
-                        this.innerHTML = originalHTML;
+            document.getElementById('formReporte').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const btnEnviar = document.getElementById('btnEnviar');
+                btnEnviar.disabled = true;
+                btnEnviar.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Enviando...';
+
+                const formData = new FormData(this);
+
+                fetch('/api/reportes', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status === 'success') {
+                        modalReporte.hide();
+                        document.getElementById('successScreen').style.display = 'flex';
+                    } else {
+                        alert('Error al guardar reporte: ' + (data.message || 'Desconocido'));
+                        btnEnviar.disabled = false;
+                        btnEnviar.innerHTML = '🚀 Enviar Reporte';
                     }
+                })
+                .catch(err => {
+                    alert('Ocurrió un error al enviar el reporte.');
+                    btnEnviar.disabled = false;
+                    btnEnviar.innerHTML = '🚀 Enviar Reporte';
                 });
             });
         });
+
+        function copiarEnlace() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('¡Enlace copiado al portapapeles!');
+            }).catch(err => {
+                console.error('Error al copiar enlace: ', err);
+            });
+        }
+
+        function transicionarAsegundaPagina() {
+            const intro = document.getElementById('introScreen');
+            const welcome = document.getElementById('welcomeScreen');
+            
+            intro.classList.add('fade-out');
+            setTimeout(() => {
+                intro.style.display = 'none';
+                welcome.style.display = 'flex';
+            }, 800);
+        }
+
+        function generarCaidaAmbiental(containerId) {
+            const bg = document.getElementById(containerId);
+            const iconos = ['fa-leaf', 'fa-plus', 'fa-check', 'fa-seedling'];
+            const cantidad = 24;
+
+            for (let i = 0; i < cantidad; i++) {
+                const el = document.createElement('i');
+                const tipoIcono = iconos[Math.floor(Math.random() * iconos.length)];
+                el.className = `fa-solid ${tipoIcono} falling-element`;
+                
+                const leftPos = Math.random() * 100;
+                const duracion = 7 + Math.random() * 7; 
+                const retraso = Math.random() * 5;
+                const tamano = 15 + Math.random() * 16;
+                
+                const colorOpac = 0.3 + Math.random() * 0.4;
+                el.style.left = `${leftPos}%`;
+                el.style.animationDuration = `${duracion}s`;
+                el.style.animationDelay = `${retraso}s`;
+                el.style.fontSize = `${tamano}px`;
+                el.style.color = `rgba(32, 201, 151, ${colorOpac})`;
+
+                bg.appendChild(el);
+            }
+        }
+
+        function toggleInfoDropdown(event) {
+            event.stopPropagation();
+            const panel = document.getElementById('infoDropdownPanel');
+            const chevron = document.getElementById('dropdownChevron');
+            panel.classList.toggle('show');
+            if (panel.classList.contains('show')) {
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function entrarAlMapa() {
+            const welcome = document.getElementById('welcomeScreen');
+            if (welcome && welcome.style.display !== 'none') {
+                welcome.classList.add('fade-out');
+                setTimeout(() => {
+                    welcome.style.display = 'none';
+                    
+                    const mapContainer = document.getElementById('mapContainer');
+                    mapContainer.style.visibility = 'visible';
+                    mapContainer.style.opacity = '1';
+
+                    document.getElementById('headerBrandContainer').style.display = 'block';
+                    document.getElementById('instructionBanner').style.display = 'block';
+
+                    if (!map) {
+                        initMap();
+                        cargarReportesPublicos();
+                    } else {
+                        map.invalidateSize();
+                    }
+                    solicitarUbicacionUsuario();
+                }, 800);
+            }
+        }
+
+        function solicitarUbicacionUsuario() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+                        map.setView([userLat, userLng], 16);
+
+                        const userIcon = L.divIcon({
+                            className: 'user-location-pin',
+                            html: `<div style="background-color: #0d6efd; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(13,110,253,0.8);"></div>`,
+                            iconSize: [18, 18],
+                            iconAnchor: [9, 9]
+                        });
+
+                        L.marker([userLat, userLng], { icon: userIcon })
+                         .addTo(map)
+                         .bindPopup("<b>¡Estás aquí!</b><br>Tu ubicación actual.");
+                    },
+                    (error) => {
+                        console.warn("Geolocalización denegada o no disponible:", error.message);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            }
+        }
+
+        function cerrarPantallaExito() {
+            document.getElementById('successScreen').style.display = 'none';
+            location.reload();
+        }
+
+        function initMap() {
+            map = L.map('map', { zoomControl: false }).setView([defaultLat, defaultLng], 14);
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
+
+            map.on('click', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+
+                document.getElementById('latitud').value = lat;
+                document.getElementById('longitud').value = lng;
+
+                if (tempMarker) {
+                    map.removeLayer(tempMarker);
+                }
+
+                tempMarker = L.marker([lat, lng]).addTo(map)
+                    .bindPopup("Ubicación seleccionada para el reporte").openPopup();
+
+                modalReporte.show();
+            });
+        }
+
+        function verificarOtroCategoria() {
+            const select = document.getElementById('selectCategoria');
+            const divOtro = document.getElementById('divOtraCategoria');
+            const inputOtro = document.getElementById('otra_categoria_texto');
+
+            if (select.value === 'otro') {
+                divOtro.classList.remove('d-none');
+                inputOtro.required = true;
+            } else {
+                divOtro.classList.add('d-none');
+                inputOtro.required = false;
+                inputOtro.value = '';
+            }
+        }
+
+        function cargarReportesPublicos() {
+            fetch('/api/reportes')
+                .then(res => res.json())
+                .then(reportes => {
+                    reportes.forEach(r => {
+                        let colorHex = '#ffc107'; 
+                        if (r.gravedad && r.gravedad.includes('Baja')) colorHex = '#198754';
+                        if (r.gravedad && r.gravedad.includes('Alta')) colorHex = '#dc3545';
+                        if (r.gravedad && r.gravedad.includes('Media')) colorHex = '#ffc107';
+
+                        const pinIcon = L.divIcon({
+                            className: 'custom-semaforo-pin',
+                            html: `<div style="background-color: ${colorHex}; width: 22px; height: 22px; border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.4);"></div>`,
+                            iconSize: [22, 22],
+                            iconAnchor: [11, 11]
+                        });
+
+                        const fotoHtml = r.foto_path ? `<a href="${r.foto_path}" target="_blank"><img src="${r.foto_path}" style="width:100%; max-height:110px; object-fit:cover; border-radius:8px; margin-top:6px; box-shadow:0 2px 5px rgba(0,0,0,0.1);"></a>` : '<small class="text-muted d-block mt-2">Sin imagen adjunta</small>';
+                        
+                        const fechaFormateada = r.fecha_creacion ? r.fecha_creacion : 'Fecha no registrada';
+                        const haceCuanto = r.tiempo_transcurrido ? r.tiempo_transcurrido : 'Recientemente';
+
+                        // Textos y URLs específicos para compartir este reporte individual
+                        const reportUrl = encodeURIComponent(window.location.href);
+                        const reportShareText = encodeURIComponent(`[Reporte EcoMapa Fray Bentos] ${r.categoria}: "${r.descripcion}"`);
+
+                        const popupContent = `
+                            <div style="width: 220px; font-family: 'Segoe UI', sans-serif;">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="badge border text-dark" style="font-size: 0.75rem;">${r.gravedad || 'Media'}</span>
+                                    <small class="text-muted" style="font-size: 0.7rem;"><i class="fa-regular fa-clock me-1"></i>${haceCuanto}</small>
+                                </div>
+                                <strong style="color:#198754; font-size: 0.95rem; display:block; margin-bottom:2px;">${r.categoria}</strong>
+                                <p style="font-size: 0.85rem; color:#495057; margin-bottom:6px; line-height:1.3;">${r.descripcion}</p>
+                                <div style="font-size: 0.7rem; color: #6c757d; margin-bottom: 6px;">
+                                    <i class="fa-regular fa-calendar-days me-1"></i>${fechaFormateada}
+                                </div>
+                                ${fotoHtml}
+                                
+                                <hr class="my-2" style="opacity: 0.15;">
+                                <div class="text-center">
+                                    <span class="d-block text-secondary mb-1" style="font-size: 0.7rem; font-weight: bold;"><i class="fa-solid fa-share-nodes me-1"></i> Compartir reporte:</span>
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a href="https://api.whatsapp.com/send?text=${reportShareText}%20${reportUrl}" class="btn-social bg-whatsapp" style="width:30px;height:30px;font-size:13px;" target="_blank" title="Compartir en WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+                                        <a href="https://www.facebook.com/sharer/sharer.php?u=${reportUrl}" class="btn-social bg-facebook" style="width:30px;height:30px;font-size:13px;" target="_blank" title="Compartir en Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                                        <a href="https://twitter.com/intent/tweet?text=${reportShareText}&url=${reportUrl}" class="btn-social bg-twitter" style="width:30px;height:30px;font-size:13px;" target="_blank" title="Compartir en X"><i class="fa-brands fa-x-twitter"></i></a>
+                                    </div>
+                                </div>
+                            </div>`;
+
+                        L.marker([r.latitud, r.longitud], { icon: pinIcon }).addTo(map).bindPopup(popupContent);
+                    });
+                })
+                .catch(err => console.error("Error al cargar reportes:", err));
+        }
     </script>
 </body>
 </html>
