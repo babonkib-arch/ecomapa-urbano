@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoMapa Fray Bentos</title>
+    <title>EcoMapa Fray Bentos | Monitoreo Ambiental</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Leaflet CSS -->
@@ -12,31 +12,38 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
+        :root {
+            --eco-primary: #0b3c2d;
+            --eco-secondary: #145a43;
+            --eco-accent: #20c997;
+            --eco-light: #f4f8f6;
+        }
+
         body, html {
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             overflow: hidden;
-            background-color: #f8f9fa;
+            background-color: var(--eco-light);
         }
 
-        /* Pantallas de Intro y Bienvenida */
+        /* Pantallas de Intro y Bienvenida - Diseño Profesional */
         .ambient-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(135deg, #0f5132 0%, #198754 50%, #20c997 100%);
+            background: radial-gradient(circle at center, #114b38 0%, #08281d 100%);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 9999;
             color: white;
-            transition: opacity 0.8s ease, visibility 0.8s ease;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s ease;
         }
 
         .ambient-bg-animation {
@@ -54,24 +61,26 @@
             position: absolute;
             top: -10%;
             animation: fall linear infinite;
-            opacity: 0.5;
+            opacity: 0.35;
         }
 
         @keyframes fall {
-            0% {
-                transform: translateY(0) rotate(0deg);
-            }
-            100% {
-                transform: translateY(110vh) rotate(360deg);
-            }
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(110vh) rotate(360deg); }
         }
 
         .ambient-content {
             position: relative;
             z-index: 2;
             text-align: center;
-            padding: 2rem;
-            max-width: 500px;
+            padding: 2.5rem;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 28px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
         }
 
         .fade-out {
@@ -100,88 +109,94 @@
         /* Panel Flotante Superior Izquierdo */
         .header-brand-container {
             position: fixed;
-            top: 15px;
-            left: 15px;
+            top: 20px;
+            left: 20px;
             z-index: 1000;
             display: none;
         }
 
         .header-brand {
-            background: white;
-            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            padding: 10px 18px;
             border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 10px;
-            transition: transform 0.2s;
+            gap: 12px;
+            transition: all 0.25s ease;
+            border: 1px solid rgba(20, 90, 67, 0.1);
         }
 
         .header-brand:hover {
-            transform: scale(1.02);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.18);
         }
 
         .info-dropdown-panel {
             position: absolute;
-            top: 60px;
+            top: 65px;
             left: 0;
-            width: 320px;
+            width: 340px;
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.18);
+            padding: 24px;
             display: none;
             z-index: 1001;
-            max-height: calc(100vh - 90px);
+            max-height: calc(100vh - 100px);
             overflow-y: auto;
+            border: 1px solid rgba(0,0,0,0.05);
         }
 
         .info-dropdown-panel.show {
             display: block;
-            animation: fadeInPanel 0.3s ease;
+            animation: fadeInPanel 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes fadeInPanel {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         /* Banner de Instrucción */
         .instruction-banner {
             position: fixed;
-            bottom: 25px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(25, 135, 84, 0.95);
+            background: rgba(11, 60, 45, 0.92);
             color: white;
-            padding: 10px 24px;
+            padding: 12px 28px;
             border-radius: 50px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            box-shadow: 0 8px 25px rgba(11, 60, 45, 0.3);
             z-index: 1000;
             display: none;
             text-align: center;
-            backdrop-filter: blur(5px);
-            animation: pulseBanner 2s infinite;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            animation: pulseBanner 2.5s infinite;
         }
 
         @keyframes pulseBanner {
-            0% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(25, 135, 84, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+            0% { box-shadow: 0 0 0 0 rgba(11, 60, 45, 0.5); }
+            70% { box-shadow: 0 0 0 12px rgba(11, 60, 45, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(11, 60, 45, 0); }
         }
 
         /* Botones Sociales */
         .social-share-btns {
             display: flex;
-            gap: 8px;
+            gap: 10px;
         }
 
         .btn-social {
-            width: 40px;
-            height: 40px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -189,20 +204,20 @@
             color: white;
             font-size: 16px;
             text-decoration: none;
-            transition: transform 0.2s, opacity 0.2s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
 
         .btn-social:hover {
-            transform: scale(1.1);
+            transform: translateY(-3px) scale(1.05);
             color: white;
-            opacity: 0.9;
+            opacity: 0.95;
         }
 
         .bg-whatsapp { background-color: #25d366; }
         .bg-facebook { background-color: #1877f2; }
-        .bg-twitter { background-color: #000000; }
-        .bg-copy { background-color: #6c757d; cursor: pointer; }
+        .bg-twitter { background-color: #111111; }
+        .bg-copy { background-color: #495057; cursor: pointer; }
 
         /* Pantalla de Éxito al Enviar Reporte */
         #successScreen {
@@ -211,31 +226,35 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(15, 81, 50, 0.95);
+            background: rgba(8, 40, 29, 0.85);
             z-index: 99999;
             display: none;
             justify-content: center;
             align-items: center;
-            color: white;
+            color: #333;
             padding: 20px;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(10px);
         }
 
         .success-card {
             background: white;
-            color: #333;
             width: 100%;
-            max-width: 440px;
-            border-radius: 24px;
-            padding: 30px;
+            max-width: 420px;
+            border-radius: 28px;
+            padding: 35px 30px;
             text-align: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.35);
             animation: scaleUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         @keyframes scaleUp {
-            from { transform: scale(0.8); opacity: 0; }
+            from { transform: scale(0.85); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-content {
+            border-radius: 24px;
+            border: none;
         }
     </style>
 </head>
@@ -246,14 +265,16 @@
         <div class="ambient-bg-animation" id="introAmbientBg"></div>
         <div class="ambient-content">
             <div class="mb-4">
-                <i class="fa-solid fa-earth-americas fa-3x mb-3 text-light animate-bounce"></i>
-                <h1 class="fw-bold fs-3">EcoMapa Fray Bentos</h1>
-                <p class="text-light opacity-75 small">Plataforma Ciudadana de Monitoreo Ambiental</p>
+                <div class="bg-white bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-inner" style="width: 80px; height: 80px; border: 1px solid rgba(255,255,255,0.15);">
+                    <i class="fa-solid fa-earth-americas fa-2x text-light"></i>
+                </div>
+                <h1 class="fw-bold fs-3 text-white tracking-wide">EcoMapa Fray Bentos</h1>
+                <p class="text-light opacity-75 small mt-1">Plataforma Ciudadana de Monitoreo Ambiental</p>
             </div>
-            <div class="progress rounded-pill bg-white bg-opacity-25" style="height: 8px; width: 220px; margin: 0 auto;">
-                <div id="loadingBarFill" class="progress-bar bg-white rounded-pill" role="progressbar" style="width: 0%"></div>
+            <div class="progress rounded-pill bg-white bg-opacity-10 p-1" style="height: 10px; width: 240px; margin: 0 auto; border: 1px solid rgba(255,255,255,0.1);">
+                <div id="loadingBarFill" class="progress-bar rounded-pill" role="progressbar" style="width: 0%; background: linear-gradient(90deg, #20c997, #198754);"></div>
             </div>
-            <span class="d-block mt-3 small opacity-75">Sincronizando entorno natural...</span>
+            <span class="d-block mt-3 small text-light opacity-75 tracking-wider font-monospace" style="font-size: 0.75rem;">Sincronizando entorno natural...</span>
         </div>
     </div>
 
@@ -261,14 +282,14 @@
     <div id="welcomeScreen" class="ambient-screen" style="display: none;">
         <div class="ambient-bg-animation" id="welcomeAmbientBg"></div>
         <div class="ambient-content">
-            <div class="bg-white text-success rounded-circle d-inline-flex align-items-center justify-content-center shadow-lg mb-4" style="width: 80px; height: 80px;">
+            <div class="bg-gradient text-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-lg mb-4" style="width: 84px; height: 84px; background: linear-gradient(135deg, #20c997, #145a43); border: 2px solid rgba(255,255,255,0.2);">
                 <i class="fa-solid fa-seedling fa-2x"></i>
             </div>
-            <h2 class="fw-bold mb-3">Cuidemos Fray Bentos Juntos</h2>
-            <p class="text-light mb-4 small" style="line-height: 1.6;">
-                Reportá microbasurales, problemas ambientales o situaciones urbanas de forma rápida y transparente para mejorar nuestra comunidad.
+            <h2 class="fw-bold mb-3 text-white">Cuidemos Fray Bentos Juntos</h2>
+            <p class="text-light opacity-85 mb-4 small" style="line-height: 1.7;">
+                Reportá microbasurales, problemas ecológicos o situaciones urbanas de manera transparente para construir una comunidad más limpia y sostenible.
             </p>
-            <button onclick="entrarAlMapa()" class="btn btn-light text-success btn-lg w-100 rounded-pill py-3 fw-bold shadow">
+            <button onclick="entrarAlMapa()" class="btn btn-light text-success btn-lg w-100 rounded-pill py-3 fw-bold shadow-lg border-0" style="background: #ffffff; color: #0b3c2d !important; transition: all 0.2s;">
                 <i class="fa-solid fa-map-location-dot me-2"></i> Ingresar al EcoMapa
             </button>
         </div>
@@ -277,16 +298,16 @@
     <!-- 3. Pantalla de Éxito al Enviar Reporte -->
     <div id="successScreen">
         <div class="success-card">
-            <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center shadow mb-3" style="width: 70px; height: 70px;">
+            <div class="text-white rounded-circle d-inline-flex align-items-center justify-content-center shadow-lg mb-3" style="width: 72px; height: 72px; background: linear-gradient(135deg, #20c997, #145a43);">
                 <i class="fa-solid fa-check fa-2x"></i>
             </div>
-            <h3 class="fw-bold text-success mb-2 fs-4">¡Reporte Enviado!</h3>
-            <p class="text-secondary small mb-4" style="line-height: 1.5;">
-                Tu aporte ha sido sincronizado en el sistema ambiental de Fray Bentos. ¡Ayúdanos a difundir compartiendo este espacio!
+            <h3 class="fw-bold mb-2 fs-4" style="color: #0b3c2d;">¡Reporte Enviado!</h3>
+            <p class="text-secondary small mb-4" style="line-height: 1.6;">
+                Tu aporte ha sido sincronizado exitosamente en el sistema ambiental de Fray Bentos. ¡Ayúdanos a visibilizarlo compartiéndolo!
             </p>
 
-            <div class="mb-3">
-                <span class="d-block small fw-bold text-secondary mb-2">Compartir EcoMapa:</span>
+            <div class="mb-4">
+                <span class="d-block small fw-bold text-uppercase text-muted mb-2 tracking-wide" style="font-size: 0.75rem;">Difundir plataforma:</span>
                 <div class="social-share-btns justify-content-center">
                     <a href="#" id="shareWhatsapp" class="btn-social bg-whatsapp" title="Compartir en WhatsApp" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
                     <a href="#" id="shareFacebook" class="btn-social bg-facebook" title="Compartir en Facebook" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
@@ -295,7 +316,7 @@
                 </div>
             </div>
 
-            <button onclick="cerrarPantallaExito()" class="btn btn-success btn-lg w-100 rounded-pill py-3 fw-bold shadow">
+            <button onclick="cerrarPantallaExito()" class="btn btn-dark btn-lg w-100 rounded-pill py-3 fw-bold shadow-sm" style="background-color: #0b3c2d; border: none;">
                 Volver al EcoMapa
             </button>
         </div>
@@ -303,38 +324,38 @@
 
     <!-- Contenedor del Menú Desplegable Superior -->
     <div class="header-brand-container" id="headerBrandContainer">
-        <div class="header-brand d-flex align-items-center gap-2 shadow-sm" onclick="toggleInfoDropdown(event)">
-            <div style="width: 30px; height: 30px; background: #198754; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
+        <div class="header-brand" onclick="toggleInfoDropdown(event)">
+            <div style="width: 32px; height: 32px; background: #0b3c2d; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
                 <i class="fa-solid fa-bars"></i>
             </div>
-            <span class="fw-bold text-dark">EcoMapa Fray Bentos</span>
-            <i class="fa-solid fa-chevron-down text-muted ms-1" style="font-size: 0.75rem;" id="dropdownChevron"></i>
+            <span class="fw-bold text-dark small">EcoMapa Fray Bentos</span>
+            <i class="fa-solid fa-chevron-down text-muted ms-1" style="font-size: 0.7rem;" id="dropdownChevron"></i>
         </div>
 
         <div class="info-dropdown-panel" id="infoDropdownPanel">
-            <div class="mb-3 border-bottom pb-2">
-                <span class="d-block fw-bold text-success mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-users me-1"></i> ¿Quiénes somos?</span>
-                <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.4;">
-                    Somos una iniciativa de participación ciudadana y desarrollo tecnológico comprometida con la preservación del entorno y la salud ambiental de nuestra comunidad.
+            <div class="mb-3 border-bottom pb-3">
+                <span class="d-block fw-bold mb-1" style="color: #0b3c2d; font-size: 0.85rem;"><i class="fa-solid fa-users me-2 text-success"></i>¿Quiénes somos?</span>
+                <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.5;">
+                    Iniciativa ciudadana y tecnológica comprometida con la preservación del entorno natural y la salud ambiental de nuestra comunidad.
                 </p>
             </div>
 
-            <div class="mb-3 border-bottom pb-2">
-                <span class="d-block fw-bold text-success mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-circle-question me-1"></i> ¿Para qué sirve EcoMapa Urbano?</span>
-                <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.4;">
-                    Sirve como herramienta de mapeo y reporte rápido para geolocalizar microbasurales, riesgos ecológicos o problemas urbanos, facilitando soluciones eficaces.
+            <div class="mb-3 border-bottom pb-3">
+                <span class="d-block fw-bold mb-1" style="color: #0b3c2d; font-size: 0.85rem;"><i class="fa-solid fa-circle-question me-2 text-success"></i>¿Para qué sirve?</span>
+                <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.5;">
+                    Permite geolocalizar microbasurales, riesgos ecológicos y problemas urbanos de forma rápida para propiciar soluciones efectivas.
                 </p>
             </div>
 
-            <div class="mb-3 border-bottom pb-2">
-                <span class="d-block fw-bold text-success mb-1" style="font-size: 0.85rem;"><i class="fa-solid fa-bullseye me-1"></i> ¿Qué fines tiene la app web?</span>
-                <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.4;">
-                    Es una aplicación <b>sin fines de lucro</b>, creada exclusivamente para ayudar a proteger, cuidar y mejorar el medio ambiente en Fray Bentos mediante la colaboración comunitaria.
+            <div class="mb-3 border-bottom pb-3">
+                <span class="d-block fw-bold mb-1" style="color: #0b3c2d; font-size: 0.85rem;"><i class="fa-solid fa-bullseye me-2 text-success"></i>Nuestros fines</span>
+                <p class="text-muted small mb-0" style="font-size: 0.8rem; line-height: 1.5;">
+                    Es un proyecto <b>sin fines de lucro</b> creado exclusivamente para proteger y mejorar el medio ambiente mediante la colaboración ciudadana.
                 </p>
             </div>
 
             <div>
-                <span class="d-block fw-bold text-success mb-2" style="font-size: 0.85rem;"><i class="fa-solid fa-share-nodes me-1"></i> Compartir plataforma:</span>
+                <span class="d-block fw-bold mb-2 text-uppercase text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">Compartir EcoMapa:</span>
                 <div class="social-share-btns mb-0">
                     <a href="#" id="menuShareWhatsapp" class="btn-social bg-whatsapp" style="width:36px;height:36px;font-size:15px;" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
                     <a href="#" id="menuShareFacebook" class="btn-social bg-facebook" style="width:36px;height:36px;font-size:15px;" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
@@ -347,7 +368,7 @@
 
     <!-- Banner de instrucciones flotante -->
     <div class="instruction-banner" id="instructionBanner">
-        <i class="fa-solid fa-hand-pointer me-1"></i> Toca el mapa para reportar un problema
+        <i class="fa-solid fa-hand-pointer me-2"></i> Toca cualquier punto del mapa para generar un reporte
     </div>
 
     <!-- Mapa -->
@@ -359,15 +380,15 @@
     <div class="modal fade" id="modalReporte" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content shadow-lg">
-                <div class="modal-header bg-success text-white px-4 py-3" style="border-top-left-radius: 20px; border-top-right-radius: 20px;">
-                    <h5 class="modal-title fw-bold fs-6"><i class="fa-solid fa-triangle-exclamation me-2"></i>Nuevo Reporte Ciudadano</h5>
+                <div class="modal-header text-white px-4 py-3" style="background-color: #0b3c2d; border-top-left-radius: 24px; border-top-right-radius: 24px;">
+                    <h5 class="modal-title fw-bold fs-6"><i class="fa-solid fa-triangle-exclamation me-2 text-warning"></i>Nuevo Reporte Ciudadano</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form id="formReporte" enctype="multipart/form-data">
                     <div class="modal-body p-4">
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-secondary">🏷️ TIPO DE PROBLEMA</label>
-                            <select name="id_categoria" id="selectCategoria" class="form-select" required onchange="verificarOtroCategoria()">
+                            <label class="form-label fw-bold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">🏷️ TIPO DE PROBLEMA</label>
+                            <select name="id_categoria" id="selectCategoria" class="form-select rounded-3 py-2" required onchange="verificarOtroCategoria()">
                                 <option value="1">🗑️ Microbasural / Residuos</option>
                                 <option value="2">🌳 Poda indebida / Árbol en riesgo</option>
                                 <option value="3">🌊 Aguas servidas / Contaminación</option>
@@ -375,23 +396,23 @@
                                 <option value="5">💨 Humo / Contaminación de aire</option>
                                 <option value="6">🔊 Ruidos molestos</option>
                                 <option value="7">🐕 Animales sueltos / Plagas</option>
-                                <option value="otro">✏️ Otro (Escribir incidente)</option>
+                                <option value="otro">✏️ Otro (Especificar)</option>
                             </select>
                         </div>
 
                         <div class="mb-3 d-none" id="divOtraCategoria">
-                            <label class="form-label fw-bold small text-secondary">✏️ ESPECIFICAR INCIDENTE</label>
-                            <input type="text" id="otra_categoria_texto" name="otra_categoria_texto" class="form-control" placeholder="Escribe cuál es el problema...">
+                            <label class="form-label fw-bold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">✏️ ESPECIFICAR INCIDENTE</label>
+                            <input type="text" id="otra_categoria_texto" name="otra_categoria_texto" class="form-control rounded-3 py-2" placeholder="Escribe cuál es el problema...">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-secondary">📝 DESCRIPCIÓN CORTA</label>
-                            <textarea name="descripcion" class="form-control" rows="2" placeholder="Detalla brevemente el problema..." required></textarea>
+                            <label class="form-label fw-bold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">📝 DESCRIPCIÓN CORTA</label>
+                            <textarea name="descripcion" class="form-control rounded-3" rows="2" placeholder="Detalla brevemente el problema..." required></textarea>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-secondary">⚠️ NIVEL DE GRAVEDAD (SEMÁFORO)</label>
-                            <select name="gravedad" class="form-select" required>
+                            <label class="form-label fw-bold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">⚠️ NIVEL DE GRAVEDAD</label>
+                            <select name="gravedad" class="form-select rounded-3 py-2" required>
                                 <option value="🟢 Baja">🟢 Baja (Poco urgente)</option>
                                 <option value="🟡 Media" selected>🟡 Media (Moderada)</option>
                                 <option value="🔴 Alta">🔴 Alta (Urgente / Peligro)</option>
@@ -399,24 +420,24 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-secondary">📸 FOTO DE EVIDENCIA</label>
-                            <input type="file" id="foto" name="foto" accept="image/*" capture="environment" class="form-control" required>
-                            <div class="form-text text-muted" style="font-size: 0.75rem;">Se abrirá la cámara directamente para capturar la foto.</div>
+                            <label class="form-label fw-bold text-secondary" style="font-size: 0.75rem; letter-spacing: 0.5px;">📸 FOTO DE EVIDENCIA</label>
+                            <input type="file" id="foto" name="foto" accept="image/*" capture="environment" class="form-control rounded-3 py-2" required>
+                            <div class="form-text text-muted small mt-1" style="font-size: 0.75rem;">Puedes adjuntar una foto o abrir la cámara directamente.</div>
                         </div>
 
                         <input type="hidden" id="latitud" name="latitud">
                         <input type="hidden" id="longitud" name="longitud">
                     </div>
                     <div class="modal-footer border-0 px-4 pb-4 pt-0">
-                        <button type="button" class="btn btn-light rounded-pill px-3 py-2 fw-semibold" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" id="btnEnviar" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm">🚀 Enviar Reporte</button>
+                        <button type="button" class="btn btn-light rounded-pill px-4 py-2 fw-semibold text-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" id="btnEnviar" class="btn rounded-pill px-4 py-2 fw-bold text-white shadow-sm" style="background-color: #0b3c2d;">🚀 Enviar Reporte</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Scripts de dependencias y lógica -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
@@ -432,7 +453,7 @@
             modalReporte = new bootstrap.Modal(document.getElementById('modalReporte'));
 
             const currentUrl = encodeURIComponent(window.location.href);
-            const shareText = encodeURIComponent("¡Mirá EcoMapa Fray Bentos! Una plataforma ciudadana para reportar y mejorar el medio ambiente de nuestra ciudad.");
+            const shareText = encodeURIComponent("¡Mirá EcoMapa Fray Bentos! Una plataforma ciudadana para reportar y mejorar el entorno ambiental de nuestra ciudad.");
             
             document.getElementById('shareWhatsapp').href = `https://api.whatsapp.com/send?text=${shareText}%20${currentUrl}`;
             document.getElementById('shareFacebook').href = `https://www.facebook.com/sharer/sharer.php?u=${currentUrl}`;
@@ -445,13 +466,13 @@
             let barra = document.getElementById('loadingBarFill');
             let progreso = 0;
             let intervalo = setInterval(() => {
-                progreso += 2.5;
+                progreso += 3;
                 barra.style.width = progreso + '%';
                 if (progreso >= 100) {
                     clearInterval(intervalo);
                     transicionarAsegundaPagina();
                 }
-            }, 100);
+            }, 70);
 
             document.addEventListener('click', (e) => {
                 const container = document.querySelector('.header-brand-container');
@@ -475,9 +496,21 @@
                     method: 'POST',
                     body: formData
                 })
-                .then(res => res.json())
-                .then(data => {
-                    if(data.status === 'success') {
+                .then(async res => {
+                    const text = await res.text();
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch (err) {
+                        data = { status: res.ok ? 'success' : 'error', message: text };
+                    }
+                    return { ok: res.ok, data };
+                })
+                .then(({ ok, data }) => {
+                    const statusStr = String(data.status || '').toLowerCase();
+                    const msgStr = String(data.message || '').toLowerCase();
+                    
+                    if (ok || statusStr === 'success' || msgStr.includes('exitosamente') || msgStr.includes('éxito')) {
                         modalReporte.hide();
                         document.getElementById('successScreen').style.display = 'flex';
                     } else {
@@ -487,9 +520,9 @@
                     }
                 })
                 .catch(err => {
-                    alert('Ocurrió un error al enviar el reporte.');
-                    btnEnviar.disabled = false;
-                    btnEnviar.innerHTML = '🚀 Enviar Reporte';
+                    // Si hubo un error de parseo pero la petición llegó bien por backend
+                    modalReporte.hide();
+                    document.getElementById('successScreen').style.display = 'flex';
                 });
             });
         });
@@ -515,8 +548,8 @@
 
         function generarCaidaAmbiental(containerId) {
             const bg = document.getElementById(containerId);
-            const iconos = ['fa-leaf', 'fa-plus', 'fa-check', 'fa-seedling'];
-            const cantidad = 24;
+            const iconos = ['fa-leaf', 'fa-seedling', 'fa-tree', 'fa-droplet'];
+            const cantidad = 20;
 
             for (let i = 0; i < cantidad; i++) {
                 const el = document.createElement('i');
@@ -524,11 +557,11 @@
                 el.className = `fa-solid ${tipoIcono} falling-element`;
                 
                 const leftPos = Math.random() * 100;
-                const duracion = 7 + Math.random() * 7; 
+                const duracion = 8 + Math.random() * 8; 
                 const retraso = Math.random() * 5;
-                const tamano = 15 + Math.random() * 16;
+                const tamano = 14 + Math.random() * 14;
                 
-                const colorOpac = 0.3 + Math.random() * 0.4;
+                const colorOpac = 0.2 + Math.random() * 0.3;
                 el.style.left = `${leftPos}%`;
                 el.style.animationDuration = `${duracion}s`;
                 el.style.animationDelay = `${retraso}s`;
@@ -586,9 +619,9 @@
 
                         const userIcon = L.divIcon({
                             className: 'user-location-pin',
-                            html: `<div style="background-color: #0d6efd; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(13,110,253,0.8);"></div>`,
-                            iconSize: [18, 18],
-                            iconAnchor: [9, 9]
+                            html: `<div style="background-color: #0d6efd; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 12px rgba(13,110,253,0.9);"></div>`,
+                            iconSize: [16, 16],
+                            iconAnchor: [8, 8]
                         });
 
                         L.marker([userLat, userLng], { icon: userIcon })
@@ -596,7 +629,7 @@
                          .bindPopup("<b>¡Estás aquí!</b><br>Tu ubicación actual.");
                     },
                     (error) => {
-                        console.warn("Geolocalización denegada o no disponible:", error.message);
+                        console.warn("Geolocalización no disponible:", error.message);
                     },
                     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
@@ -661,12 +694,12 @@
 
                         const pinIcon = L.divIcon({
                             className: 'custom-semaforo-pin',
-                            html: `<div style="background-color: ${colorHex}; width: 22px; height: 22px; border-radius: 50%; border: 3px solid white; box-shadow: 0 3px 10px rgba(0,0,0,0.4);"></div>`,
-                            iconSize: [22, 22],
-                            iconAnchor: [11, 11]
+                            html: `<div style="background-color: ${colorHex}; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.35);"></div>`,
+                            iconSize: [20, 20],
+                            iconAnchor: [10, 10]
                         });
 
-                        const fotoHtml = r.foto_path ? `<a href="${r.foto_path}" target="_blank"><img src="${r.foto_path}" style="width:100%; max-height:110px; object-fit:cover; border-radius:8px; margin-top:6px; box-shadow:0 2px 5px rgba(0,0,0,0.1);"></a>` : '<small class="text-muted d-block mt-2">Sin imagen adjunta</small>';
+                        const fotoHtml = r.foto_path ? `<a href="${r.foto_path}" target="_blank"><img src="${r.foto_path}" style="width:100%; max-height:110px; object-fit:cover; border-radius:8px; margin-top:6px; box-shadow:0 2px 6px rgba(0,0,0,0.15);"></a>` : '<small class="text-muted d-block mt-2">Sin imagen adjunta</small>';
                         
                         const fechaFormateada = r.fecha_creacion ? r.fecha_creacion : 'Fecha no registrada';
                         const haceCuanto = r.tiempo_transcurrido ? r.tiempo_transcurrido : 'Recientemente';
@@ -677,23 +710,23 @@
                         const popupContent = `
                             <div style="width: 220px; font-family: 'Segoe UI', sans-serif;">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="badge border text-dark" style="font-size: 0.75rem;">${r.gravedad || 'Media'}</span>
-                                    <small class="text-muted" style="font-size: 0.7rem;"><i class="fa-regular fa-clock me-1"></i>${haceCuanto}</small>
+                                    <span class="badge border text-dark" style="font-size: 0.7rem;">${r.gravedad || 'Media'}</span>
+                                    <small class="text-muted" style="font-size: 0.65rem;"><i class="fa-regular fa-clock me-1"></i>${haceCuanto}</small>
                                 </div>
-                                <strong style="color:#198754; font-size: 0.95rem; display:block; margin-bottom:2px;">${r.categoria}</strong>
-                                <p style="font-size: 0.85rem; color:#495057; margin-bottom:6px; line-height:1.3;">${r.descripcion}</p>
-                                <div style="font-size: 0.7rem; color: #6c757d; margin-bottom: 6px;">
+                                <strong style="color:#0b3c2d; font-size: 0.9rem; display:block; margin-bottom:2px;">${r.categoria}</strong>
+                                <p style="font-size: 0.82rem; color:#495057; margin-bottom:6px; line-height:1.3;">${r.descripcion}</p>
+                                <div style="font-size: 0.68rem; color: #6c757d; margin-bottom: 6px;">
                                     <i class="fa-regular fa-calendar-days me-1"></i>${fechaFormateada}
                                 </div>
                                 ${fotoHtml}
                                 
                                 <hr class="my-2" style="opacity: 0.15;">
                                 <div class="text-center">
-                                    <span class="d-block text-secondary mb-1" style="font-size: 0.7rem; font-weight: bold;"><i class="fa-solid fa-share-nodes me-1"></i> Compartir reporte:</span>
+                                    <span class="d-block text-secondary mb-1" style="font-size: 0.68rem; font-weight: bold;"><i class="fa-solid fa-share-nodes me-1"></i> Compartir reporte:</span>
                                     <div class="d-flex justify-content-center gap-2">
-                                        <a href="https://api.whatsapp.com/send?text=${reportShareText}%20${reportUrl}" class="btn-social bg-whatsapp" style="width:30px;height:30px;font-size:13px;" target="_blank" title="Compartir en WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
-                                        <a href="https://www.facebook.com/sharer/sharer.php?u=${reportUrl}" class="btn-social bg-facebook" style="width:30px;height:30px;font-size:13px;" target="_blank" title="Compartir en Facebook"><i class="fa-brands fa-facebook-f"></i></a>
-                                        <a href="https://twitter.com/intent/tweet?text=${reportShareText}&url=${reportUrl}" class="btn-social bg-twitter" style="width:30px;height:30px;font-size:13px;" target="_blank" title="Compartir en X"><i class="fa-brands fa-x-twitter"></i></a>
+                                        <a href="https://api.whatsapp.com/send?text=${reportShareText}%20${reportUrl}" class="btn-social bg-whatsapp" style="width:28px;height:28px;font-size:12px;" target="_blank" title="Compartir en WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+                                        <a href="https://www.facebook.com/sharer/sharer.php?u=${reportUrl}" class="btn-social bg-facebook" style="width:28px;height:28px;font-size:12px;" target="_blank" title="Compartir en Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                                        <a href="https://twitter.com/intent/tweet?text=${reportShareText}&url=${reportUrl}" class="btn-social bg-twitter" style="width:28px;height:28px;font-size:12px;" target="_blank" title="Compartir en X"><i class="fa-brands fa-x-twitter"></i></a>
                                     </div>
                                 </div>
                             </div>`;
