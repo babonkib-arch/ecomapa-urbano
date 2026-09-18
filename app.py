@@ -7,7 +7,8 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import psycopg2.extras
-from supabase import create_client, Client from flask import Flask, render_template, request, jsonify, redirect, url_for
+from supabase import create_client, Client
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 # (Mantén aquí el resto de tus importaciones, inicialización de DB, etc.)
 
 app = Flask(__name__)
