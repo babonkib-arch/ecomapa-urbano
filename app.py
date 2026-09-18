@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import psycopg2.extras
 from supabase import create_client, Client
-from flask import Flask, render_template, request, jsonify, redirect, url_for from flask import render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for 
 # Asegúrate de tener inicializado tu cliente de supabase arriba, por ejemplo:
 # supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
