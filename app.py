@@ -18,7 +18,7 @@ SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
 @app.route('/admin')
-def admin_panel()
+def admin_panel():
     try:
         # Obtener los reportes desde la tabla de Supabase
         response = supabase.table('reportes').select('*').execute()
