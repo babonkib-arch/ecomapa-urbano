@@ -8,7 +8,32 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import psycopg2.extras
 from supabase import create_client, Client
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for from flask import render_template, request, jsonify, redirect, url_for
+# Asegúrate de tener inicializado tu cliente de supabase arriba, por ejemplo:
+# supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+@app.route('/admin')
+def admin_panel():
+    try:
+        # Obtener los reportes desde la tabla de Supabase
+        response = supabase.table('reportes').select('*').execute()
+        reportes = response.data if hasattr(response, 'data') else response.get('data', [])
+        
+        return render_template('admin.html', reportes=reportes)
+    except Exception as e:
+        print(f"Error al cargar admin: {e}")
+        return "Error interno al cargar el panel", 500
+
+@app.route('/resolver_reporte/<int:reporte_id>', methods=['POST'])
+def resolver_reporte(reporte_id):
+    try:
+        # Actualizar el estado del reporte a 'Resuelto' en Supabase
+        supabase.table('reportes').update({'estado': 'Resuelto'}).eq('id', reporte_id).execute()
+        
+        return jsonify({'success': True, 'message': 'Incidencia resuelta correctamente'})
+    except Exception as e:
+        print(f"Error al resolver reporte: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 # (Mantén aquí el resto de tus importaciones, inicialización de DB, etc.)
 
 app = Flask(__name__)
