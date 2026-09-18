@@ -9,57 +9,7 @@ import psycopg2
 import psycopg2.extras
 from supabase import create_client, Client
 
-# Inicialización de la aplicación Flask (Debe ir antes de cualquier @app.route)
-app = Flask(__name__)
-
-# Configuración del cliente de Supabase (Asegúrate de tener tus variables de entorno configuradas)
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
-
-@app.route('/admin')
-def admin_panel():
-    try:
-        # Obtener los reportes desde la tabla de Supabase
-        response = supabase.table('reportes').select('*').execute()
-        reportes = response.data if hasattr(response, 'data') else response.get('data', [])
-        
-        return render_template('admin.html', reportes=reportes)
-    except Exception as e:
-        print(f"Error al cargar admin: {e}")
-        return "Error interno al cargar el panel", 500
-
-@app.route('/resolver_reporte/<int:reporte_id>', methods=['POST'])
-def resolver_reporte(reporte_id):
-    try:
-        # Actualizar el estado del reporte a 'Resuelto' en Supabase
-        supabase.table('reportes').update({'estado': 'Resuelto'}).eq('id', reporte_id).execute()
-        
-        return jsonify({'success': True, 'message': 'Incidencia resuelta correctamente'})
-    except Exception as e:
-        print(f"Error al resolver reporte: {e}")
-        return jsonify({'success': False, 'message': str(e)}), 500
-# (Mantén aquí el resto de tus importaciones, inicialización de DB, etc.)
-
-app = Flask(__name__)
-
-# --- RUTA PARA RESOLVER INCIDENCIAS ---
-@app.route('/resolver_reporte/<int:reporte_id>', methods=['POST'])
-def resolver_reporte(reporte_id):
-    try:
-        # Busca el reporte en tu base de datos (Ejemplo usando Flask-SQLAlchemy)
-        reporte = Reporte.query.get_or_404(reporte_id)
-        
-        # Actualiza el estado de la incidencia
-        reporte.estado = 'Resuelto'
-        db.session.commit()
-        
-        return jsonify({'success': True, 'message': 'Incidencia resuelta correctamente'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 500
-
-# (Aquí continúa el resto de tu código y rutas de Flask habituales)
-
+# Inicialización de la aplicación Flask
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'clave-super-secreta-eco-mapa-2026'
 
@@ -69,7 +19,6 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase_cliente = None
 if SUPABASE_URL and SUPABASE_KEY:
     supabase_cliente = create_client(SUPABASE_URL, SUPABASE_KEY)
-# ----------------------------------------
 
 # Configuración de Flask-Login
 login_manager = LoginManager()
@@ -215,12 +164,6 @@ def load_user(user_id):
 def index():
     return render_template('index.html') 
 
-@app.route('/admin')
-def admin_panel():
-    # Aquí va tu lógica para verificar si el usuario es administrador y obtener los reportes
-    # ...
-    return render_template('admin.html', reportes=reportes, user=current_user)
-
 @app.route('/api/reportes', methods=['GET'])
 def obtener_reportes():
     conn = get_db_connection()
@@ -326,6 +269,7 @@ def logout():
     flash('Has cerrado sesión exitosamente.', 'info')
     return redirect(url_for('index'))
 
+@app.route('/admin')
 @login_required
 def admin_panel():
     if not current_user.es_admin:
