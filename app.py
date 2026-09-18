@@ -8,12 +8,17 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import psycopg2.extras
 from supabase import create_client, Client
-from flask import Flask, render_template, request, jsonify, redirect, url_for 
-# Asegúrate de tener inicializado tu cliente de supabase arriba, por ejemplo:
-# supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Inicialización de la aplicación Flask (Debe ir antes de cualquier @app.route)
+app = Flask(__name__)
+
+# Configuración del cliente de Supabase (Asegúrate de tener tus variables de entorno configuradas)
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
 
 @app.route('/admin')
-def admin_panel():
+def admin_panel()
     try:
         # Obtener los reportes desde la tabla de Supabase
         response = supabase.table('reportes').select('*').execute()
