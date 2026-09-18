@@ -2,429 +2,292 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EcoMapa - Fray Bentos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoMapa Fray Bentos</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FontAwesome para Iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body, html { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; background-color: #09150d; }
-        
-        #mapContainer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
-            visibility: hidden;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-        #map { height: 100%; width: 100%; }
-
-        #introScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #09150d;
-            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.99) 70%);
-            z-index: 30000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            transition: opacity 0.8s ease, visibility 0.8s ease;
-            padding: 20px;
-        }
-        #introScreen.fade-out { opacity: 0; visibility: hidden; }
-
-        #welcomeScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #09150d;
-            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.4) 0%, rgba(9, 21, 13, 0.98) 70%);
-            z-index: 20000;
-            display: none; 
-            align-items: center;
-            justify-content: center;
-            color: #ffffff;
-            transition: opacity 0.8s ease, visibility 0.8s ease;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        #welcomeScreen.fade-out { opacity: 0; visibility: hidden; }
-
-        .ambient-bg {
-            position: absolute;
+        body, html {
+            margin: 0;
+            padding: 0;
             width: 100%;
             height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background-color: #f8f9fa;
+        }
+
+        /* Pantallas de Intro y Bienvenida */
+        .ambient-screen {
+            position: fixed;
             top: 0;
             left: 0;
-            overflow: hidden;
-            pointer-events: none;
-            z-index: 1;
-        }
-        .falling-element {
-            position: absolute;
-            top: -10vh;
-            animation: fallDown linear infinite;
-            opacity: 0.75;
-        }
-        @keyframes fallDown {
-            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
-            15% { opacity: 0.85; }
-            85% { opacity: 0.85; }
-            100% { transform: translateY(110vh) translateX(60px) rotate(360deg); opacity: 0; }
-        }
-
-        .portal-container {
-            width: 100%;
-            max-width: 1150px;
-            margin: auto;
-            position: relative;
-            z-index: 2;
-        }
-
-        .pro-eco-logo-wrapper {
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #0f5132 0%, #198754 50%, #20c997 100%);
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
-            text-align: center;
-        }
-        .pro-eco-logo {
-            width: 120px;
-            height: 120px;
-            background: linear-gradient(145deg, #134e32 0%, #198754 50%, #0f3d27 100%);
-            border-radius: 35px;
-            display: flex;
             align-items: center;
-            justify-content: center;
-            position: relative;
-            box-shadow: 0 15px 40px rgba(25, 135, 84, 0.5), inset 0 3px 6px rgba(255, 255, 255, 0.35);
-            border: 2px solid rgba(32, 201, 151, 0.4);
-            animation: logoPulse 3.5s ease-in-out infinite;
-        }
-        @keyframes logoPulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 15px 40px rgba(25, 135, 84, 0.5); }
-            50% { transform: scale(1.04); box-shadow: 0 20px 50px rgba(32, 201, 151, 0.75); }
-        }
-        .pro-eco-logo .main-leaf-icon {
-            font-size: 56px;
-            color: #20c997;
-            filter: drop-shadow(0 3px 6px rgba(0,0,0,0.3));
-        }
-        .pro-eco-logo .logo-cross-badge {
-            position: absolute;
-            bottom: -6px;
-            right: -6px;
-            background: #ffffff;
-            color: #198754;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
-            border: 2px solid #134e32;
-        }
-        .water-bubble {
-            position: absolute;
-            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(32, 201, 151, 0.4));
-            border-radius: 50%;
-            box-shadow: inset 0 1px 2px rgba(255,255,255,0.8), 0 2px 4px rgba(0,0,0,0.2);
-            animation: bubbleFloat 3s ease-in-out infinite;
-        }
-        @keyframes bubbleFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
+            z-index: 9999;
+            color: white;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
         }
 
-        .loading-bar-container {
-            width: 260px;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            margin: 25px auto 0 auto;
+        .ambient-bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            border: 1px solid rgba(32, 201, 151, 0.2);
-        }
-        .loading-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #198754, #20c997);
-            border-radius: 10px;
-            transition: width 0.1s linear;
+            z-index: 1;
+            pointer-events: none;
         }
 
-        .eco-card {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
-            border-radius: 20px;
-            padding: 25px;
+        .falling-element {
+            position: absolute;
+            top: -10%;
+            animation: fall linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+            100% {
+                transform: translateY(110vh) rotate(360deg);
+            }
+        }
+
+        .ambient-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 2rem;
+            max-width: 500px;
+        }
+
+        .fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Mapa y Contenedores */
+        #mapContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            z-index: 1;
+        }
+
+        #map {
+            width: 100%;
             height: 100%;
-            transition: transform 0.3s ease;
         }
-        .eco-card:hover {
-            border-color: rgba(32, 201, 151, 0.35);
-            transform: translateY(-3px);
-        }
-        
+
+        /* Panel Flotante Superior Izquierdo */
         .header-brand-container {
             position: fixed;
             top: 15px;
             left: 15px;
-            z-index: 15000;
-            display: none; 
+            z-index: 1000;
+            display: none;
         }
 
         .header-brand {
-            background: rgba(255, 255, 255, 0.95);
+            background: white;
             padding: 8px 16px;
-            border-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            backdrop-filter: blur(5px);
-            font-size: 0.9rem;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             cursor: pointer;
-            user-select: none;
-            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.2s;
         }
-        .header-brand:hover { background: rgba(255, 255, 255, 1); }
+
+        .header-brand:hover {
+            transform: scale(1.02);
+        }
 
         .info-dropdown-panel {
             position: absolute;
-            top: 55px;
+            top: 60px;
             left: 0;
             width: 320px;
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(12px);
+            background: white;
             border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            padding: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 20px;
             display: none;
-            z-index: 16000;
-            border: 1px solid rgba(25, 135, 84, 0.2);
-            animation: fadeInDrop 0.3s ease forwards;
+            z-index: 1001;
+            max-height: calc(100vh - 90px);
+            overflow-y: auto;
         }
-        @keyframes fadeInDrop {
-            from { opacity: 0; transform: translateY(-8px); }
+
+        .info-dropdown-panel.show {
+            display: block;
+            animation: fadeInPanel 0.3s ease;
+        }
+
+        @keyframes fadeInPanel {
+            from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .info-dropdown-panel.show { display: block; }
 
+        /* Banner de Instrucción */
         .instruction-banner {
             position: fixed;
-            bottom: 20px;
+            bottom: 25px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 15000;
-            background: rgba(17, 29, 21, 0.95);
+            background: rgba(25, 135, 84, 0.95);
             color: white;
-            border: 1px solid rgba(32, 201, 151, 0.3);
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-            text-align: center;
-            pointer-events: none;
-            font-weight: 500;
-            width: 90%;
-            max-width: 380px;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
             display: none;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            animation: pulseBanner 2s infinite;
         }
 
+        @keyframes pulseBanner {
+            0% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(25, 135, 84, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+        }
+
+        /* Botones Sociales */
+        .social-share-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-social {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            text-decoration: none;
+            transition: transform 0.2s, opacity 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .btn-social:hover {
+            transform: scale(1.1);
+            color: white;
+            opacity: 0.9;
+        }
+
+        .bg-whatsapp { background-color: #25d366; }
+        .bg-facebook { background-color: #1877f2; }
+        .bg-twitter { background-color: #000000; }
+        .bg-copy { background-color: #6c757d; cursor: pointer; }
+
+        /* Pantalla de Éxito al Enviar Reporte */
         #successScreen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(11, 22, 15, 0.85);
-            backdrop-filter: blur(10px);
-            z-index: 25000;
+            background: rgba(15, 81, 50, 0.95);
+            z-index: 99999;
             display: none;
+            justify-content: center;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .success-card {
-            background: #ffffff;
-            width: 100%;
-            max-width: 420px;
-            border-radius: 28px;
-            padding: 35px 25px;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-        @keyframes bounceIn {
-            0% { transform: scale(0.4); opacity: 0; }
-            70% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .success-icon-wrapper {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #d1e7dd 0%, #a3cfbb 100%);
-            color: #198754;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            margin: 0 auto 15px auto;
-            box-shadow: 0 0 0 10px rgba(25, 135, 84, 0.12);
-        }
-
-        .social-share-btns {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .btn-social {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             color: white;
-            font-size: 18px;
-            text-decoration: none;
-            transition: transform 0.2s ease, opacity 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            padding: 20px;
+            backdrop-filter: blur(8px);
         }
-        .btn-social:hover { transform: scale(1.1); color: white; opacity: 0.9; }
-        .bg-whatsapp { background-color: #25d366; }
-        .bg-facebook { background-color: #1877f2; }
-        .bg-twitter { background-color: #000000; }
-        .bg-copy { background-color: #6c757d; }
 
-        .modal-content { border-radius: 20px !important; border: none; }
-        .form-control, .form-select { padding: 12px 15px; font-size: 1rem; border-radius: 12px; }
+        .success-card {
+            background: white;
+            color: #333;
+            width: 100%;
+            max-width: 440px;
+            border-radius: 24px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            animation: scaleUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes scaleUp {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="introScreen">
-        <div class="ambient-bg" id="introAmbientBg"></div>
-        <div class="text-center position-relative z-2">
-            <div class="pro-eco-logo-wrapper mb-4">
-                <div class="pro-eco-logo">
-                    <i class="fa-solid fa-leaf main-leaf-icon"></i>
-                    <div class="logo-cross-badge"><i class="fa-solid fa-plus"></i></div>
-                    <div class="water-bubble" style="width: 12px; height: 12px; top: -8px; left: 20px; animation-delay: 0s;"></div>
-                    <div class="water-bubble" style="width: 8px; height: 8px; top: 15px; right: -6px; animation-delay: 1s;"></div>
-                </div>
+    <!-- 1. Pantalla de Carga Inicial (Intro) -->
+    <div id="introScreen" class="ambient-screen">
+        <div class="ambient-bg-animation" id="introAmbientBg"></div>
+        <div class="ambient-content">
+            <div class="mb-4">
+                <i class="fa-solid fa-earth-americas fa-3x mb-3 text-light animate-bounce"></i>
+                <h1 class="fw-bold fs-3">EcoMapa Fray Bentos</h1>
+                <p class="text-light opacity-75 small">Plataforma Ciudadana de Monitoreo Ambiental</p>
             </div>
-            <h1 class="fw-bold mb-2 display-6 text-white">EcoMapa Urbano Fray Bentos</h1>
-            <p class="text-light opacity-75 small mb-4">Iniciando sistema de inteligencia ambiental...</p>
-            
-            <div class="loading-bar-container">
-                <div class="loading-bar-fill" id="loadingBarFill"></div>
+            <div class="progress rounded-pill bg-white bg-opacity-25" style="height: 8px; width: 220px; margin: 0 auto;">
+                <div id="loadingBarFill" class="progress-bar bg-white rounded-pill" role="progressbar" style="width: 0%"></div>
             </div>
+            <span class="d-block mt-3 small opacity-75">Sincronizando entorno natural...</span>
         </div>
     </div>
 
-    <div id="welcomeScreen">
-        <div class="ambient-bg" id="welcomeAmbientBg"></div>
-
-        <div class="portal-container py-4">
-            <div class="text-center mb-5">
-                <div class="pro-eco-logo-wrapper mb-3">
-                    <div class="pro-eco-logo">
-                        <i class="fa-solid fa-leaf main-leaf-icon"></i>
-                        <div class="logo-cross-badge"><i class="fa-solid fa-plus"></i></div>
-                        <div class="water-bubble" style="width: 12px; height: 12px; top: -8px; left: 20px; animation-delay: 0s;"></div>
-                        <div class="water-bubble" style="width: 8px; height: 8px; top: 15px; right: -6px; animation-delay: 1s;"></div>
-                        <div class="water-bubble" style="width: 10px; height: 10px; bottom: 10px; left: -6px; animation-delay: 0.5s;"></div>
-                    </div>
-                </div>
-                
-                <h1 class="fw-bold mb-2 display-6 text-white tracking-wide">EcoMapa Urbano Fray Bentos</h1>
-                <p class="text-light opacity-75 mx-auto" style="max-width: 650px;">
-                    Plataforma de inteligencia ambiental, salud pública y gobernanza participativa para la conservación y bienestar de nuestra ciudad.
-                </p>
+    <!-- 2. Pantalla de Bienvenida -->
+    <div id="welcomeScreen" class="ambient-screen" style="display: none;">
+        <div class="ambient-bg-animation" id="welcomeAmbientBg"></div>
+        <div class="ambient-content">
+            <div class="bg-white text-success rounded-circle d-inline-flex align-items-center justify-content-center shadow-lg mb-4" style="width: 80px; height: 80px;">
+                <i class="fa-solid fa-seedling fa-2x"></i>
             </div>
-
-            <div class="row g-4 align-items-stretch mb-5">
-                <div class="col-lg-4">
-                    <div class="eco-card">
-                        <div class="text-success mb-3 fs-4"><i class="fa-solid fa-leaf"></i></div>
-                        <h5 class="fw-bold text-white mb-2">Acción Climática y Salud</h5>
-                        <p class="small mb-0" style="color: #adb5bd !important; line-height: 1.6;">
-                            El cuidado de los espacios públicos previene riesgos epidemiológicos y mejora la calidad de vida urbana. Cada reporte activa protocolos de saneamiento municipal.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="col-lg-4">
-                    <div class="eco-card border-success border-opacity-50 text-center d-flex flex-column justify-content-between" style="background: rgba(25, 135, 84, 0.08);">
-                        <div>
-                            <div class="text-success mb-2 fs-4"><i class="fa-solid fa-compass"></i></div>
-                            <h5 class="fw-bold text-white mb-3">Guía de Uso Rápido</h5>
-                            <ul class="text-start small text-light ps-3 mb-3" style="line-height: 1.6; opacity: 0.9;">
-                                <li>📍 Selecciona un punto exacto en el mapa.</li>
-                                <li>🏷️ Elige el tipo de problema a reportar.</li>
-                                <li>📝 Escribe una descripción corta.</li>
-                                <li>📸 Captura la evidencia fotográfica.</li>
-                            </ul>
-                            
-                            <div class="bg-dark bg-opacity-50 p-3 rounded-4 text-start mb-3 border border-secondary border-opacity-25">
-                                <span class="d-block fw-bold text-success mb-2" style="font-size: 0.8rem;"><i class="fa-solid fa-traffic-light me-1"></i> Sistema de Semáforos:</span>
-                                <div class="d-flex align-items-center gap-2 mb-1 small text-light"><span class="badge rounded-pill bg-success" style="width:12px;height:12px;padding:0;"></span> 🟢 <b>Baja:</b> Poco urgente</div>
-                                <div class="d-flex align-items-center gap-2 mb-1 small text-light"><span class="badge rounded-pill bg-warning" style="width:12px;height:12px;padding:0;"></span> 🟡 <b>Media:</b> Moderada</div>
-                                <div class="d-flex align-items-center gap-2 small text-light"><span class="badge rounded-pill bg-danger" style="width:12px;height:12px;padding:0;"></span> 🔴 <b>Alta:</b> Urgente / Peligro</div>
-                            </div>
-                        </div>
-                        
-                        <button onclick="entrarAlMapa()" class="btn btn-success btn-lg fw-bold py-3 shadow rounded-pill w-100 fs-6">
-                            <i class="fa-solid fa-map-location-dot me-2"></i> Entrar al Mapa
-                        </button>
-                    </div>
-                </div>
-
-                <div class="col-lg-4">
-                    <div class="eco-card">
-                        <div class="text-success mb-3 fs-4"><i class="fa-solid fa-shield-halved"></i></div>
-                        <h5 class="fw-bold text-white mb-2">Comunidad y Control</h5>
-                        <p class="small mb-0" style="color: #adb5bd !important; line-height: 1.6;">
-                            Haz clic sobre cualquier marcador en el mapa para ver los detalles, foto, fecha y compartir reportes individuales con tus redes sociales.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="text-center text-muted small opacity-50">
-                Municipio de Fray Bentos • Río Negro, Uruguay
-            </div>
+            <h2 class="fw-bold mb-3">Cuidemos Fray Bentos Juntos</h2>
+            <p class="text-light mb-4 small" style="line-height: 1.6;">
+                Reportá microbasurales, problemas ambientales o situaciones urbanas de forma rápida y transparente para mejorar nuestra comunidad.
+            </p>
+            <button onclick="entrarAlMapa()" class="btn btn-light text-success btn-lg w-100 rounded-pill py-3 fw-bold shadow">
+                <i class="fa-solid fa-map-location-dot me-2"></i> Ingresar al EcoMapa
+            </button>
         </div>
     </div>
 
-    <!-- Pantalla de Éxito General -->
+    <!-- 3. Pantalla de Éxito al Enviar Reporte -->
     <div id="successScreen">
         <div class="success-card">
-            <div class="success-icon-wrapper">
-                <i class="fa-solid fa-earth-americas"></i>
+            <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center shadow mb-3" style="width: 70px; height: 70px;">
+                <i class="fa-solid fa-check fa-2x"></i>
             </div>
-            <h3 class="fw-bold text-success mb-2">¡Reporte Registrado!</h3>
-            <p class="text-muted small mb-3" style="line-height: 1.5;">
+            <h3 class="fw-bold text-success mb-2 fs-4">¡Reporte Enviado!</h3>
+            <p class="text-secondary small mb-4" style="line-height: 1.5;">
                 Tu aporte ha sido sincronizado en el sistema ambiental de Fray Bentos. ¡Ayúdanos a difundir compartiendo este espacio!
             </p>
 
             <div class="mb-3">
                 <span class="d-block small fw-bold text-secondary mb-2">Compartir EcoMapa:</span>
-                <div class="social-share-btns">
+                <div class="social-share-btns justify-content-center">
                     <a href="#" id="shareWhatsapp" class="btn-social bg-whatsapp" title="Compartir en WhatsApp" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
                     <a href="#" id="shareFacebook" class="btn-social bg-facebook" title="Compartir en Facebook" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
                     <a href="#" id="shareTwitter" class="btn-social bg-twitter" title="Compartir en X (Twitter)" target="_blank"><i class="fa-brands fa-x-twitter"></i></a>
@@ -438,6 +301,7 @@
         </div>
     </div>
 
+    <!-- Contenedor del Menú Desplegable Superior -->
     <div class="header-brand-container" id="headerBrandContainer">
         <div class="header-brand d-flex align-items-center gap-2 shadow-sm" onclick="toggleInfoDropdown(event)">
             <div style="width: 30px; height: 30px; background: #198754; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px;">
@@ -481,10 +345,12 @@
         </div>
     </div>
 
+    <!-- Banner de instrucciones flotante -->
     <div class="instruction-banner" id="instructionBanner">
         <i class="fa-solid fa-hand-pointer me-1"></i> Toca el mapa para reportar un problema
     </div>
 
+    <!-- Mapa -->
     <div id="mapContainer">
         <div id="map"></div>
     </div>
@@ -550,6 +416,7 @@
         </div>
     </div>
 
+    <!-- Scripts de dependencias y lógica -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
@@ -804,7 +671,6 @@
                         const fechaFormateada = r.fecha_creacion ? r.fecha_creacion : 'Fecha no registrada';
                         const haceCuanto = r.tiempo_transcurrido ? r.tiempo_transcurrido : 'Recientemente';
 
-                        // Textos y URLs específicos para compartir este reporte individual
                         const reportUrl = encodeURIComponent(window.location.href);
                         const reportShareText = encodeURIComponent(`[Reporte EcoMapa Fray Bentos] ${r.categoria}: "${r.descripcion}"`);
 
