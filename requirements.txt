@@ -7,3 +7,4 @@ supabase==2.3.4
 gotrue==2.8.1
 requests
 python-dotenv
+Flask-SQLAlchemy
