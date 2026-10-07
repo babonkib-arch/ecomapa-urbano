@@ -12,7 +12,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     
     <style>
-        /* Animaciones de Fondo Premium */
         @keyframes bgGradient {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -40,25 +39,17 @@
 </head>
 <body class="bg-slate-950 text-slate-100 h-screen overflow-hidden font-sans relative">
 
-    <!-- PANTALLA INICIAL / MODAL DE BIENVENIDA PREMIUM CON ANIMACIÓN -->
+    <!-- MODAL BIENVENIDA -->
     <div id="welcome-modal" class="fixed inset-0 animate-gradient-bg z-[2000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-        
-        <!-- Partículas ecológicas flotantes -->
         <div class="particle w-32 h-32 top-10 left-10"></div>
         <div class="particle w-48 h-48 bottom-10 right-10" style="animation-delay: -3s;"></div>
-        <div class="particle w-24 h-24 top-1/2 left-1/4" style="animation-delay: -5s;"></div>
 
         <div class="bg-slate-900/90 border border-emerald-500/30 max-w-2xl w-full rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-6 backdrop-blur-xl relative z-10 my-auto">
-            
             <div class="flex justify-center">
                 <div class="relative">
                     <div class="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-400/60 rounded-3xl flex items-center justify-center text-emerald-400 text-4xl shadow-lg shadow-emerald-950/50 transform rotate-3">
                         <i class="fa-solid fa-leaf animate-bounce"></i>
                     </div>
-                    <span class="absolute -top-1 -right-1 flex h-4 w-4">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-4 w-4 bg-emerald-500"></span>
-                    </span>
                 </div>
             </div>
             
@@ -71,7 +62,6 @@
                 </p>
             </div>
 
-            <!-- NAVEGACIÓN ENTRE SECCIONES DEL MODAL -->
             <div class="flex border-b border-slate-800 text-xs font-bold">
                 <button id="tab-guia-btn" onclick="cambiarTab('guia')" class="flex-1 py-2.5 border-b-2 border-emerald-400 text-emerald-400 transition flex items-center justify-center gap-2">
                     <i class="fa-solid fa-map-location-dot"></i> Guía Interactiva
@@ -81,46 +71,30 @@
                 </button>
             </div>
 
-            <!-- CONTENIDO TAB 1: GUÍA DE USO -->
             <div id="tab-guia" class="space-y-3 text-left">
                 <div class="grid sm:grid-cols-3 gap-3">
                     <div class="bg-slate-800/60 border border-slate-700/60 p-4 rounded-2xl space-y-2">
                         <div class="w-8 h-8 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center font-bold text-sm">1</div>
                         <h4 class="font-bold text-xs text-white">Marca la Ubicación</h4>
-                        <p class="text-[11px] text-slate-400 leading-snug">Haz clic o toca directamente en cualquier punto del mapa interactivo donde detectes una incidencia.</p>
+                        <p class="text-[11px] text-slate-400">Haz clic o toca en cualquier punto del mapa interactivo.</p>
                     </div>
                     <div class="bg-slate-800/60 border border-slate-700/60 p-4 rounded-2xl space-y-2">
                         <div class="w-8 h-8 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center font-bold text-sm">2</div>
                         <h4 class="font-bold text-xs text-white">Completa los Datos</h4>
-                        <p class="text-[11px] text-slate-400 leading-snug">Selecciona la gravedad, categoría (Basura, Podas, Saneamiento) y adjunta una imagen del sitio.</p>
+                        <p class="text-[11px] text-slate-400">Selecciona categoría, gravedad y adjunta una imagen.</p>
                     </div>
                     <div class="bg-slate-800/60 border border-slate-700/60 p-4 rounded-2xl space-y-2">
                         <div class="w-8 h-8 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center font-bold text-sm">3</div>
                         <h4 class="font-bold text-xs text-white">Publica y Difunde</h4>
-                        <p class="text-[11px] text-slate-400 leading-snug">El reporte se genera con sello de fecha/hora. Utiliza los botones sociales para mayor alcance.</p>
+                        <p class="text-[11px] text-slate-400">El reporte se crea y puedes compartirlo en redes.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- CONTENIDO TAB 2: INFORMACIÓN Y PROPÓSITO -->
             <div id="tab-info" class="hidden space-y-3 text-left text-xs text-slate-300 leading-relaxed bg-slate-800/40 p-4 rounded-2xl border border-slate-800">
                 <p>
-                    <strong>EcoMapa Fray Bentos</strong> es un ecosistema tecnológico diseñado para empoderar a la comunidad y conectar de forma ágil a los vecinos con los servicios de respuesta ambiental municipal.
+                    <strong>EcoMapa Fray Bentos</strong> conecta de manera transparente a los ciudadanos con la gestión de respuestas municipales.
                 </p>
-                <div class="grid grid-cols-2 gap-2 pt-1">
-                    <div class="flex items-center gap-2 text-emerald-400 text-[11px] font-bold">
-                        <i class="fa-solid fa-shield-halved"></i> Datos Transparentes
-                    </div>
-                    <div class="flex items-center gap-2 text-emerald-400 text-[11px] font-bold">
-                        <i class="fa-solid fa-clock-rotate-left"></i> Historial Completo
-                    </div>
-                    <div class="flex items-center gap-2 text-emerald-400 text-[11px] font-bold">
-                        <i class="fa-solid fa-users"></i> Acción Comunitaria
-                    </div>
-                    <div class="flex items-center gap-2 text-emerald-400 text-[11px] font-bold">
-                        <i class="fa-solid fa-mobile-screen"></i> 100% Mobile First
-                    </div>
-                </div>
             </div>
 
             <button onclick="cerrarBienvenida()" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl transition shadow-xl shadow-emerald-950/60 flex items-center justify-center gap-2 text-sm tracking-wide">
@@ -150,13 +124,12 @@
     <!-- MAPA LEAFLET -->
     <div id="map" class="w-full h-[calc(100vh-4rem)] z-0"></div>
 
-    <!-- INSIGNIA FLOTANTE DE INSTRUCCIÓN -->
     <div id="instruction-badge" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900/95 text-emerald-400 border border-emerald-500/40 shadow-2xl px-4 py-2 rounded-full text-xs font-bold z-10 flex items-center gap-2 pointer-events-none backdrop-blur">
         <i class="fa-solid fa-hand-pointer animate-bounce"></i>
         <span>Toca cualquier punto del mapa para crear un reporte</span>
     </div>
 
-    <!-- PANEL SLIDE-UP DE REGISTRO -->
+    <!-- PANEL SLIDE-UP -->
     <div id="report-sheet" class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 rounded-t-3xl p-5 sm:p-6 transition-transform duration-300 translate-y-full z-[1000] max-w-xl mx-auto shadow-2xl">
         <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
             <h3 class="font-black text-base text-white flex items-center gap-2">
@@ -217,7 +190,7 @@
         </form>
     </div>
 
-    <!-- MODAL DE ÉXITO TICK ANIMADO -->
+    <!-- MODAL DE ÉXITO -->
     <div id="modal-success" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[3000] hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-emerald-500/40 text-slate-100 max-w-sm w-full rounded-3xl p-6 text-center shadow-2xl space-y-4">
             <div class="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-400 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">

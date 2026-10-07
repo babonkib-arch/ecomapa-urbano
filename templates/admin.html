@@ -1,240 +1,137 @@
 <!DOCTYPE html>
-<html lang="es" class="scroll-smooth">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Panel de Administración | EcoMapa Fray Bentos</title>
-
-    <!-- Tailwind CSS CDN -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control Admin - EcoMapa FB</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                            800: '#166534',
-                            900: '#14532d',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- FontAwesome Vector Icons -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-
-    <style>
-        #admin-map {
-            height: 320px;
-            border-radius: 1rem;
-            z-index: 10;
-        }
-        @media (min-width: 768px) {
-            #admin-map { height: 420px; }
-        }
-        .touch-scroller {
-            -webkit-overflow-scrolling: touch;
-        }
-    </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans antialiased selection:bg-brand-500 selection:text-white pb-12">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
 
-    <!-- Header Mobile-First -->
-    <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-lg border-b border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 sm:w-10 sm:h-10 bg-brand-500 rounded-xl flex items-center justify-center text-white text-lg shadow-md shadow-brand-500/20">
-                    <i class="fa-solid fa-user-shield"></i>
-                </div>
-                <div>
-                    <h1 class="text-base sm:text-xl font-black tracking-tight leading-none text-white">
-                        EcoMapa <span class="text-brand-400">Admin</span>
-                    </h1>
-                    <span class="text-[10px] sm:text-xs text-slate-400 font-medium">Panel de Control y Gestión</span>
-                </div>
+    <!-- Encabezado Admin -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <div class="bg-emerald-500 p-2 rounded-xl text-slate-950 font-black">
+                <i class="fa-solid fa-user-shield"></i>
             </div>
-
-            <div class="flex items-center space-x-2">
-                <a href="/" class="p-2.5 sm:px-4 sm:py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5">
-                    <i class="fa-solid fa-globe text-brand-400"></i>
-                    <span class="hidden sm:inline">Ir al Sitio</span>
-                </a>
-                <a href="/logout" class="p-2.5 sm:px-4 sm:py-2 bg-rose-600/20 text-rose-300 hover:bg-rose-600 hover:text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                    <span class="hidden sm:inline">Salir</span>
-                </a>
+            <div>
+                <h1 class="font-black text-base text-white">Panel de Administración</h1>
+                <span class="text-xs text-emerald-400">{{ admin_email }}</span>
             </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold border border-slate-700 transition">
+                <i class="fa-solid fa-map"></i> Ver Mapa
+            </a>
+            <a href="/logout" class="px-3.5 py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition">
+                <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+            </a>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8 space-y-6">
+    <!-- Contenido Principal -->
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
 
-        <!-- Métricas Rápidas (KPIs para Mobile) -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] sm:text-xs font-bold uppercase text-slate-400 tracking-wider">Total</p>
-                    <p id="kpi-total" class="text-xl sm:text-2xl font-black text-slate-900">0</p>
-                </div>
-                <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 text-sm">
-                    <i class="fa-solid fa-list-check"></i>
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] sm:text-xs font-bold uppercase text-amber-500 tracking-wider">Pendientes</p>
-                    <p id="kpi-pendientes" class="text-xl sm:text-2xl font-black text-amber-600">0</p>
-                </div>
-                <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600 text-sm">
-                    <i class="fa-solid fa-clock"></i>
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] sm:text-xs font-bold uppercase text-brand-600 tracking-wider">Resueltos</p>
-                    <p id="kpi-resueltos" class="text-xl sm:text-2xl font-black text-brand-600">0</p>
-                </div>
-                <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600 text-sm">
-                    <i class="fa-solid fa-circle-check"></i>
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-[10px] sm:text-xs font-bold uppercase text-rose-500 tracking-wider">Urgentes</p>
-                    <p id="kpi-urgentes" class="text-xl sm:text-2xl font-black text-rose-600">0</p>
-                </div>
-                <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600 text-sm">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                </div>
-            </div>
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-extrabold text-white">Gestión de Incidentes Ciudadanos</h2>
+            <span class="bg-slate-800 border border-slate-700 px-3 py-1 rounded-full text-xs font-bold text-slate-300">
+                Total: {{ reportes|length }} reportes
+            </span>
         </div>
 
-        <!-- Mapa de Monitoreo Admin -->
-        <div class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-            <div class="flex items-center justify-between mb-3 px-1">
-                <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center">
-                    <i class="fa-solid fa-map-location-dot text-brand-600 mr-2"></i> Monitoreo General de Incidentes
-                </h2>
-                <span class="text-[10px] sm:text-xs text-slate-400">Actualizado en vivo</span>
-            </div>
-            <div id="admin-map" class="w-full"></div>
-        </div>
-
-        <!-- Lista / Tabla de Reportes -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-            <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center">
-                    <i class="fa-solid fa-table-list text-brand-600 mr-2"></i> Gestión de Reportes
-                </h2>
-                <button onclick="cargarReportesAdmin()" class="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-sm flex items-center space-x-1">
-                    <i class="fa-solid fa-rotate-right text-brand-600"></i>
-                    <span>Refrescar</span>
-                </button>
-            </div>
-
-            <!-- Vista Móvil: Tarjetas Touch -->
-            <div id="contenedor-tarjetas-mobile" class="block sm:hidden divide-y divide-slate-100">
-                <div class="p-8 text-center text-xs text-slate-400">Cargando reportes...</div>
-            </div>
-
-            <!-- Vista Escritorio/Tablet: Tabla Completa -->
-            <div class="hidden sm:block overflow-x-auto touch-scroller">
-                <table class="w-full text-left text-xs text-slate-600">
-                    <thead class="bg-slate-100/70 text-slate-700 uppercase font-black tracking-wider text-[10px]">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-800/80 uppercase text-[10px] font-black tracking-wider text-slate-400">
                         <tr>
-                            <th class="py-3 px-4">Evidencia</th>
-                            <th class="py-3 px-4">Título y Categoría</th>
-                            <th class="py-3 px-4">Gravedad</th>
-                            <th class="py-3 px-4">Estado</th>
-                            <th class="py-3 px-4 text-right">Acciones</th>
+                            <th class="p-4">ID</th>
+                            <th class="p-4">Incidencia</th>
+                            <th class="p-4">Categoría</th>
+                            <th class="p-4">Gravedad</th>
+                            <th class="p-4">Fecha</th>
+                            <th class="p-4">Estado</th>
+                            <th class="p-4 text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-reportes-body" class="divide-y divide-slate-100">
-                        <tr>
-                            <td colspan="5" class="py-8 text-center text-slate-400">Cargando reportes...</td>
+                    <tbody class="divide-y divide-slate-800">
+                        {% for r in reportes %}
+                        <tr class="hover:bg-slate-800/40 transition" id="row-{{ r.id }}">
+                            <td class="p-4 font-mono font-bold text-slate-500">#{{ r.id }}</td>
+                            <td class="p-4">
+                                <div class="font-bold text-white text-sm">{{ r.titulo }}</div>
+                                <div class="text-[11px] text-slate-400 line-clamp-1">{{ r.descripcion or 'Sin descripción' }}</div>
+                            </td>
+                            <td class="p-4">
+                                <span class="bg-slate-800 text-slate-300 border border-slate-700 px-2 py-1 rounded-lg font-bold">
+                                    {{ r.categoria }}
+                                </span>
+                            </td>
+                            <td class="p-4">
+                                {% if r.gravedad == 'alta' %}
+                                    <span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-1 rounded-lg font-extrabold">ALTA</span>
+                                {% elif r.gravedad == 'media' %}
+                                    <span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-1 rounded-lg font-extrabold">MEDIA</span>
+                                {% else %}
+                                    <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-lg font-extrabold">BAJA</span>
+                                {% endif %}
+                            </td>
+                            <td class="p-4 text-slate-400">{{ r.to_dict().fecha }}</td>
+                            <td class="p-4">
+                                <select onchange="actualizarEstado({{ r.id }}, this.value)" class="bg-slate-800 border border-slate-700 text-white rounded-lg px-2 py-1 focus:outline-none focus:border-emerald-500 font-bold">
+                                    <option value="Pendiente" {% if r.estado == 'Pendiente' %}selected{% endif %}>🟡 Pendiente</option>
+                                    <option value="En Proceso" {% if r.estado == 'En Proceso' %}selected{% endif %}>🔵 En Proceso</option>
+                                    <option value="Resuelto" {% if r.estado == 'Resuelto' %}selected{% endif %}>🟢 Resuelto</option>
+                                </select>
+                            </td>
+                            <td class="p-4 text-center">
+                                <button onclick="eliminarReporte({{ r.id }})" class="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl transition border border-rose-500/20" title="Eliminar reporte">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </td>
                         </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="p-8 text-center text-slate-500 font-bold">
+                                No hay reportes registrados en la plataforma.
+                            </td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 
-    <!-- Modal Móvil para Editar Reporte -->
-    <div id="modal-editar" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-                <h3 class="font-black text-slate-900 text-base sm:text-lg flex items-center">
-                    <i class="fa-solid fa-pen-to-square text-brand-600 mr-2"></i> Modificar Reporte
-                </h3>
-                <button onclick="cerrarModalEditar()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold text-sm flex items-center justify-center active:scale-95">✕</button>
-            </div>
+    <script>
+        async function actualizarEstado(id, nuevoEstado) {
+            try {
+                const res = await fetch(`/api/reportes/${id}/estado`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estado: nuevoEstado })
+                });
+                if (!res.ok) throw new Error('Error al actualizar estado');
+            } catch (err) {
+                alert(err.message);
+            }
+        }
 
-            <form id="form-editar-reporte" class="space-y-4">
-                <input type="hidden" id="edit-id">
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Título</label>
-                    <input type="text" id="edit-titulo" required class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Categoría</label>
-                        <select id="edit-categoria" required class="w-full border border-slate-200 rounded-xl px-2.5 py-2.5 text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white">
-                            <option value="Residuos">Residuos</option>
-                            <option value="Saneamiento">Saneamiento</option>
-                            <option value="Alumbrado">Alumbrado</option>
-                            <option value="Espacios Verdes">Espacios Verdes</option>
-                            <option value="Vialidad">Vialidad</option>
-                            <option value="Otro">Otro</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Gravedad</label>
-                        <select id="edit-gravedad" required class="w-full border border-slate-200 rounded-xl px-2.5 py-2.5 text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white">
-                            <option value="baja">Baja</option>
-                            <option value="media">Media</option>
-                            <option value="alta">Alta</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Estado de Resolución</label>
-                    <select id="edit-estado" required class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white text-brand-700">
-                        <option value="Pendiente">Pendiente</option>
-                        <option value="En Proceso">En Proceso</option>
-                        <option value="Resuelto">Resuelto / Limpiado</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Descripción</label>
-                    <textarea id="edit-descripcion" rows="3" required class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
-                </div>
-
-                <div class="pt-2 flex space-x-3">
-                    <button type="button" onclick="cerrarModalEditar()" class="w-1/2 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Cancelar</button>
-                    <button type="submit" class="w-1/2 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-brand-600/30 active:scale-95">Guardar Cambios</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Leaflet JS y Lógica Admin -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/static/js/admin.js"></script>
+        async function eliminarReporte(id) {
+            if (!confirm('¿Estás seguro de eliminar este reporte permanentemente?')) return;
+            try {
+                const res = await fetch(`/api/reportes/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    document.getElementById(`row-${id}`).remove();
+                } else {
+                    alert('Error al eliminar el reporte');
+                }
+            } catch (err) {
+                alert('Error de conexión');
+            }
+        }
+    </script>
 </body>
 </html>
