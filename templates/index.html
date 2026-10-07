@@ -2,8 +2,8 @@
 <html lang="es" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoMapa Fray Bentos | Participación Ciudadana y Gestión Ambiental</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EcoMapa Fray Bentos | Reporte Ciudadano</title>
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -29,305 +29,195 @@
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-    <!-- FontAwesome Vector Icons -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-    <!-- Estilos Adicionales UI/UX -->
     <style>
+        /* Altura adaptada a pantallas móviles */
         #map {
-            height: 560px;
-            border-radius: 1.25rem;
+            height: calc(100vh - 4.5rem);
+            width: 100%;
             z-index: 10;
         }
-        .glass-header {
-            background: rgba(255, 255, 255, 0.88);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
+
+        /* Animación del Tick Verde */
+        .checkmark-circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 2;
+            stroke-miterlimit: 10;
+            stroke: #22c55e;
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
         }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
+
+        .checkmark-check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards;
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 99px;
+
+        @keyframes stroke {
+            100% { stroke-dashoffset: 0; }
+        }
+
+        @keyframes scale {
+            0%, 100% { transform: none; }
+            50% { transform: scale3d(1.1, 1.1, 1); }
+        }
+
+        .animate-success-bounce {
+            animation: scale 0.5s ease-in-out 0.9s both;
+        }
+
+        /* Transición suavizada para Bottom Sheet en celular */
+        .bottom-sheet {
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-brand-500 selection:text-white">
+<body class="bg-slate-900 text-slate-800 font-sans antialiased overflow-x-hidden selection:bg-brand-500 selection:text-white">
 
-    <!-- Navegación Superior (Glassmorphic) -->
-    <header class="sticky top-0 z-50 glass-header border-b border-slate-200/80 shadow-sm transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <a href="#" class="flex items-center space-x-3 group">
-                <div class="w-11 h-11 bg-gradient-to-tr from-brand-700 to-brand-500 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg shadow-brand-500/25 group-hover:scale-105 transition-transform">
-                    <i class="fa-solid fa-leaf"></i>
-                </div>
-                <div>
-                    <span class="text-xl font-black text-slate-900 tracking-tight group-hover:text-brand-600 transition-colors">
-                        EcoMapa <span class="text-brand-600">Fray Bentos</span>
-                    </span>
-                    <p class="text-[11px] text-slate-500 font-medium tracking-wide">Plataforma Ciudadana de Gestión Ambiental</p>
-                </div>
-            </a>
-
-            <nav class="hidden lg:flex items-center space-x-8">
-                <a href="#mapa-section" class="text-sm font-semibold text-slate-600 hover:text-brand-600 transition-colors">Mapa Interactivo</a>
-                <a href="#nosotros" class="text-sm font-semibold text-slate-600 hover:text-brand-600 transition-colors">¿Qué es EcoMapa?</a>
-                <a href="#como-usar" class="text-sm font-semibold text-slate-600 hover:text-brand-600 transition-colors">Guía de Uso</a>
-                <a href="#semaforo" class="text-sm font-semibold text-slate-600 hover:text-brand-600 transition-colors">Semaforización</a>
-            </nav>
-
-            <div class="flex items-center space-x-3">
-                <a href="/login" class="inline-flex items-center space-x-2 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 px-5 py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95">
-                    <i class="fa-solid fa-user-shield text-brand-500"></i>
-                    <span>Acceso Admin</span>
-                </a>
+    <!-- Navegación Móvil Superior -->
+    <header class="fixed top-0 inset-x-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 text-white h-16 flex items-center justify-between px-4">
+        <a href="#" class="flex items-center space-x-2.5">
+            <div class="w-9 h-9 bg-brand-500 rounded-xl flex items-center justify-center text-white text-base shadow-md shadow-brand-500/30">
+                <i class="fa-solid fa-leaf"></i>
             </div>
-        </div>
+            <div>
+                <span class="text-base font-black tracking-tight block leading-none">EcoMapa <span class="text-brand-400">FB</span></span>
+                <span class="text-[10px] text-slate-400 font-medium">Fray Bentos Sustentable</span>
+            </div>
+        </a>
+
+        <a href="/login" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
+            <i class="fa-solid fa-user-shield text-brand-400"></i>
+            <span>Admin</span>
+        </a>
     </header>
 
-    <!-- Hero Section Banner -->
-    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
-        <div class="bg-gradient-to-br from-brand-900 via-slate-900 to-brand-950 rounded-3xl p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden border border-brand-800/40">
-            <!-- Glow decorativo de fondo -->
-            <div class="absolute -right-10 -bottom-10 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            
-            <div class="relative z-10 max-w-3xl">
-                <span class="inline-flex items-center space-x-2 bg-brand-500/20 text-brand-300 border border-brand-400/30 px-3.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-5">
-                    <span class="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span>
-                    <span>Participación Ciudadana Activa</span>
-                </span>
-                <h1 class="text-3xl sm:text-5xl font-black leading-tight tracking-tight mb-4">
-                    Reporta e impacta positivamente en <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-emerald-200">Fray Bentos</span>
-                </h1>
-                <p class="text-slate-300 text-base sm:text-lg mb-8 leading-relaxed">
-                    Identifica incidentes ambientales, basurales clandestinos, averías de alumbrado o roturas de infraestructura. Captura la foto directo con la cámara de tu celular, geolocaliza el problema y compártelo con la comunidad.
-                </p>
-                <div class="flex flex-wrap gap-4">
-                    <a href="#mapa-section" class="inline-flex items-center bg-brand-500 hover:bg-brand-600 text-white font-bold px-6 py-3.5 rounded-2xl transition-all shadow-lg shadow-brand-500/30 active:scale-95">
-                        <i class="fa-solid fa-location-dot mr-2"></i> Crear Nuevo Reporte
-                    </a>
-                    <a href="#como-usar" class="inline-flex items-center bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3.5 rounded-2xl backdrop-blur-md transition-all">
-                        <i class="fa-solid fa-circle-info mr-2"></i> ¿Cómo funciona?
-                    </a>
-                </div>
-            </div>
+    <!-- Contenedor del Mapa (Ocupa la pantalla) -->
+    <main class="pt-16 relative">
+        <div id="map"></div>
+
+        <!-- Indicador Flotante para tocar el mapa -->
+        <div id="instruction-badge" class="fixed top-20 inset-x-4 z-30 pointer-events-none flex justify-center">
+            <span class="bg-slate-900/85 backdrop-blur-md text-white border border-slate-700/80 px-4 py-2 rounded-full text-xs font-semibold shadow-xl flex items-center space-x-2 animate-bounce">
+                <i class="fa-solid fa-hand-pointer text-brand-400"></i>
+                <span>Toca cualquier punto en el mapa para reportar</span>
+            </span>
         </div>
-    </section>
+    </main>
 
-    <!-- Sección Principal: Mapa & Formulario -->
-    <section id="mapa-section" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
-            <!-- Contenedor del Mapa -->
-            <div class="lg:col-span-7 bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col">
-                <div class="flex items-center justify-between mb-4 px-2">
-                    <div>
-                        <h2 class="font-black text-slate-900 text-lg flex items-center">
-                            <i class="fa-solid fa-map-location-dot text-brand-600 mr-2.5 text-xl"></i> Mapa Urbano de Incidentes
-                        </h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Haz clic sobre cualquier punto del mapa para fijar la ubicación exacta del incidente.</p>
-                    </div>
-                </div>
-                
-                <div id="map" class="w-full shadow-inner border border-slate-100"></div>
-            </div>
-
-            <!-- Formulario de Registro de Reporte -->
-            <div class="lg:col-span-5 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm">
-                <div class="mb-6">
-                    <h3 class="font-black text-slate-900 text-xl flex items-center">
-                        <i class="fa-solid fa-camera-retro text-brand-600 mr-2.5"></i> Registrar Incidente
-                    </h3>
-                    <p class="text-xs text-slate-500 mt-1">Completa la información requerida y adjunta la evidencia.</p>
-                </div>
-
-                <form id="form-reporte" class="space-y-4">
-                    <!-- Ubicación / Coordenadas -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                            Ubicación Seleccionada <span class="text-rose-500">*</span>
-                        </label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="latitud" readonly required placeholder="Latitud" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-600 focus:outline-none">
-                            <input type="text" id="longitud" readonly required placeholder="Longitud" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono text-slate-600 focus:outline-none">
-                        </div>
-                    </div>
-
-                    <!-- Título -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                            Título del Reporte <span class="text-rose-500">*</span>
-                        </label>
-                        <input type="text" id="titulo" required placeholder="Ej: Basural clandestino en la rambla" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:outline-none transition">
-                    </div>
-
-                    <!-- Categoría y Gravedad -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                                Categoría <span class="text-rose-500">*</span>
-                            </label>
-                            <select id="categoria" required class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none transition bg-white">
-                                <option value="">Seleccionar...</option>
-                                <option value="Residuos">Residuos / Basura</option>
-                                <option value="Saneamiento">Saneamiento / Agua</option>
-                                <option value="Alumbrado">Alumbrado Público</option>
-                                <option value="Espacios Verdes">Espacios Verdes</option>
-                                <option value="Vialidad">Vialidad / Calles</option>
-                                <option value="Otro">Otro Incidente</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                                Gravedad <span class="text-rose-500">*</span>
-                            </label>
-                            <select id="gravedad" required class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none transition bg-white">
-                                <option value="baja">Baja (Mantenimiento)</option>
-                                <option value="media">Media (Intervención)</option>
-                                <option value="alta">Alta (Riesgo urgente)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Descripción -->
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                            Descripción del Incidente <span class="text-rose-500">*</span>
-                        </label>
-                        <textarea id="descripcion" rows="3" required placeholder="Describe brevemente la situación observada..." class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none transition"></textarea>
-                    </div>
-
-                    <!-- Campo de Entrada de Foto Directa desde Cámara -->
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-dashed border-slate-300">
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                            <i class="fa-solid fa-camera text-brand-600 mr-1.5"></i> Capturar o Adjuntar Foto
-                        </label>
-                        <p class="text-[11px] text-slate-500 mb-2">En dispositivos móviles, al pulsar se abrirá directamente la cámara del celular.</p>
-                        <input type="file" id="input-foto" accept="image/*" capture="environment" 
-                               class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-100 file:text-brand-800 hover:file:bg-brand-200 cursor-pointer">
-                        
-                        <!-- Previsualización de la Imagen -->
-                        <div id="preview-container" class="mt-3 hidden">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Vista previa:</span>
-                            <img id="foto-preview" class="w-full h-36 object-cover rounded-xl border border-slate-200 shadow-sm">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-2xl transition-all shadow-lg shadow-brand-600/30 flex items-center justify-center space-x-2 active:scale-95">
-                        <i class="fa-solid fa-paper-plane"></i>
-                        <span>Publicar Reporte Ciudadano</span>
-                    </button>
-                </form>
-            </div>
-        </div>
-    </section>
-
-    <!-- Sección Informativa: Qué es el EcoMapa -->
-    <section id="nosotros" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-sm relative overflow-hidden">
-            <div class="max-w-3xl relative z-10">
-                <span class="text-xs font-extrabold text-brand-600 uppercase tracking-widest block mb-2">Acerca del Proyecto</span>
-                <h2 class="text-3xl font-black text-slate-900 mb-4">¿Qué es el EcoMapa Fray Bentos?</h2>
-                <p class="text-slate-600 leading-relaxed mb-4 text-sm sm:text-base">
-                    EcoMapa Fray Bentos es un ecosistema digital y colaborativo concebido para empoderar a la comunidad. Permite visualizar, monitorear y gestionar de forma transparente las problemáticas ambientales e infraestructura de nuestra ciudad en un mapa dinámico en tiempo real.
-                </p>
-                <p class="text-slate-600 leading-relaxed text-sm sm:text-base">
-                    Mediante el uso de tecnologías geoespaciales abiertas y la integración de fotos geolocalizadas, creamos un puente directo entre la voz de los vecinos y las acciones de respuesta, impulsando una Fray Bentos más sustentable, organizada y limpia.
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Guía Paso a Paso -->
-    <section id="como-usar" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="text-center max-w-2xl mx-auto mb-10">
-            <span class="text-xs font-extrabold text-brand-600 uppercase tracking-widest block mb-1">Paso a Paso</span>
-            <h2 class="text-3xl font-black text-slate-900">¿Cómo reportar un problema?</h2>
-        </div>
+    <!-- Bottom Sheet / Panel Deslizante de Reporte (Animado) -->
+    <div id="report-sheet" class="bottom-sheet fixed inset-x-0 bottom-0 z-50 transform translate-y-full max-h-[88vh] bg-white rounded-t-3xl shadow-2xl flex flex-col border-t border-slate-200">
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 bg-brand-100 text-brand-700 rounded-2xl flex items-center justify-center text-xl font-black mb-4">1</div>
-                <h3 class="font-bold text-slate-900 mb-2">Marca el Punto</h3>
-                <p class="text-xs text-slate-600 leading-relaxed">Toca sobre el mapa para fijar las coordenadas exactas donde ocurre el incidente.</p>
-            </div>
-
-            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 bg-brand-100 text-brand-700 rounded-2xl flex items-center justify-center text-xl font-black mb-4">2</div>
-                <h3 class="font-bold text-slate-900 mb-2">Toma la Foto</h3>
-                <p class="text-xs text-slate-600 leading-relaxed">Abre la cámara de tu celular directo desde el formulario para registrar la evidencia física.</p>
-            </div>
-
-            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 bg-brand-100 text-brand-700 rounded-2xl flex items-center justify-center text-xl font-black mb-4">3</div>
-                <h3 class="font-bold text-slate-900 mb-2">Completa los Datos</h3>
-                <p class="text-xs text-slate-600 leading-relaxed">Ingresa un título descriptivo, clasifica el problema y define la urgencia o gravedad.</p>
-            </div>
-
-            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition">
-                <div class="w-12 h-12 bg-brand-100 text-brand-700 rounded-2xl flex items-center justify-center text-xl font-black mb-4">4</div>
-                <h3 class="font-bold text-slate-900 mb-2">Publica y Difunde</h3>
-                <p class="text-xs text-slate-600 leading-relaxed">Envía el reporte y compártelo por WhatsApp, Facebook o enlace directo a Google Maps.</p>
+        <!-- Barra Táctil Superior (Handle) -->
+        <div class="p-3 flex flex-col items-center justify-center cursor-pointer border-b border-slate-100" onclick="cerrarMenuReporte()">
+            <div class="w-12 h-1.5 bg-slate-300 rounded-full mb-1"></div>
+            <div class="w-full flex items-center justify-between px-2">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center">
+                    <i class="fa-solid fa-location-dot text-brand-600 mr-1.5"></i> Nuevo Incidente
+                </span>
+                <button type="button" class="w-7 h-7 bg-slate-100 rounded-full text-slate-500 font-bold text-xs flex items-center justify-center">✕</button>
             </div>
         </div>
-    </section>
 
-    <!-- Semáforo de Gravedad -->
-    <section id="semaforo" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="bg-slate-900 text-white rounded-3xl p-8 sm:p-12 shadow-xl border border-slate-800">
-            <div class="max-w-2xl mb-8">
-                <span class="text-xs font-extrabold text-brand-400 uppercase tracking-widest block mb-1">Clasificación de Riesgo</span>
-                <h2 class="text-3xl font-black mb-2">Semáforos de Nivel de Gravedad</h2>
-                <p class="text-slate-400 text-sm">Entiende cómo priorizamos las respuestas según la urgencia del reporte registrado.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Baja -->
-                <div class="bg-slate-800/90 p-6 rounded-2xl border border-slate-700/80">
-                    <div class="flex items-center space-x-3 mb-3">
-                        <span class="w-4 h-4 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50"></span>
-                        <h3 class="font-bold text-emerald-400">Gravedad Baja</h3>
+        <!-- Formulario Deslizable -->
+        <div class="p-5 overflow-y-auto space-y-4 touch-pan-y">
+            <form id="form-reporte-mobile" class="space-y-3.5">
+                <!-- Coordenadas ocultas pero dinámicas -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">Latitud</label>
+                        <input type="text" id="latitud" readonly required class="w-full bg-slate-100 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-mono text-slate-600">
                     </div>
-                    <p class="text-xs text-slate-300 leading-relaxed">Inconvenientes estéticos o de mantenimiento regular que no representan peligro inminente (ej. restos de poda, contenedores al límite).</p>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase">Longitud</label>
+                        <input type="text" id="longitud" readonly required class="w-full bg-slate-100 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-mono text-slate-600">
+                    </div>
                 </div>
 
-                <!-- Media -->
-                <div class="bg-slate-800/90 p-6 rounded-2xl border border-slate-700/80">
-                    <div class="flex items-center space-x-3 mb-3">
-                        <span class="w-4 h-4 rounded-full bg-amber-500 shadow-lg shadow-amber-500/50"></span>
-                        <h3 class="font-bold text-amber-400">Gravedad Media</h3>
-                    </div>
-                    <p class="text-xs text-slate-300 leading-relaxed">Fallos que afectan el tránsito o generan molestias importantes (ej. luminarias apagadas, pequeñas pérdidas de agua limpia, baches).</p>
+                <!-- Título -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Título del problema <span class="text-rose-500">*</span></label>
+                    <input type="text" id="titulo" required placeholder="Ej: Basura acumulada en la esquina" class="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
                 </div>
 
-                <!-- Alta -->
-                <div class="bg-slate-800/90 p-6 rounded-2xl border border-slate-700/80">
-                    <div class="flex items-center space-x-3 mb-3">
-                        <span class="w-4 h-4 rounded-full bg-rose-500 shadow-lg shadow-rose-500/50"></span>
-                        <h3 class="font-bold text-rose-400">Gravedad Alta</h3>
+                <!-- Categoría y Gravedad -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Categoría</label>
+                        <select id="categoria" required class="w-full border border-slate-200 rounded-xl px-2.5 py-2.5 text-xs bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="Residuos">Residuos</option>
+                            <option value="Saneamiento">Saneamiento</option>
+                            <option value="Alumbrado">Alumbrado</option>
+                            <option value="Espacios Verdes">Espacios Verdes</option>
+                            <option value="Vialidad">Vialidad</option>
+                            <option value="Otro">Otro</option>
+                        </select>
                     </div>
-                    <p class="text-xs text-slate-300 leading-relaxed">Emergencias comunitarias, focos de contaminación o peligro directo para la salud (ej. cables caídos, vertidos de saneamiento, basurales tóxicos).</p>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Gravedad</label>
+                        <select id="gravedad" required class="w-full border border-slate-200 rounded-xl px-2.5 py-2.5 text-xs bg-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="baja">Baja</option>
+                            <option value="media">Media</option>
+                            <option value="alta">Alta (Urgente)</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
+
+                <!-- Descripción -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Descripción</label>
+                    <textarea id="descripcion" rows="2" required placeholder="Detalles de lo sucedido..." class="w-full border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                </div>
+
+                <!-- Botón Directo de Cámara -->
+                <div class="bg-slate-50 p-3 rounded-2xl border border-dashed border-slate-300">
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1 flex items-center">
+                        <i class="fa-solid fa-camera text-brand-600 mr-1.5 text-sm"></i> Fotografiar Incidente
+                    </label>
+                    <input type="file" id="input-foto" accept="image/*" capture="environment" 
+                           class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-100 file:text-brand-800 hover:file:bg-brand-200 cursor-pointer">
+                    
+                    <div id="preview-container" class="mt-2 hidden">
+                        <img id="foto-preview" class="w-full h-28 object-cover rounded-xl border border-slate-200 shadow-sm">
+                    </div>
+                </div>
+
+                <!-- Botón de Envío -->
+                <button type="submit" id="btn-submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-extrabold py-3.5 rounded-2xl text-xs transition shadow-lg shadow-brand-600/30 flex items-center justify-center space-x-2 active:scale-95">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Publicar Reporte Ciudadano</span>
+                </button>
+            </form>
         </div>
-    </section>
+    </div>
 
-    <!-- Pie de Página (Footer) -->
-    <footer class="bg-white border-t border-slate-200 mt-12 py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div class="flex items-center justify-center space-x-2 mb-3">
-                <div class="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center text-white text-xs font-bold">
-                    <i class="fa-solid fa-leaf"></i>
-                </div>
-                <span class="font-black text-slate-900 tracking-tight">EcoMapa Fray Bentos</span>
+    <!-- Modal de Éxito Premium con Tick Verde Animado -->
+    <div id="modal-success" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border border-slate-100 animate-success-bounce">
+            
+            <!-- SVG Tick Verde Animado -->
+            <div class="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                <svg class="w-20 h-20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark-circle" cx="26" cy="26" r="23" fill="none"/>
+                    <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
             </div>
-            <p class="text-xs text-slate-500">© 2026 EcoMapa Fray Bentos. Proyecto de Participación Ciudadana y Gestión Urbano-Ambiental.</p>
-        </div>
-    </footer>
 
-    <!-- Scripts de Leaflet JS y Lógica Principal -->
+            <h3 class="text-xl font-black text-slate-900 mb-1">¡Reporte Enviado!</h3>
+            <p class="text-xs text-slate-500 leading-relaxed mb-6">Tu contribución fue registrada con éxito en el mapa de Fray Bentos.</p>
+
+            <button onclick="cerrarModalExito()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-2xl text-xs transition shadow-md active:scale-95">
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <!-- Leaflet JS y Lógica Principal Móvil -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="/static/js/main.js"></script>
 </body>
