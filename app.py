@@ -1,5 +1,6 @@
 import os
-from flask import Flask, render_template, request, jsonify
+from datetime import datetime
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 
@@ -9,14 +10,14 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ecomapa.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Configuración de carpeta de imágenes subidas
+# Configuración de carpeta para archivos subidos
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db = SQLAlchemy(app)
 
-# Modelo de Base de Datos
+# Modelo de datos extendido con fecha de creación
 class Reporte(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(150), nullable=False)
@@ -27,8 +28,10 @@ class Reporte(db.Model):
     longitud = db.Column(db.Float, nullable=False)
     estado = db.Column(db.String(20), default='Pendiente')
     foto_url = db.Column(db.String(300), nullable=True)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
+        fecha_fmt = self.fecha_creacion.strftime('%d/%m/%Y a las %H:%M hs') if self.fecha_creacion else 'Sin fecha'
         return {
             'id': self.id,
             'titulo': self.titulo,
@@ -38,10 +41,10 @@ class Reporte(db.Model):
             'latitud': self.latitud,
             'longitud': self.longitud,
             'estado': self.estado,
-            'foto_url': self.foto_url
+            'foto_url': self.foto_url,
+            'fecha': fecha_fmt
         }
 
-# Crear tablas al iniciar la aplicación
 with app.app_context():
     db.create_all()
 
@@ -49,10 +52,14 @@ with app.app_context():
 def index():
     return render_template('index.html')
 
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
 @app.route('/api/reportes', methods=['GET'])
 def obtener_reportes():
     try:
-        reportes = Reporte.query.all()
+        reportes = Reporte.query.order_by(Reporte.fecha_creacion.desc()).all()
         return jsonify([r.to_dict() for r in reportes]), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -60,21 +67,15 @@ def obtener_reportes():
 @app.route('/api/reportes', methods=['POST'])
 def crear_reporte():
     try:
-        # Obtener datos de FormData o de JSON
-        if request.form:
-            datos = request.form
-        else:
-            datos = request.get_json() or {}
+        datos = request.form if request.form else (request.get_json() or {})
 
         titulo = datos.get('titulo')
         latitud = datos.get('latitud')
         longitud = datos.get('longitud')
 
-        # Validación de campos obligatorios
         if not titulo or latitud is None or longitud is None:
             return jsonify({'error': 'Faltan campos obligatorios (título, latitud o longitud)'}), 400
 
-        # Procesamiento de la foto opcional
         foto_path = None
         if 'foto' in request.files:
             file = request.files['foto']
@@ -84,7 +85,6 @@ def crear_reporte():
                 file.save(save_path)
                 foto_path = f'/{UPLOAD_FOLDER}/{filename}'
 
-        # Guardar el registro en la base de datos
         nuevo_reporte = Reporte(
             titulo=titulo,
             categoria=datos.get('categoria', 'Otro'),
@@ -93,7 +93,8 @@ def crear_reporte():
             latitud=float(latitud),
             longitud=float(longitud),
             estado=datos.get('estado', 'Pendiente'),
-            foto_url=foto_path
+            foto_url=foto_path,
+            fecha_creacion=datetime.utcnow()
         )
 
         db.session.add(nuevo_reporte)
