@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control Admin - EcoMapa FB</title>
+    <title>Panel Premium Admin - EcoMapa FB</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -11,125 +11,158 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
 
-    <!-- Encabezado Admin -->
-    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+    <!-- Header Admin -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-xl">
         <div class="flex items-center gap-3">
-            <div class="bg-emerald-500 p-2 rounded-xl text-slate-950 font-black">
-                <i class="fa-solid fa-user-shield"></i>
+            <div class="bg-emerald-500 p-2.5 rounded-xl text-slate-950 font-black shadow-lg shadow-emerald-500/20">
+                <i class="fa-solid fa-shield-halved"></i>
             </div>
             <div>
-                <h1 class="font-black text-base text-white">Panel de Administración</h1>
-                <span class="text-xs text-emerald-400">{{ admin_email }}</span>
+                <h1 class="font-black text-base text-white tracking-wide">Gestión de Incidentes</h1>
+                <span class="text-xs text-emerald-400 font-medium">{{ admin_email }}</span>
             </div>
         </div>
         <div class="flex items-center gap-3">
-            <a href="/" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold border border-slate-700 transition">
-                <i class="fa-solid fa-map"></i> Ver Mapa
+            <a href="/" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold border border-slate-700 transition">
+                <i class="fa-solid fa-map"></i> Ver Mapa Público
             </a>
-            <a href="/logout" class="px-3.5 py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition">
-                <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+            <a href="/logout" class="px-4 py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 rounded-xl text-xs font-bold transition">
+                <i class="fa-solid fa-right-from-bracket"></i> Salir
             </a>
         </div>
     </header>
 
-    <!-- Contenido Principal -->
-    <main class="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+    <!-- Modal Animación Tick Verde -->
+    <div id="tick-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[3000] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-emerald-500/40 text-slate-100 max-w-sm w-full rounded-3xl p-6 text-center shadow-2xl space-y-4">
+            <div class="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-400 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">
+                <i class="fa-solid fa-circle-check animate-bounce"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-2xl font-black text-white">¡Reporte Resuelto!</h3>
+                <p class="text-xs text-slate-400">El estado del reporte ha sido actualizado con éxito a Resuelto.</p>
+            </div>
+            <button onclick="cerrarTickModal()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition shadow-lg">
+                Continuar
+            </button>
+        </div>
+    </div>
 
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
         <div class="flex items-center justify-between">
-            <h2 class="text-xl font-extrabold text-white">Gestión de Incidentes Ciudadanos</h2>
-            <span class="bg-slate-800 border border-slate-700 px-3 py-1 rounded-full text-xs font-bold text-slate-300">
-                Total: {{ reportes|length }} reportes
+            <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+                <i class="fa-solid fa-list-check text-emerald-400"></i> Reportes Registrados
+            </h2>
+            <span class="bg-slate-900 border border-slate-800 px-4 py-1.5 rounded-full text-xs font-bold text-slate-300">
+                Total: {{ reportes|length }}
             </span>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-slate-300">
-                    <thead class="bg-slate-800/80 uppercase text-[10px] font-black tracking-wider text-slate-400">
-                        <tr>
-                            <th class="p-4">ID</th>
-                            <th class="p-4">Incidencia</th>
-                            <th class="p-4">Categoría</th>
-                            <th class="p-4">Gravedad</th>
-                            <th class="p-4">Fecha</th>
-                            <th class="p-4">Estado</th>
-                            <th class="p-4 text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-800">
-                        {% for r in reportes %}
-                        <tr class="hover:bg-slate-800/40 transition" id="row-{{ r.id }}">
-                            <td class="p-4 font-mono font-bold text-slate-500">#{{ r.id }}</td>
-                            <td class="p-4">
-                                <div class="font-bold text-white text-sm">{{ r.titulo }}</div>
-                                <div class="text-[11px] text-slate-400 line-clamp-1">{{ r.descripcion or 'Sin descripción' }}</div>
-                            </td>
-                            <td class="p-4">
-                                <span class="bg-slate-800 text-slate-300 border border-slate-700 px-2 py-1 rounded-lg font-bold">
-                                    {{ r.categoria }}
-                                </span>
-                            </td>
-                            <td class="p-4">
-                                {% if r.gravedad == 'alta' %}
-                                    <span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-1 rounded-lg font-extrabold">ALTA</span>
-                                {% elif r.gravedad == 'media' %}
-                                    <span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-1 rounded-lg font-extrabold">MEDIA</span>
-                                {% else %}
-                                    <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-lg font-extrabold">BAJA</span>
-                                {% endif %}
-                            </td>
-                            <td class="p-4 text-slate-400">{{ r.to_dict().fecha }}</td>
-                            <td class="p-4">
-                                <select onchange="actualizarEstado({{ r.id }}, this.value)" class="bg-slate-800 border border-slate-700 text-white rounded-lg px-2 py-1 focus:outline-none focus:border-emerald-500 font-bold">
-                                    <option value="Pendiente" {% if r.estado == 'Pendiente' %}selected{% endif %}>🟡 Pendiente</option>
-                                    <option value="En Proceso" {% if r.estado == 'En Proceso' %}selected{% endif %}>🔵 En Proceso</option>
-                                    <option value="Resuelto" {% if r.estado == 'Resuelto' %}selected{% endif %}>🟢 Resuelto</option>
-                                </select>
-                            </td>
-                            <td class="p-4 text-center">
-                                <button onclick="eliminarReporte({{ r.id }})" class="p-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl transition border border-rose-500/20" title="Eliminar reporte">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="7" class="p-8 text-center text-slate-500 font-bold">
-                                No hay reportes registrados en la plataforma.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- Cards / Table Grid -->
+        <div class="grid grid-cols-1 gap-4">
+            {% for r in reportes %}
+            <div id="card-{{ r.id }}" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col md:flex-row gap-5 items-start md:items-center justify-between">
+                
+                <div class="flex gap-4 items-start w-full md:w-auto">
+                    <!-- Foto Preview -->
+                    {% if r.foto_url %}
+                        <img src="{{ r.foto_url }}" class="w-24 h-24 object-cover rounded-xl border border-slate-700 flex-shrink-0">
+                    {% else %}
+                        <div class="w-24 h-24 bg-slate-800 rounded-xl border border-slate-700/60 flex items-center justify-center text-slate-600 flex-shrink-0">
+                            <i class="fa-solid fa-image text-2xl"></i>
+                        </div>
+                    {% endif %}
+
+                    <!-- Info Detallada -->
+                    <div class="space-y-1.5">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="font-mono text-xs font-bold text-slate-500">#{{ r.id }}</span>
+                            <h3 class="font-bold text-white text-base">{{ r.titulo }}</h3>
+                            
+                            {% if r.gravedad == 'alta' %}
+                                <span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] px-2 py-0.5 rounded-md font-black">ALTA</span>
+                            {% elif r.gravedad == 'media' %}
+                                <span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] px-2 py-0.5 rounded-md font-black">MEDIA</span>
+                            {% else %}
+                                <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded-md font-black">BAJA</span>
+                            {% endif %}
+                        </div>
+
+                        <p class="text-xs text-slate-400 line-clamp-2">{{ r.descripcion or 'Sin descripción proporcionada.' }}</p>
+
+                        <!-- Ubicación y Fecha -->
+                        <div class="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
+                            <span><i class="fa-solid fa-calendar-days text-emerald-400"></i> {{ r.to_dict().fecha }}</span>
+                            <span><i class="fa-solid fa-location-dot text-emerald-400"></i> Lat: {{ r.latitud }}, Lng: {{ r.longitud }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acciones Rápidas -->
+                <div class="flex items-center gap-3 w-full md:w-auto justify-end border-t md:border-t-0 border-slate-800 pt-3 md:pt-0">
+                    <!-- Selector Estado -->
+                    <select id="select-estado-{{ r.id }}" onchange="actualizarEstado({{ r.id }}, this.value)" class="bg-slate-800 border border-slate-700 text-xs text-white rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500 font-bold">
+                        <option value="Pendiente" {% if r.estado == 'Pendiente' %}selected{% endif %}>🟡 Pendiente</option>
+                        <option value="En Proceso" {% if r.estado == 'En Proceso' %}selected{% endif %}>🔵 En Proceso</option>
+                        <option value="Resuelto" {% if r.estado == 'Resuelto' %}selected{% endif %}>🟢 Resuelto</option>
+                    </select>
+
+                    <!-- Botón directo Resolver -->
+                    <button onclick="resolverDirecto({{ r.id }})" class="px-3.5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs transition flex items-center gap-1.5 shadow-lg shadow-emerald-950">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>Resolver</span>
+                    </button>
+
+                    <!-- Eliminar -->
+                    <button onclick="eliminarReporte({{ r.id }})" class="p-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-xl transition border border-rose-500/20" title="Eliminar">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
             </div>
+            {% else %}
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-500 font-bold">
+                No hay reportes registrados por el momento.
+            </div>
+            {% endfor %}
         </div>
     </main>
 
     <script>
-        async function actualizarEstado(id, nuevoEstado) {
+        async function actualizarEstado(id, nuevoEstado, esDirecto = false) {
             try {
                 const res = await fetch(`/api/reportes/${id}/estado`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ estado: nuevoEstado })
                 });
-                if (!res.ok) throw new Error('Error al actualizar estado');
+
+                if (res.ok && (nuevoEstado === 'Resuelto' || esDirecto)) {
+                    document.getElementById(`select-estado-${id}`).value = 'Resuelto';
+                    document.getElementById('tick-modal').classList.remove('hidden');
+                }
             } catch (err) {
-                alert(err.message);
+                alert('Error al actualizar el estado del reporte');
             }
         }
 
+        function resolverDirecto(id) {
+            actualizarEstado(id, 'Resuelto', true);
+        }
+
+        function cerrarTickModal() {
+            document.getElementById('tick-modal').classList.add('hidden');
+        }
+
         async function eliminarReporte(id) {
-            if (!confirm('¿Estás seguro de eliminar este reporte permanentemente?')) return;
+            if (!confirm('¿Deseas eliminar este reporte?')) return;
             try {
                 const res = await fetch(`/api/reportes/${id}`, { method: 'DELETE' });
                 if (res.ok) {
-                    document.getElementById(`row-${id}`).remove();
-                } else {
-                    alert('Error al eliminar el reporte');
+                    document.getElementById(`card-${id}`).remove();
                 }
             } catch (err) {
-                alert('Error de conexión');
+                alert('Error de comunicación con el servidor');
             }
         }
     </script>

@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoMapa Urbano - Fray Bentos Sustentable</title>
+    <title>EcoMapa FB - Fray Bentos Sustentable</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- FontAwesome Font Icons -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     
     <style>
@@ -23,17 +23,15 @@
             animation: bgGradient 15s ease infinite;
         }
 
-        @keyframes floatParticle {
-            0% { transform: translateY(0px) rotate(0deg); opacity: 0.2; }
-            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.6; }
-            100% { transform: translateY(0px) rotate(360deg); opacity: 0.2; }
+        .leaflet-popup-content-wrapper {
+            background: #0f172a !important;
+            color: #f8fafc !important;
+            border: 1px solid #334155 !important;
+            border-radius: 1rem !important;
+            padding: 0.5rem !important;
         }
-        .particle {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(16, 185, 129, 0.15);
-            animation: floatParticle 8s infinite ease-in-out;
-            pointer-events: none;
+        .leaflet-popup-tip {
+            background: #0f172a !important;
         }
     </style>
 </head>
@@ -41,15 +39,10 @@
 
     <!-- MODAL BIENVENIDA -->
     <div id="welcome-modal" class="fixed inset-0 animate-gradient-bg z-[2000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-        <div class="particle w-32 h-32 top-10 left-10"></div>
-        <div class="particle w-48 h-48 bottom-10 right-10" style="animation-delay: -3s;"></div>
-
         <div class="bg-slate-900/90 border border-emerald-500/30 max-w-2xl w-full rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-6 backdrop-blur-xl relative z-10 my-auto">
             <div class="flex justify-center">
-                <div class="relative">
-                    <div class="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-400/60 rounded-3xl flex items-center justify-center text-emerald-400 text-4xl shadow-lg shadow-emerald-950/50 transform rotate-3">
-                        <i class="fa-solid fa-leaf animate-bounce"></i>
-                    </div>
+                <div class="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-400/60 rounded-3xl flex items-center justify-center text-emerald-400 text-4xl shadow-lg shadow-emerald-950/50 transform rotate-3">
+                    <i class="fa-solid fa-leaf animate-bounce"></i>
                 </div>
             </div>
             
@@ -59,41 +52,6 @@
                 </h1>
                 <p class="text-slate-300 text-xs sm:text-sm max-w-lg mx-auto">
                     Plataforma participativa ciudadana para el reporte, monitoreo y gestión ambiental en tiempo real.
-                </p>
-            </div>
-
-            <div class="flex border-b border-slate-800 text-xs font-bold">
-                <button id="tab-guia-btn" onclick="cambiarTab('guia')" class="flex-1 py-2.5 border-b-2 border-emerald-400 text-emerald-400 transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-map-location-dot"></i> Guía Interactiva
-                </button>
-                <button id="tab-info-btn" onclick="cambiarTab('info')" class="flex-1 py-2.5 border-b-2 border-transparent text-slate-400 hover:text-white transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-circle-info"></i> Acerca de la Plataforma
-                </button>
-            </div>
-
-            <div id="tab-guia" class="space-y-3 text-left">
-                <div class="grid sm:grid-cols-3 gap-3">
-                    <div class="bg-slate-800/60 border border-slate-700/60 p-4 rounded-2xl space-y-2">
-                        <div class="w-8 h-8 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center font-bold text-sm">1</div>
-                        <h4 class="font-bold text-xs text-white">Marca la Ubicación</h4>
-                        <p class="text-[11px] text-slate-400">Haz clic o toca en cualquier punto del mapa interactivo.</p>
-                    </div>
-                    <div class="bg-slate-800/60 border border-slate-700/60 p-4 rounded-2xl space-y-2">
-                        <div class="w-8 h-8 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center font-bold text-sm">2</div>
-                        <h4 class="font-bold text-xs text-white">Completa los Datos</h4>
-                        <p class="text-[11px] text-slate-400">Selecciona categoría, gravedad y adjunta una imagen.</p>
-                    </div>
-                    <div class="bg-slate-800/60 border border-slate-700/60 p-4 rounded-2xl space-y-2">
-                        <div class="w-8 h-8 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center font-bold text-sm">3</div>
-                        <h4 class="font-bold text-xs text-white">Publica y Difunde</h4>
-                        <p class="text-[11px] text-slate-400">El reporte se crea y puedes compartirlo en redes.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="tab-info" class="hidden space-y-3 text-left text-xs text-slate-300 leading-relaxed bg-slate-800/40 p-4 rounded-2xl border border-slate-800">
-                <p>
-                    <strong>EcoMapa Fray Bentos</strong> conecta de manera transparente a los ciudadanos con la gestión de respuestas municipales.
                 </p>
             </div>
 
@@ -129,76 +87,79 @@
         <span>Toca cualquier punto del mapa para crear un reporte</span>
     </div>
 
-    <!-- PANEL SLIDE-UP -->
-    <div id="report-sheet" class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 rounded-t-3xl p-5 sm:p-6 transition-transform duration-300 translate-y-full z-[1000] max-w-xl mx-auto shadow-2xl">
-        <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-            <h3 class="font-black text-base text-white flex items-center gap-2">
-                <i class="fa-solid fa-plus-circle text-emerald-400"></i> Registrar Nuevo Reporte
-            </h3>
-            <button onclick="cerrarMenuReporte()" class="text-slate-400 hover:text-white p-1 transition">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
+    <!-- MODAL DE REPORTE (CENTRADO EN PANTALLA) -->
+    <div id="report-modal-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[1500] hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none">
+        <div id="report-card" class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 transform scale-95 transition-all duration-300">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-black text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-camera text-emerald-400"></i> Registrar Nuevo Reporte
+                </h3>
+                <button onclick="cerrarMenuReporte()" class="text-slate-400 hover:text-white p-1 transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form id="form-reporte" class="space-y-4">
+                <input type="hidden" id="latitud">
+                <input type="hidden" id="longitud">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Título del reporte *</label>
+                    <input type="text" id="titulo" required placeholder="Ej. Acumulación de residuos en la esquina" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Categoría</label>
+                        <select id="categoria" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                            <option value="Basura">Basura / Residuos</option>
+                            <option value="Arbolado">Arbolado / Podas</option>
+                            <option value="Alumbrado">Alumbrado Público</option>
+                            <option value="Saneamiento">Agua / Saneamiento</option>
+                            <option value="Otro">Otros</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Gravedad</label>
+                        <select id="gravedad" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                            <option value="baja">Baja</option>
+                            <option value="media">Media</option>
+                            <option value="alta">Alta / Urgente</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Descripción</label>
+                    <textarea id="descripcion" rows="2" placeholder="Agrega contexto o detalles adicionales..." class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Tomar Foto con Cámara</label>
+                    <!-- capture="environment" abre directamente la cámara posterior en móviles -->
+                    <input type="file" id="input-foto" accept="image/*" capture="environment" class="w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-500 file:text-slate-950 hover:file:bg-emerald-400 cursor-pointer">
+                    <div id="preview-container" class="mt-2 hidden">
+                        <img id="foto-preview" class="h-24 rounded-xl object-cover border border-slate-700 w-full">
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-submit" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl transition flex items-center justify-center gap-2 text-xs uppercase tracking-wider shadow-lg shadow-emerald-950">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Publicar Reporte</span>
+                </button>
+            </form>
         </div>
-
-        <form id="form-reporte-mobile" class="space-y-4">
-            <input type="hidden" id="latitud">
-            <input type="hidden" id="longitud">
-
-            <div>
-                <label class="block text-xs font-bold text-slate-300 mb-1">Título de la incidencia *</label>
-                <input type="text" id="titulo" required placeholder="Ej. Vertedero clandestino de basura" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Categoría</label>
-                    <select id="categoria" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
-                        <option value="Basura">Basura / Residuos</option>
-                        <option value="Arbolado">Arbolado / Podas</option>
-                        <option value="Alumbrado">Alumbrado Público</option>
-                        <option value="Saneamiento">Agua / Saneamiento</option>
-                        <option value="Otro">Otros</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Gravedad</label>
-                    <select id="gravedad" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
-                        <option value="baja">Baja</option>
-                        <option value="media">Media</option>
-                        <option value="alta">Alta / Urgente</option>
-                    </select>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-slate-300 mb-1">Descripción detallada</label>
-                <textarea id="descripcion" rows="2" placeholder="Agrega contexto adicional sobre el problema..." class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"></textarea>
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-slate-300 mb-1">Fotografía de evidencia</label>
-                <input type="file" id="input-foto" accept="image/*" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-500 file:text-slate-950 hover:file:bg-emerald-400 cursor-pointer">
-                <div id="preview-container" class="mt-2 hidden">
-                    <img id="foto-preview" class="h-20 rounded-xl object-cover border border-slate-700">
-                </div>
-            </div>
-
-            <button type="submit" id="btn-submit" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl transition flex items-center justify-center gap-2 text-xs uppercase tracking-wider shadow-lg shadow-emerald-950">
-                <i class="fa-solid fa-paper-plane"></i>
-                <span>Publicar Reporte Ciudadano</span>
-            </button>
-        </form>
     </div>
 
-    <!-- MODAL DE ÉXITO -->
+    <!-- MODAL DE ÉXITO CON ANIMACIÓN DE TICK -->
     <div id="modal-success" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[3000] hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-emerald-500/40 text-slate-100 max-w-sm w-full rounded-3xl p-6 text-center shadow-2xl space-y-4">
             <div class="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-400 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">
                 <i class="fa-solid fa-check animate-bounce"></i>
             </div>
             <div class="space-y-1">
-                <h3 class="text-2xl font-black text-white">¡Reporte Publicado!</h3>
-                <p class="text-xs text-slate-400">Tu contribución ya está visible en el mapa participativo de Fray Bentos.</p>
+                <h3 class="text-2xl font-black text-white" id="success-title">¡Reporte Publicado!</h3>
+                <p class="text-xs text-slate-400" id="success-desc">Tu contribución ya está visible en el mapa participativo de Fray Bentos.</p>
             </div>
             <button onclick="cerrarModalExito()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition shadow-lg">
                 Entendido
@@ -208,29 +169,133 @@
 
     <!-- Leaflet JS & Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
         function cerrarBienvenida() {
             document.getElementById('welcome-modal').classList.add('hidden');
         }
 
-        function cambiarTab(tab) {
-            const tabGuia = document.getElementById('tab-guia');
-            const tabInfo = document.getElementById('tab-info');
-            const btnGuia = document.getElementById('tab-guia-btn');
-            const btnInfo = document.getElementById('tab-info-btn');
+        let map, tempMarker, reportesLayer;
 
-            if (tab === 'guia') {
-                tabGuia.classList.remove('hidden');
-                tabInfo.classList.add('hidden');
-                btnGuia.className = 'flex-1 py-2.5 border-b-2 border-emerald-400 text-emerald-400 transition flex items-center justify-center gap-2';
-                btnInfo.className = 'flex-1 py-2.5 border-b-2 border-transparent text-slate-400 hover:text-white transition flex items-center justify-center gap-2';
-            } else {
-                tabGuia.classList.add('hidden');
-                tabInfo.classList.remove('hidden');
-                btnInfo.className = 'flex-1 py-2.5 border-b-2 border-emerald-400 text-emerald-400 transition flex items-center justify-center gap-2';
-                btnGuia.className = 'flex-1 py-2.5 border-b-2 border-transparent text-slate-400 hover:text-white transition flex items-center justify-center gap-2';
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializar Mapa centrado en Fray Bentos
+            map = L.map('map').setView([-33.1381, -58.2988], 14);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
+
+            reportesLayer = L.layerGroup().addTo(map);
+
+            map.on('click', (e) => {
+                abrirMenuReporte(e.latlng.lat, e.latlng.lng);
+            });
+
+            cargarReportes();
+        });
+
+        async function cargarReportes() {
+            reportesLayer.clearLayers();
+            try {
+                const res = await fetch('/api/reportes');
+                const data = await res.json();
+
+                data.forEach(r => {
+                    const popupContent = `
+                        <div class="space-y-2 text-xs">
+                            ${r.foto_url ? `<img src="${r.foto_url}" class="w-full h-32 object-cover rounded-lg border border-slate-700">` : ''}
+                            <div class="font-bold text-emerald-400 text-sm">${r.titulo}</div>
+                            <div class="text-slate-300">${r.descripcion || 'Sin descripción'}</div>
+                            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800">
+                                <span><i class="fa-solid fa-clock"></i> ${r.fecha}</span>
+                                <span class="uppercase font-bold text-emerald-300">${r.estado}</span>
+                            </div>
+                        </div>
+                    `;
+                    L.marker([r.latitud, r.longitud]).addTo(reportesLayer).bindPopup(popupContent);
+                });
+            } catch (err) {
+                console.error("Error al cargar reportes:", err);
             }
+        }
+
+        function abrirMenuReporte(lat, lng) {
+            document.getElementById('latitud').value = lat;
+            document.getElementById('longitud').value = lng;
+            
+            const overlay = document.getElementById('report-modal-overlay');
+            const card = document.getElementById('report-card');
+            
+            overlay.classList.remove('hidden', 'pointer-events-none', 'opacity-0');
+            overlay.classList.add('opacity-100');
+            card.classList.remove('scale-95');
+            card.classList.add('scale-100');
+        }
+
+        function cerrarMenuReporte() {
+            const overlay = document.getElementById('report-modal-overlay');
+            const card = document.getElementById('report-card');
+            
+            card.classList.remove('scale-100');
+            card.classList.add('scale-95');
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+
+        document.getElementById('input-foto').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    document.getElementById('foto-preview').src = event.target.result;
+                    document.getElementById('preview-container').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('form-reporte').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Publicando...`;
+
+            const formData = new FormData();
+            formData.append('titulo', document.getElementById('titulo').value);
+            formData.append('categoria', document.getElementById('categoria').value);
+            formData.append('gravedad', document.getElementById('gravedad').value);
+            formData.append('descripcion', document.getElementById('descripcion').value);
+            formData.append('latitud', document.getElementById('latitud').value);
+            formData.append('longitud', document.getElementById('longitud').value);
+
+            const fileInput = document.getElementById('input-foto');
+            if (fileInput.files[0]) {
+                formData.append('foto', fileInput.files[0]);
+            }
+
+            try {
+                const res = await fetch('/api/reportes', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    cerrarMenuReporte();
+                    document.getElementById('form-reporte').reset();
+                    document.getElementById('preview-container').classList.add('hidden');
+                    document.getElementById('modal-success').classList.remove('hidden');
+                    cargarReportes();
+                }
+            } catch (err) {
+                alert("Error al enviar el reporte");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Publicar Reporte</span>`;
+            }
+        });
+
+        function cerrarModalExito() {
+            document.getElementById('modal-success').classList.add('hidden');
         }
     </script>
 </body>
