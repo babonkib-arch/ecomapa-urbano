@@ -25,15 +25,15 @@ function initMap() {
         attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    // Evento Táctil al tocar sobre el mapa
+    // Evento táctil/click al tocar sobre el mapa
     map.on('click', (e) => {
         const { lat, lng } = e.latlng;
 
-        // Asignar coordenadas a inputs
+        // Asignar coordenadas a los inputs
         document.getElementById('latitud').value = lat.toFixed(6);
         document.getElementById('longitud').value = lng.toFixed(6);
 
-        // Mover marcador temporal
+        // Mover o crear marcador temporal
         if (activeMarker) {
             activeMarker.setLatLng([lat, lng]);
         } else {
@@ -119,35 +119,48 @@ async function enviarReporte(e) {
     btnSubmit.disabled = true;
     btnSubmit.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Enviando...</span>`;
 
-    const payload = {
-        latitud: parseFloat(document.getElementById('latitud').value),
-        longitud: parseFloat(document.getElementById('longitud').value),
-        titulo: document.getElementById('titulo').value,
-        categoria: document.getElementById('categoria').value,
-        gravedad: document.getElementById('gravedad').value,
-        descripcion: document.getElementById('descripcion').value,
-        estado: 'Pendiente'
-    };
+    // Uso de FormData para enviar tanto texto como la fotografía
+    const formData = new FormData();
+    formData.append('latitud', document.getElementById('latitud').value);
+    formData.append('longitud', document.getElementById('longitud').value);
+    formData.append('titulo', document.getElementById('titulo').value);
+    formData.append('categoria', document.getElementById('categoria').value);
+    formData.append('gravedad', document.getElementById('gravedad').value);
+    formData.append('descripcion', document.getElementById('descripcion').value);
+
+    const inputFoto = document.getElementById('input-foto');
+    if (inputFoto && inputFoto.files[0]) {
+        formData.append('foto', inputFoto.files[0]);
+    }
 
     try {
         const res = await fetch('/api/reportes', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: formData // No se pone 'Content-Type', el navegador lo asigna automáticamente
         });
 
-        if (!res.ok) throw new Error('Error guardando el reporte');
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.error || `Error del servidor (${res.status})`);
+        }
 
-        // Resetear formulario y cerrar menú
+        // Limpiar formulario y cerrar panel
         document.getElementById('form-reporte-mobile').reset();
         document.getElementById('preview-container').classList.add('hidden');
         cerrarMenuReporte();
 
-        // Mostrar animación de éxito con Tick Verde
+        // Eliminar marcador temporal
+        if (activeMarker) {
+            map.removeLayer(activeMarker);
+            activeMarker = null;
+        }
+
+        // Mostrar tick verde animado y recargar marcadores
         mostrarModalExito();
         cargarReportesPublicos();
     } catch (err) {
-        alert('Ocurrió un error al enviar el reporte. Revisa la conexión.');
+        console.error('Detalle del error:', err);
+        alert(`No se pudo guardar el reporte: ${err.message}`);
     } finally {
         btnSubmit.disabled = false;
         btnSubmit.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Publicar Reporte Ciudadano</span>`;

@@ -1,129 +1,109 @@
 import os
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from supabase import create_client, Client
-from dotenv import load_dotenv
-
-# Cargar variables de entorno (.env)
-load_dotenv()
+from flask import Flask, render_template, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "eco_mapa_fray_bentos_secret_key_2026")
 
-# Configuración de Supabase
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+# Configuración de base de datos
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ecomapa.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-supabase: Client = None
-if SUPABASE_URL and SUPABASE_KEY:
-    try:
-        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    except Exception as e:
-        print(f"Error al inicializar Supabase: {e}")
+# Configuración de carpeta de imágenes subidas
+UPLOAD_FOLDER = os.path.join('static', 'uploads')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Configuración Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = "login"
+db = SQLAlchemy(app)
 
-class User(UserMixin):
-    def __init__(self, id, email):
-        self.id = id
-        self.email = email
+# Modelo de Base de Datos
+class Reporte(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(150), nullable=False)
+    categoria = db.Column(db.String(50), nullable=False)
+    gravedad = db.Column(db.String(20), nullable=False)
+    descripcion = db.Column(db.Text, nullable=True)
+    latitud = db.Column(db.Float, nullable=False)
+    longitud = db.Column(db.Float, nullable=False)
+    estado = db.Column(db.String(20), default='Pendiente')
+    foto_url = db.Column(db.String(300), nullable=True)
 
-@login_manager.user_loader
-def load_user(user_id):
-    # En un entorno real se verifica la sesión del usuario.
-    return User(user_id, "admin@fraybentos.gub.uy")
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'titulo': self.titulo,
+            'categoria': self.categoria,
+            'gravedad': self.gravedad,
+            'descripcion': self.descripcion,
+            'latitud': self.latitud,
+            'longitud': self.longitud,
+            'estado': self.estado,
+            'foto_url': self.foto_url
+        }
 
-# --- RUTAS DE VISTAS ---
+# Crear tablas al iniciar la aplicación
+with app.app_context():
+    db.create_all()
 
-@app.route("/")
+@app.route('/')
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        email = request.form.get("email")
-        password = request.form.get("password")
-
-        # Validación simple o con Supabase Auth
-        if email and password:
-            user = User(id="1", email=email)
-            login_user(user)
-            return redirect(url_for("admin"))
-        
-        return render_template("login.html", error="Credenciales inválidas")
-
-    return render_template("login.html")
-
-@app.route("/logout")
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for("index"))
-
-@app.route("/admin")
-@login_required
-def admin():
-    return render_template("admin.html")
-
-# --- ENDPOINTS API PARA REPORTES ---
-
-@app.route("/api/reportes", methods=["GET"])
-def get_reportes():
-    if not supabase:
-        return jsonify([]), 200
+@app.route('/api/reportes', methods=['GET'])
+def obtener_reportes():
     try:
-        res = supabase.table("reportes").select("*").order("created_at", desc=True).execute()
-        return jsonify(res.data), 200
+        reportes = Reporte.query.all()
+        return jsonify([r.to_dict() for r in reportes]), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({'error': str(e)}), 500
 
-@app.route("/api/reportes/<reporte_id>", methods=["GET"])
-def get_reporte_by_id(reporte_id):
-    if not supabase:
-        return jsonify({"error": "Sin conexión"}), 500
+@app.route('/api/reportes', methods=['POST'])
+def crear_reporte():
     try:
-        res = supabase.table("reportes").select("*").eq("id", reporte_id).single().execute()
-        return jsonify(res.data), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 404
+        # Obtener datos de FormData o de JSON
+        if request.form:
+            datos = request.form
+        else:
+            datos = request.get_json() or {}
 
-@app.route("/api/reportes", methods=["POST"])
-def create_reporte():
-    if not supabase:
-        return jsonify({"error": "Sin conexión a base de datos"}), 500
-    try:
-        data = request.json
-        res = supabase.table("reportes").insert(data).execute()
-        return jsonify(res.data), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        titulo = datos.get('titulo')
+        latitud = datos.get('latitud')
+        longitud = datos.get('longitud')
 
-@app.route("/api/reportes/<reporte_id>", methods=["PUT"])
-@login_required
-def update_reporte(reporte_id):
-    if not supabase:
-        return jsonify({"error": "Sin conexión a base de datos"}), 500
-    try:
-        data = request.json
-        res = supabase.table("reportes").update(data).eq("id", reporte_id).execute()
-        return jsonify(res.data), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        # Validación de campos obligatorios
+        if not titulo or latitud is None or longitud is None:
+            return jsonify({'error': 'Faltan campos obligatorios (título, latitud o longitud)'}), 400
 
-@app.route("/api/reportes/<reporte_id>", methods=["DELETE"])
-@login_required
-def delete_reporte(reporte_id):
-    if not supabase:
-        return jsonify({"error": "Sin conexión a base de datos"}), 500
-    try:
-        res = supabase.table("reportes").delete().eq("id", reporte_id).execute()
-        return jsonify({"message": "Eliminado exitosamente"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        # Procesamiento de la foto opcional
+        foto_path = None
+        if 'foto' in request.files:
+            file = request.files['foto']
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+                save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(save_path)
+                foto_path = f'/{UPLOAD_FOLDER}/{filename}'
 
-if __name__ == "__main__":
+        # Guardar el registro en la base de datos
+        nuevo_reporte = Reporte(
+            titulo=titulo,
+            categoria=datos.get('categoria', 'Otro'),
+            gravedad=datos.get('gravedad', 'baja'),
+            descripcion=datos.get('descripcion', ''),
+            latitud=float(latitud),
+            longitud=float(longitud),
+            estado=datos.get('estado', 'Pendiente'),
+            foto_url=foto_path
+        )
+
+        db.session.add(nuevo_reporte)
+        db.session.commit()
+
+        return jsonify({'mensaje': 'Reporte guardado con éxito', 'reporte': nuevo_reporte.to_dict()}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Error interno del servidor: {str(e)}'}), 500
+
+if __name__ == '__main__':
     app.run(debug=True)
