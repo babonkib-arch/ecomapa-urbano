@@ -1,314 +1,229 @@
 import os
-import time
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from werkzeug.utils import secure_filename
-from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import psycopg2
-import psycopg2.extras
-from supabase import create_client, Client
+from psycopg2.extras import RealDictCursor
+from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
 
-# Inicialización de la aplicación Flask
+load_dotenv()
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'clave-super-secreta-eco-mapa-2026'
+app.secret_key = os.getenv("SECRET_KEY", "eco_mapa_fray_bentos_secret_key_2026")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# --- CONFIGURACIÓN DE SUPABASE STORAGE ---
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-supabase_cliente = None
-if SUPABASE_URL and SUPABASE_KEY:
-    supabase_cliente = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-# Configuración de Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
-class Usuario(UserMixin):
-    def __init__(self, id, email, es_admin=False):
-        self.id = id
-        self.email = email
-        self.es_admin = es_admin
+# Lista blanca de 4 Administradores autorizados
+ADMINS_PERMITIDOS = [
+    "admin1@gmail.com",
+    "admin2@gmail.com",
+    "admin3@gmail.com",
+    "admin4@gmail.com"
+]
 
 def get_db_connection():
-    database_url = os.getenv("DATABASE_URL")
-    if database_url:
-        if database_url.startswith("postgres://"):
-            database_url = database_url.replace("postgres://", "postgresql://", 1)
-        conn = psycopg2.connect(database_url, cursor_factory=psycopg2.extras.DictCursor)
-    else:
-        raise Exception("No se encontró la variable de entorno DATABASE_URL.")
-    return conn
-
-def allowed_file(filename):
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def calcular_tiempo_transcurrido(fecha_str):
-    if not fecha_str or fecha_str == 'None' or fecha_str == 'N/D':
-        return "Hace tiempo"
-    try:
-        fecha_reporte = datetime.strptime(fecha_str, '%Y-%m-%d %H:%M:%S')
-        ahora = datetime.now()
-        diferencia = ahora - fecha_reporte
-        
-        segundos = diferencia.total_seconds()
-        minutos = int(segundos // 60)
-        horas = int(minutos // 60)
-        dias = int(horas // 24)
-        
-        if dias > 0:
-            return f"Hace {dias} {'día' if dias == 1 else 'días'}"
-        elif horas > 0:
-            return f"Hace {horas} {'hora' if horas == 1 else 'horas'}"
-        elif minutos > 0:
-            return f"Hace {minutos} {'minuto' if minutos == 1 else 'minutos'}"
-        else:
-            return "Hace un momento"
-    except Exception:
-        return "Hace tiempo"
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def init_db():
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cur = conn.cursor()
     
-    # Tabla de categorías
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS categorias (
-            id SERIAL PRIMARY KEY,
-            nombre TEXT NOT NULL
-        )
-    ''')
-    
-    # Tabla de reportes
-    cursor.execute('''
+    # Tabla de Reportes con soporte para Imagen URL
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS reportes (
             id SERIAL PRIMARY KEY,
-            id_categoria INTEGER,
+            titulo VARCHAR(150) NOT NULL,
             descripcion TEXT NOT NULL,
-            gravedad TEXT NOT NULL,
-            estado TEXT DEFAULT 'Pendiente',
+            categoria VARCHAR(50) NOT NULL,
+            gravedad VARCHAR(20) NOT NULL CHECK (gravedad IN ('baja', 'media', 'alta')),
             latitud DOUBLE PRECISION NOT NULL,
             longitud DOUBLE PRECISION NOT NULL,
-            foto_path TEXT,
-            fecha_creacion TEXT,
-            FOREIGN KEY (id_categoria) REFERENCES categorias (id)
-        )
-    ''')
-    
-    # Tabla de Usuarios / Admins
-    cursor.execute('''
+            imagen_url TEXT,
+            estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'resuelto')),
+            fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            fecha_resolucion TIMESTAMP
+        );
+    """)
+
+    # Tabla de Usuarios Admin por Email
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS usuarios (
             id SERIAL PRIMARY KEY,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            es_admin INTEGER DEFAULT 0
-        )
-    ''')
-    
-    # Verificar e insertar categorías predeterminadas
-    cursor.execute('SELECT COUNT(*) FROM categorias')
-    if cursor.fetchone()[0] == 0:
-        categorias = [
-            ("Microbasural / Acumulación de residuos",),
-            ("Poda indebida / Árbol en riesgo",),
-            ("Vertido de aguas servidas / Contaminación",),
-            ("Falta de iluminación pública",),
-            ("Contaminación de aire / Humo",),
-            ("Ruidos molestos / Contaminación acústica",),
-            ("Animales sueltos / Plagas",)
-        ]
-        cursor.executemany('INSERT INTO categorias (nombre) VALUES (%s)', categorias)
-        
-    admins_predeterminados = [
-        "admin@ecomapa.com",
-        "babonkib@gmail.com",
-        "etchartjazmin100@gmail.com",
-        "virginiasaldanaberruti@gmail.com",
-        "wnores@gmail.com"
-    ]
-    
-    pass_hash = generate_password_hash("admin123")
-    
-    for email_admin in admins_predeterminados:
-        cursor.execute('SELECT COUNT(*) FROM usuarios WHERE email = %s', (email_admin,))
-        if cursor.fetchone()[0] == 0:
-            cursor.execute('INSERT INTO usuarios (email, password, es_admin) VALUES (%s, %s, 1)', 
-                           (email_admin, pass_hash))
-        else:
-            cursor.execute('UPDATE usuarios SET es_admin = 1 WHERE email = %s', (email_admin,))
-        
+            email VARCHAR(100) UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL
+        );
+    """)
+
+    # Sembrar Administradores por defecto si no existen
+    default_pass = generate_password_hash("AdminEco2026!")
+    for email in ADMINS_PERMITIDOS:
+        cur.execute("SELECT id FROM usuarios WHERE email = %s;", (email,))
+        if not cur.fetchone():
+            cur.execute("INSERT INTO usuarios (email, password_hash) VALUES (%s, %s);", (email, default_pass))
+
     conn.commit()
-    cursor.close()
+    cur.close()
     conn.close()
 
-init_db()
+try:
+    init_db()
+except Exception as e:
+    print(f"[BD ERROR] {e}")
 
-@login_manager.user_loader
-def load_user(user_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM usuarios WHERE id = %s', (user_id,))
-    user = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    if user:
-        es_admin_bool = True if user['es_admin'] == 1 or user['es_admin'] is True else False
-        return Usuario(user['id'], user['email'], es_admin_bool)
-    return None
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'admin_logged_in' not in session:
+            return jsonify({'error': 'No autorizado'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
 
-# ---------------- RUTAS PÚBLICAS ----------------
+# --- RUTAS DE NAVEGACIÓN ---
 
 @app.route('/')
 def index():
-    return render_template('index.html') 
-
-@app.route('/api/reportes', methods=['GET'])
-def obtener_reportes():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT r.id, 
-               COALESCE(c.nombre, 'Incidencia General') as categoria, 
-               r.descripcion, r.gravedad, r.estado, r.latitud, r.longitud, r.foto_path, r.fecha_creacion
-        FROM reportes r 
-        LEFT JOIN categorias c ON r.id_categoria = c.id
-        WHERE r.estado != 'Resuelto' OR r.estado IS NULL
-        ORDER BY r.id DESC
-    ''')
-    reportes = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    
-    lista_resultado = []
-    for r in reportes:
-        dic = dict(r)
-        if not dic.get('fecha_creacion'):
-            dic['fecha_creacion'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        dic['tiempo_transcurrido'] = calcular_tiempo_transcurrido(dic.get('fecha_creacion'))
-        lista_resultado.append(dic)
-        
-    return jsonify(lista_resultado)
-
-@app.route('/api/reportes', methods=['POST'])
-def crear_reporte():
-    try:
-        id_categoria = request.form.get('id_categoria')
-        descripcion = request.form.get('descripcion')
-        gravedad = request.form.get('gravedad')
-        latitud = request.form.get('latitud')
-        longitud = request.form.get('longitud')
-        fecha_creacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-        if not id_categoria or id_categoria == 'otro':
-            id_categoria = 1
-            
-        foto_path = None
-        if 'foto' in request.files:
-            file = request.files['foto']
-            if file and file.filename != '' and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                unique_filename = f"{int(time.time())}_{filename}"
-                
-                if supabase_cliente and SUPABASE_URL:
-                    file_bytes = file.read()
-                    supabase_cliente.storage.from_("fotos").upload(
-                        path=unique_filename,
-                        file=file_bytes,
-                        file_options={"content-type": file.content_type, "upsert": "true"}
-                    )
-                    
-                    base_clean = SUPABASE_URL.rstrip('/')
-                    foto_path = f"{base_clean}/storage/v1/object/public/fotos/{unique_filename}"
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO reportes (id_categoria, descripcion, gravedad, latitud, longitud, foto_path, fecha_creacion, estado)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, 'Pendiente')
-        ''', (id_categoria, descripcion, gravedad, latitud, longitud, foto_path, fecha_creacion))
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return jsonify({'success': True, 'message': 'Reporte creado exitosamente'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# ---------------- RUTAS DE AUTENTICACIÓN / ADMIN ----------------
+    return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        
+        data = request.get_json() if request.is_json else request.form
+        email = data.get('email', '').strip().lower()
+        password = data.get('password')
+
+        if email not in ADMINS_PERMITIDOS:
+            error_msg = "El correo electrónico no tiene permisos de administrador."
+            return jsonify({'success': False, 'message': error_msg}), 403 if request.is_json else render_template('login.html', error=error_msg)
+
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM usuarios WHERE email = %s', (email,))
-        user_data = cursor.fetchone()
-        cursor.close()
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM usuarios WHERE email = %s;", (email,))
+        user = cur.fetchone()
+        cur.close()
         conn.close()
+
+        if user and check_password_hash(user['password_hash'], password):
+            session['admin_logged_in'] = True
+            session['admin_email'] = email
+            return jsonify({'success': True, 'redirect': url_for('admin')}) if request.is_json else redirect(url_for('admin'))
         
-        if user_data and check_password_hash(user_data['password'], password):
-            es_admin_bool = True if user_data['es_admin'] == 1 or user_data['es_admin'] is True else False
-            user_obj = Usuario(user_data['id'], user_data['email'], es_admin_bool)
-            login_user(user_obj)
-            flash('Sesión iniciada correctamente.', 'success')
-            return redirect(url_for('admin_panel'))
-        else:
-            flash('Credenciales inválidas. Por favor, verifica tus datos.', 'danger')
-            
+        error_msg = "Contraseña incorrecta."
+        return jsonify({'success': False, 'message': error_msg}), 401 if request.is_json else render_template('login.html', error=error_msg)
+
     return render_template('login.html')
 
 @app.route('/logout')
-@login_required
 def logout():
-    logout_user()
-    flash('Has cerrado sesión exitosamente.', 'info')
+    session.clear()
     return redirect(url_for('index'))
 
 @app.route('/admin')
-@login_required
-def admin_panel():
-    if not current_user.es_admin:
-        flash('Acceso denegado. No tienes permisos de administrador.', 'danger')
-        return redirect(url_for('index'))
-        
+def admin():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('login'))
+    return render_template('admin.html', admin_email=session.get('admin_email'))
+
+# --- API ENDPOINTS ---
+
+@app.route('/api/reportes', methods=['GET'])
+def get_reportes():
     conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT r.id, 
-               COALESCE(c.nombre, 'Incidencia General') as categoria, 
-               r.descripcion, r.gravedad, r.estado, r.latitud, r.longitud, r.foto_path, r.fecha_creacion
-        FROM reportes r 
-        LEFT JOIN categorias c ON r.id_categoria = c.id
-        ORDER BY r.id DESC
-    ''')
-    reportes = cursor.fetchall()
-    cursor.close()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM reportes ORDER BY fecha_creacion DESC;")
+    reportes = cur.fetchall()
+    cur.close()
     conn.close()
     
-    return render_template('admin.html', reportes=reportes)
+    for r in reportes:
+        r['fecha_creacion'] = r['fecha_creacion'].strftime("%d/%m/%Y %H:%M") if r['fecha_creacion'] else None
+        r['fecha_resolucion'] = r['fecha_resolucion'].strftime("%d/%m/%Y %H:%M") if r['fecha_resolucion'] else None
 
-@app.route('/admin/reporte/<int:reporte_id>/estado', methods=['POST'])
-@login_required
-def actualizar_estado_reporte(reporte_id):
-    if not current_user.es_admin:
-        return jsonify({'success': False, 'error': 'No autorizado'}), 403
-        
-    nuevo_estado = request.form.get('estado')
-    if nuevo_estado in ['Pendiente', 'En proceso', 'Resuelto']:
+    return jsonify(reportes)
+
+@app.route('/api/reportes', methods=['POST'])
+def crear_reporte():
+    data = request.get_json()
+    try:
         conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('UPDATE reportes SET estado = %s WHERE id = %s', (nuevo_estado, reporte_id))
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO reportes (titulo, descripcion, categoria, gravedad, latitud, longitud, imagen_url)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id;
+        """, (
+            data['titulo'],
+            data['descripcion'],
+            data['categoria'],
+            data['gravedad'],
+            float(data['latitud']),
+            float(data['longitud']),
+            data.get('imagen_url', '')
+        ))
+        nuevo_id = cur.fetchone()['id']
         conn.commit()
-        cursor.close()
+        cur.close()
         conn.close()
-        return jsonify({'success': True})
-    
-    return jsonify({'success': False, 'error': 'Estado no válido'}), 400
+        
+        return jsonify({'message': 'Reporte guardado con éxito', 'id': nuevo_id}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route('/api/reportes/<int:id>', methods=['PUT'])
+@login_required
+def modificar_reporte(id):
+    data = request.get_json()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE reportes 
+            SET titulo = %s, descripcion = %s, categoria = %s, gravedad = %s
+            WHERE id = %s RETURNING id;
+        """, (data['titulo'], data['descripcion'], data['categoria'], data['gravedad'], id))
+        updated = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        if not updated:
+            return jsonify({'error': 'Reporte no encontrado'}), 404
+
+        return jsonify({'message': 'Reporte modificado correctamente'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/reportes/<int:id>/resolver', methods=['PUT'])
+@login_required
+def resolver_reporte(id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE reportes 
+        SET estado = 'resuelto', fecha_resolucion = CURRENT_TIMESTAMP 
+        WHERE id = %s RETURNING id;
+    """, (id,))
+    updated = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    if not updated:
+        return jsonify({'error': 'Reporte no encontrado'}), 404
+
+    return jsonify({'message': 'Reporte resuelto'})
+
+@app.route('/api/reportes/<int:id>', methods=['DELETE'])
+@login_required
+def borrar_reporte(id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM reportes WHERE id = %s RETURNING id;", (id,))
+    deleted = cur.fetchone()
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    if not deleted:
+        return jsonify({'error': 'Reporte no encontrado'}), 404
+
+    return jsonify({'message': 'Reporte borrado de PostgreSQL'})

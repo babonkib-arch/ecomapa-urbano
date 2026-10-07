@@ -1,177 +1,156 @@
-// Control de Pantalla de Inicio y Transición Fluida
-document.addEventListener('DOMContentLoaded', () => {
-    const splash = document.getElementById('splash-screen');
-    const btnEntrar = document.getElementById('btn-entrar');
-    const mapContainer = document.getElementById('map-container');
+let map, markerSeleccionado, reportesMarkersGroup;
+let imagenBase64 = "";
 
-    if (btnEntrar && splash && mapContainer) {
-        btnEntrar.addEventListener('click', () => {
-            splash.classList.add('splash-hidden');
-            setTimeout(() => {
-                mapContainer.classList.add('visible');
-                map.invalidateSize(); 
-            }, 400);
+document.addEventListener('DOMContentLoaded', () => {
+    initMap();
+    cargarReportes();
+
+    // Listener para abrir cámara y capturar preview
+    const inputFoto = document.getElementById('input-foto');
+    if (inputFoto) {
+        inputFoto.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    imagenBase64 = event.target.result;
+                    const preview = document.getElementById('foto-preview');
+                    preview.src = imagenBase64;
+                    document.getElementById('preview-container').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
         });
     }
+
+    document.getElementById('form-reporte').addEventListener('submit', guardarReporte);
 });
 
-// Control visual del campo "Otro problema"
-const selectCategoria = document.getElementById('select_categoria');
-const divOtroProblema = document.getElementById('divOtroProblema');
-const inputOtroProblema = document.getElementById('inputOtroProblema');
+function initMap() {
+    map = L.map('map').setView([-33.1325, -58.2989], 14);
 
-if (selectCategoria) {
-    selectCategoria.addEventListener('change', function() {
-        if (this.value === 'otro') {
-            divOtroProblema.classList.remove('d-none');
-            inputOtroProblema.required = true;
-        } else {
-            divOtroProblema.classList.add('d-none');
-            inputOtroProblema.required = false;
-        }
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap | EcoMapa Fray Bentos'
+    }).addTo(map);
+
+    reportesMarkersGroup = L.layerGroup().addTo(map);
+
+    map.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        document.getElementById('latitud').value = lat.toFixed(6);
+        document.getElementById('longitud').value = lng.toFixed(6);
+
+        if (markerSeleccionado) map.removeLayer(markerSeleccionado);
+
+        markerSeleccionado = L.marker([lat, lng], {
+            icon: L.divIcon({
+                className: 'custom-pin-temp',
+                html: `<div style="background-color: #0284c7; width: 18px; height: 18px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);"></div>`,
+                iconSize: [18, 18],
+                iconAnchor: [9, 9]
+            })
+        }).addTo(map);
     });
 }
 
-// Inicialización del Mapa
-const map = L.map('map').setView([-33.12, -58.30], 13);
-const modalElement = document.getElementById('reporteModal') ? new bootstrap.Modal(document.getElementById('reporteModal')) : null;
+async function cargarReportes() {
+    try {
+        const res = await fetch('/api/reportes');
+        const reportes = await res.json();
+        reportesMarkersGroup.clearLayers();
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+        reportes.forEach(r => {
+            const colorGravedad = {
+                'baja': '#10b981',
+                'media': '#f59e0b',
+                'alta': '#ef4444'
+            }[r.gravedad] || '#6b7280';
 
-// Marcadores Personalizados (Iconos Semáforo)
-const redIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-});
-
-const greenIcon = L.icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-    iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-});
-
-let markersGroup = L.layerGroup().addTo(map);
-
-// Carga de Puntos
-function cargarReportes() {
-    fetch('/api/reportes')
-        .then(res => res.json())
-        .then(data => {
-            markersGroup.clearLayers();
-            data.forEach(rep => {
-                const icon = rep.estado === 'Resuelto' ? greenIcon : redIcon;
-                const badgeColor = rep.estado === 'Resuelto' ? 'bg-success' : 'bg-danger';
-                const imgHtml = rep.foto_path ? `<img src="${rep.foto_path}" class="img-fluid rounded-3 mt-2 shadow-sm" style="max-height:140px; width:100%; object-fit:cover;">` : '';
-                
-                // Texto y enlace para compartir
-                const textoCompartir = encodeURIComponent(`¡Incidencia en EcoMapa Fray Bentos!\nCategoría: ${rep.categoria}\nEstado: ${rep.estado}\nDescripción: ${rep.descripcion}`);
-                const urlActual = encodeURIComponent(window.location.href);
-
-                L.marker([rep.latitud, rep.longitud], { icon: icon })
-                    .bindPopup(`
-                        <div style="max-width:270px;" class="p-1">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="badge ${badgeColor}">${rep.estado}</span>
-                                <span class="badge bg-secondary">${rep.gravedad || 'Normal'}</span>
-                            </div>
-                            <h6 class="fw-bold mb-1 text-dark" style="font-size: 1rem;">${rep.categoria}</h6>
-                            <p class="small text-muted mb-2" style="font-size: 0.85rem;">${rep.descripcion}</p>
-                            ${imgHtml}
-                            
-                            <div class="mt-3 pt-2 border-top">
-                                <div class="text-muted text-center fw-bold mb-2" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                                    <i class="fa-solid fa-share-nodes me-1 text-success"></i> Compartir reporte:
-                                </div>
-                                <div class="d-flex justify-content-center gap-2">
-                                    <!-- WhatsApp -->
-                                    <a href="https://api.whatsapp.com/send?text=${textoCompartir}" target="_blank" title="Compartir en WhatsApp" 
-                                       style="width: 35px; height: 35px; background: #25d366; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-                                        <i class="fa-brands fa-whatsapp"></i>
-                                    </a>
-                                    <!-- Facebook -->
-                                    <a href="https://www.facebook.com/sharer/sharer.php?u=${urlActual}" target="_blank" title="Compartir en Facebook" 
-                                       style="width: 35px; height: 35px; background: #1877f2; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-                                        <i class="fa-brands fa-facebook-f"></i>
-                                    </a>
-                                    <!-- Twitter / X -->
-                                    <a href="https://twitter.com/intent/tweet?text=${textoCompartir}&url=${urlActual}" target="_blank" title="Compartir en X" 
-                                       style="width: 35px; height: 35px; background: #000000; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-                                        <i class="fa-brands fa-x-twitter"></i>
-                                    </a>
-                                    <!-- Telegram -->
-                                    <a href="https://t.me/share/url?url=${urlActual}&text=${textoCompartir}" target="_blank" title="Compartir en Telegram" 
-                                       style="width: 35px; height: 35px; background: #229ed9; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-                                        <i class="fa-brands fa-telegram"></i>
-                                    </a>
-                                    <!-- Copiar Enlace -->
-                                    <button onclick="navigator.clipboard.writeText(window.location.href); alert('¡Enlace copiado al portapapeles!');" title="Copiar Enlace" 
-                                            style="width: 35px; height: 35px; background: #6c757d; color: white; border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-                                        <i class="fa-solid fa-link"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `)
-                    .addTo(markersGroup);
+            const marker = L.marker([r.latitud, r.longitud], {
+                icon: L.divIcon({
+                    className: 'custom-pin',
+                    html: `<div style="background-color: ${colorGravedad}; width: 22px; height: 22px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);"></div>`,
+                    iconSize: [22, 22],
+                    iconAnchor: [11, 11]
+                })
             });
+
+            // Enlace exacto a Google Maps
+            const googleMapsUrl = `https://www.google.com/maps?q=${r.latitud},${r.longitud}`;
+            const shareUrl = window.location.origin + '/#mapa-section';
+            const shareText = encodeURIComponent(`🚨 Incidente en EcoMapa Fray Bentos: ${r.titulo}`);
+
+            // Estructura del Popup Premium con Foto, Fecha, Hora y Google Maps
+            const popupHtml = `
+                <div style="font-family: sans-serif; max-width: 260px;">
+                    ${r.imagen_url ? `<img src="${r.imagen_url}" style="width:100%; height:130px; object-fit:cover; border-radius:10px; margin-bottom:8px;">` : ''}
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span style="font-size:10px; font-weight:bold; background:#f1f5f9; padding:2px 6px; border-radius:4px; text-transform:uppercase;">${r.categoria}</span>
+                        <span style="font-size:10px; font-weight:bold; color:${colorGravedad}; text-transform:uppercase;">● ${r.gravedad}</span>
+                    </div>
+
+                    <h4 style="font-size:14px; font-weight:bold; margin:4px 0; color:#0f172a;">${r.titulo}</h4>
+                    <p style="font-size:11px; color:#475569; margin-bottom:6px; line-height:1.3;">${r.descripcion}</p>
+                    
+                    <div style="font-size:10px; color:#94a3b8; margin-bottom:8px;">
+                        <i class="fa-regular fa-clock"></i> <strong>Fecha/Hora:</strong> ${r.fecha_creacion}
+                    </div>
+
+                    <!-- Botón Google Maps -->
+                    <a href="${googleMapsUrl}" target="_blank" style="display:block; text-align:center; background:#ea4335; color:white; font-size:11px; font-weight:bold; padding:6px; border-radius:6px; text-decoration:none; margin-bottom:8px;">
+                        📍 Ver en Google Maps
+                    </a>
+
+                    <!-- Botones de Redes Sociales -->
+                    <div style="border-top:1px solid #e2e8f0; padding-top:6px; display:flex; gap:4px; flex-wrap:wrap;">
+                        <a href="https://api.whatsapp.com/send?text=${shareText}%20${encodeURIComponent(shareUrl)}" target="_blank" style="background:#25D366; color:white; font-size:10px; padding:4px 6px; border-radius:4px; text-decoration:none; font-weight:bold;">WhatsApp</a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}" target="_blank" style="background:#1877F2; color:white; font-size:10px; padding:4px 6px; border-radius:4px; text-decoration:none; font-weight:bold;">Facebook</a>
+                        <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${encodeURIComponent(shareUrl)}" target="_blank" style="background:#000; color:white; font-size:10px; padding:4px 6px; border-radius:4px; text-decoration:none; font-weight:bold;">X</a>
+                        <button onclick="navigator.clipboard.writeText('${googleMapsUrl}'); alert('¡Ubicación de Google Maps copiada!');" style="background:#64748b; color:white; font-size:10px; padding:4px 6px; border-radius:4px; border:none; cursor:pointer;">Copiar Link</button>
+                    </div>
+                </div>
+            `;
+
+            marker.bindPopup(popupHtml);
+            reportesMarkersGroup.addLayer(marker);
         });
+    } catch (e) {
+        console.error("Error al cargar reportes:", e);
+    }
 }
 
-// Abrir Ventana Flotante al Hacer Clic en el Mapa
-map.on('click', (e) => {
-    document.getElementById('latitud').value = e.latlng.lat;
-    document.getElementById('longitud').value = e.latlng.lng;
-    if (selectCategoria) selectCategoria.value = "";
-    if (divOtroProblema) divOtroProblema.classList.add('d-none');
-    if (inputOtroProblema) inputOtroProblema.value = "";
-    if (modalElement) modalElement.show();
-});
+async function guardarReporte(e) {
+    e.preventDefault();
 
-// Envío del Formulario con Alerta SweetAlert2 y Tick Verde
-const formReporte = document.getElementById('formReporte');
-if (formReporte) {
-    formReporte.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
+    const data = {
+        latitud: document.getElementById('latitud').value,
+        longitud: document.getElementById('longitud').value,
+        titulo: document.getElementById('titulo').value,
+        categoria: document.getElementById('categoria').value,
+        gravedad: document.getElementById('gravedad').value,
+        descripcion: document.getElementById('descripcion').value,
+        imagen_url: imagenBase64
+    };
 
-        if (selectCategoria && selectCategoria.value === 'otro') {
-            const detallePersonalizado = inputOtroProblema.value;
-            formData.set('id_categoria', 1);
-            const descOriginal = document.getElementById('txtDescripcion').value;
-            formData.set('descripcion', `[OTRO: ${detallePersonalizado}] ${descOriginal}`);
-        }
+    if (!data.latitud || !data.longitud) {
+        alert("Haz clic sobre el mapa para indicar la ubicación.");
+        return;
+    }
 
-        fetch('/api/reportes', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success' || (data.message && data.message.includes('exitosamente'))) {
-                if (modalElement) modalElement.hide();
-                this.reset();
-                if (divOtroProblema) divOtroProblema.classList.add('d-none');
-                cargarReportes();
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: '¡Reporte Enviado!',
-                    text: 'El incidente fue registrado exitosamente en el mapa.',
-                    confirmButtonColor: '#198754',
-                    customClass: { popup: 'rounded-4' }
-                });
-            } else {
-                alert('Error al guardar reporte: ' + (data.message || 'Error desconocido'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Hubo un error al conectar con el servidor.');
-        });
+    const res = await fetch('/api/reportes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
     });
-}
 
-cargarReportes();
+    if (res.ok) {
+        alert("¡Reporte y foto registrados con éxito!");
+        document.getElementById('form-reporte').reset();
+        document.getElementById('preview-container').classList.add('hidden');
+        imagenBase64 = "";
+        if (markerSeleccionado) map.removeLayer(markerSeleccionado);
+        cargarReportes();
+    }
+}
