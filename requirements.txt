@@ -2,7 +2,7 @@ Flask
 Flask-Login
 Werkzeug
 gunicorn
-psycopg2-binary==2.9.9
+psycopg[binary]
 supabase==2.3.4
 gotrue==2.8.1
 requests
