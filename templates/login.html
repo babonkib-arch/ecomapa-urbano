@@ -2,191 +2,84 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso Administrativo - EcoMapa Fray Bentos</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body, html {
-            height: 100vh;
-            margin: 0;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: #09150d;
-            overflow: hidden;
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Acceso Administrador | EcoMapa Fray Bentos</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
         }
-
-        /* Fondo ambiental con efecto corporativo y partículas idéntico al sistema público */
-        .login-wrapper {
-            position: relative;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #09150d;
-            background-image: radial-gradient(circle at 50% 30%, rgba(19, 78, 50, 0.45) 0%, rgba(9, 21, 13, 0.98) 75%);
-            overflow: hidden;
-        }
-
-        .ambient-bg {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 1;
-        }
-        .falling-element {
-            position: absolute;
-            top: -10vh;
-            animation: fallDown linear infinite;
-            opacity: 0.6;
-        }
-        @keyframes fallDown {
-            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
-            15% { opacity: 0.7; }
-            85% { opacity: 0.7; }
-            100% { transform: translateY(110vh) translateX(50px) rotate(360deg); opacity: 0; }
-        }
-
-        /* Tarjeta de Login Glassmorphism refinada */
-        .login-card {
-            position: relative;
-            z-index: 10;
-            background: rgba(13, 33, 20, 0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(32, 201, 151, 0.3);
-            border-radius: 28px;
-            padding: 45px 35px;
-            width: 100%;
-            max-width: 440px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-        }
-
-        .login-logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #134e32 0%, #198754 50%, #0f3d27 100%);
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            color: #20c997;
-            margin: 0 auto 20px auto;
-            box-shadow: 0 12px 30px rgba(25, 135, 84, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.3);
-            border: 2px solid rgba(32, 201, 151, 0.4);
-        }
-
-        .form-label {
-            color: #a8dadc;
-            font-size: 0.85rem;
-            letter-spacing: 0.5px;
-        }
-
-        .form-control {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #fff;
-            border-radius: 12px;
-            padding: 12px 16px;
-            transition: all 0.3s ease;
-        }
-        .form-control:focus {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: #20c997;
-            color: #fff;
-            box-shadow: 0 0 0 0.25rem rgba(32, 201, 151, 0.25);
-        }
-        .form-control::placeholder {
-            color: rgba(255, 255, 255, 0.35);
-        }
-
-        .input-group-text {
-            background: rgba(255, 255, 255, 0.06) !important;
-            border-color: rgba(255, 255, 255, 0.15) !important;
-            color: #20c997 !important;
-            border-radius: 12px 0 0 12px !important;
-        }
-
-        .btn-success-pro {
-            background: linear-gradient(135deg, #198754, #157347);
-            border: none;
-            border-radius: 12px;
-            padding: 12px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            color: white;
-            transition: all 0.3s ease;
-            box-shadow: 0 6px 20px rgba(25, 135, 84, 0.4);
-        }
-        .btn-success-pro:hover {
-            background: linear-gradient(135deg, #157347, #115c37);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(25, 135, 84, 0.6);
-            color: white;
-        }
-    </style>
+    </script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 </head>
-<body>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex items-center justify-center p-4">
 
-    <div class="login-wrapper">
-        <div class="ambient-bg" id="ambientBg"></div>
+    <div class="w-full max-w-md bg-slate-800/90 backdrop-blur-xl border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+        <!-- Glow decorativo -->
+        <div class="absolute -top-12 -right-12 w-40 h-40 bg-brand-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-        <div class="login-card">
-            <div class="login-logo">
+        <div class="text-center mb-8">
+            <a href="/" class="inline-flex items-center justify-center w-14 h-14 bg-brand-500/20 border border-brand-500/30 rounded-2xl text-brand-400 text-2xl mb-4 shadow-lg">
                 <i class="fa-solid fa-shield-halved"></i>
-            </div>
-            <h3 class="text-center fw-bold mb-1">Portal Municipal</h3>
-            <p class="text-center text-muted small mb-4" style="color: #a8dadc !important;">EcoMapa Fray Bentos - Seguridad</p>
+            </a>
+            <h1 class="text-2xl font-black text-white tracking-tight">Acceso Administrativo</h1>
+            <p class="text-xs text-slate-400 mt-1">EcoMapa Fray Bentos</p>
+        </div>
 
-            {% if error %}
-                <div class="alert alert-danger bg-danger bg-opacity-75 text-white border-0 py-2 small rounded-3 mb-3 text-center">
-                    <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ error }}
-                </div>
-            {% endif %}
+        {% if error %}
+        <div class="mb-5 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs text-center font-semibold">
+            <i class="fa-solid fa-circle-exclamation mr-1.5"></i> {{ error }}
+        </div>
+        {% endif %}
 
-            <form method="POST" action="/login">
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Correo Electrónico</label>
-                    <div class="input-group">
-                        <span class="input-group-text border-end-0"><i class="fa-solid fa-envelope"></i></span>
-                        <input type="email" name="email" class="form-control border-start-0" placeholder="admin@ecomapa.com" required style="border-radius: 0 12px 12px 0;">
-                    </div>
+        <form action="/login" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Correo Electrónico</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 text-xs">
+                        <i class="fa-solid fa-envelope"></i>
+                    </span>
+                    <input type="email" name="email" required placeholder="admin@fraybentos.gub.uy" 
+                           class="w-full bg-slate-900/80 border border-slate-700 rounded-2xl pl-10 pr-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
                 </div>
-                <div class="mb-4">
-                    <label class="form-label fw-semibold">Contraseña</label>
-                    <div class="input-group">
-                        <span class="input-group-text border-end-0"><i class="fa-solid fa-lock"></i></span>
-                        <input type="password" name="password" class="form-control border-start-0" placeholder="••••••••" required style="border-radius: 0 12px 12px 0;">
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-success-pro w-100 mb-3">Iniciar Sesión</button>
-            </form>
-            <div class="text-center">
-                <a href="/" class="text-decoration-none small" style="color: #20c997;"><i class="fa-solid fa-arrow-left me-1"></i> Volver al Mapa Público</a>
             </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Contraseña</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 text-xs">
+                        <i class="fa-solid fa-lock"></i>
+                    </span>
+                    <input type="password" name="password" required placeholder="••••••••" 
+                           class="w-full bg-slate-900/80 border border-slate-700 rounded-2xl pl-10 pr-4 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3.5 rounded-2xl text-xs transition shadow-lg shadow-brand-600/30 active:scale-95 flex items-center justify-center space-x-2 mt-2">
+                <span>Ingresar al Panel</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <div class="mt-8 text-center border-t border-slate-700/60 pt-4">
+            <a href="/" class="text-xs text-slate-400 hover:text-white transition inline-flex items-center space-x-1.5">
+                <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                <span>Volver al mapa público</span>
+            </a>
         </div>
     </div>
 
-    <script>
-        // Generador de iconos flotantes en el fondo idénticos al mapa principal
-        document.addEventListener('DOMContentLoaded', () => {
-            const bg = document.getElementById('ambientBg');
-            const iconos = ['fa-leaf', 'fa-plus', 'fa-seedling', 'fa-shield'];
-            for (let i = 0; i < 16; i++) {
-                const el = document.createElement('i');
-                el.className = `fa-solid ${iconos[Math.floor(Math.random() * iconos.length)]} falling-element`;
-                el.style.left = `${Math.random() * 100}%`;
-                el.style.animationDuration = `${7 + Math.random() * 6}s`;
-                el.style.animationDelay = `${Math.random() * 4}s`;
-                el.style.fontSize = `${14 + Math.random() * 14}px`;
-                el.style.color = `rgba(32, 201, 151, ${0.2 + Math.random() * 0.3})`;
-                bg.appendChild(el);
-            }
-        });
-    </script>
 </body>
 </html>

@@ -1,116 +1,242 @@
+let adminMap;
+let adminMarkers = [];
+
 document.addEventListener('DOMContentLoaded', () => {
+    initAdminMap();
     cargarReportesAdmin();
+
+    const formEditar = document.getElementById('form-editar-reporte');
+    if (formEditar) {
+        formEditar.addEventListener('submit', guardarEdicionReporte);
+    }
 });
+
+function initAdminMap() {
+    // Inicializar mapa centrado en Fray Bentos
+    adminMap = L.map('admin-map').setView([-33.1333, -58.3000], 13);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+    }).addTo(adminMap);
+}
 
 async function cargarReportesAdmin() {
     try {
-        const response = await fetch('/api/reportes');
-        if (response.status === 401) {
-            window.location.href = '/login';
-            return;
-        }
+        const res = await fetch('/api/reportes');
+        if (!res.ok) throw new Error('Error al obtener datos');
+        const reportes = await res.json();
 
-        const reportes = await response.json();
-        renderTabla(reportes);
-        actualizarEstadisticas(reportes);
-    } catch (error) {
-        console.error("Error al cargar reportes admin:", error);
+        actualizarKPIs(reportes);
+        renderizarMapaAdmin(reportes);
+        renderizarTablaAdmin(reportes);
+        renderizarTarjetasMobile(reportes);
+    } catch (err) {
+        console.error('Error:', err);
     }
 }
 
-function renderTabla(reportes) {
-    const tbody = document.getElementById('tabla-body');
-    tbody.innerHTML = '';
+function actualizarKPIs(reportes) {
+    document.getElementById('kpi-total').textContent = reportes.length;
+    document.getElementById('kpi-pendientes').textContent = reportes.filter(r => (r.estado || 'Pendiente') === 'Pendiente').length;
+    document.getElementById('kpi-resueltos').textContent = reportes.filter(r => r.estado === 'Resuelto').length;
+    document.getElementById('kpi-urgentes').textContent = reportes.filter(r => r.gravedad === 'alta').length;
+}
 
-    if (reportes.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">No hay reportes registrados.</td></tr>`;
-        return;
-    }
+function renderizarMapaAdmin(reportes) {
+    // Limpiar marcadores
+    adminMarkers.forEach(m => adminMap.removeLayer(m));
+    adminMarkers = [];
+
+    const colorGravedad = { alta: '#ef4444', media: '#f59e0b', baja: '#10b981' };
 
     reportes.forEach(r => {
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-50 transition';
+        if (!r.latitud || !r.longitud) return;
 
-        const badgeEstado = r.estado === 'resuelto'
-            ? `<span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded-full">Resuelto</span>`
-            : `<span class="bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-full">Pendiente</span>`;
+        const color = colorGravedad[r.gravedad] || '#3b82f6';
+        const marker = L.circleMarker([r.latitud, r.longitud], {
+            radius: 8,
+            fillColor: color,
+            color: '#ffffff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.9
+        }).addTo(adminMap);
 
-        const badgeGravedad = {
-            'baja': '<span class="text-emerald-600 font-bold">● Baja</span>',
-            'media': '<span class="text-amber-600 font-bold">● Media</span>',
-            'alta': '<span class="text-rose-600 font-bold">● Alta</span>'
-        }[r.gravedad] || r.gravedad;
+        marker.bindPopup(`
+            <div class="p-1 font-sans text-xs">
+                <p class="font-bold text-slate-900 mb-1">${r.titulo}</p>
+                <p class="text-[11px] text-slate-500">${r.categoria} • <span class="uppercase font-semibold">${r.gravedad}</span></p>
+            </div>
+        `);
 
-        const fechaFormatted = new Date(r.fecha_creacion).toLocaleDateString('es-UY', {
-            day: '2-digit', month: '2-digit', year: 'numeric'
-        });
-
-        tr.innerHTML = `
-            <td class="py-4 px-6 font-mono text-xs text-slate-500">#${r.id}</td>
-            <td class="py-4 px-6">
-                <div class="font-bold text-slate-900">${r.titulo}</div>
-                <div class="text-xs text-slate-500">${r.categoria}</div>
-            </td>
-            <td class="py-4 px-6 text-xs">${badgeGravedad}</td>
-            <td class="py-4 px-6">${badgeEstado}</td>
-            <td class="py-4 px-6 text-xs text-slate-500">${fechaFormatted}</td>
-            <td class="py-4 px-6 text-right space-x-2">
-                ${r.estado !== 'resuelto' ? `
-                    <button onclick="resolverReporte(${r.id})" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
-                        Resolver
-                    </button>
-                ` : ''}
-                <button onclick="borrarReporte(${r.id})" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
-                    Borrar
-                </button>
-            </td>
-        `;
-
-        tbody.appendChild(tr);
+        adminMarkers.push(marker);
     });
 }
 
-function actualizarEstadisticas(reportes) {
-    document.getElementById('stat-total').innerText = reportes.length;
-    document.getElementById('stat-pendientes').innerText = reportes.filter(r => r.estado === 'pendiente').length;
-    document.getElementById('stat-resueltos').innerText = reportes.filter(r => r.estado === 'resuelto').length;
+function renderizarTablaAdmin(reportes) {
+    const tbody = document.getElementById('tabla-reportes-body');
+    if (!tbody) return;
+
+    if (reportes.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">No hay reportes registrados aún.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = reportes.map(r => `
+        <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3 px-4">
+                ${r.foto_url 
+                    ? `<img src="${r.foto_url}" class="w-12 h-12 object-cover rounded-xl border border-slate-200">` 
+                    : `<div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 text-xs"><i class="fa-solid fa-image"></i></div>`}
+            </td>
+            <td class="py-3 px-4">
+                <p class="font-bold text-slate-900">${r.titulo}</p>
+                <span class="text-[10px] text-slate-500">${r.categoria}</span>
+            </td>
+            <td class="py-3 px-4">
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase ${getBadgeGravedad(r.gravedad)}">
+                    ${r.gravedad}
+                </span>
+            </td>
+            <td class="py-3 px-4">
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${getBadgeEstado(r.estado || 'Pendiente')}">
+                    ${r.estado || 'Pendiente'}
+                </span>
+            </td>
+            <td class="py-3 px-4 text-right space-x-1">
+                <button onclick="abrirModalEditar('${r.id}')" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition active:scale-95">
+                    <i class="fa-solid fa-pen text-xs"></i>
+                </button>
+                <button onclick="eliminarReporte('${r.id}')" class="p-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition active:scale-95">
+                    <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
 }
 
-// Acción: Resolver Reporte
-async function resolverReporte(id) {
-    if (!confirm(`¿Confirmas marcar el reporte #${id} como RESUELTO?`)) return;
+function renderizarTarjetasMobile(reportes) {
+    const contenedor = document.getElementById('contenedor-tarjetas-mobile');
+    if (!contenedor) return;
 
-    try {
-        const response = await fetch(`/api/reportes/${id}/resolver`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' }
-        });
+    if (reportes.length === 0) {
+        contenedor.innerHTML = `<div class="p-6 text-center text-slate-400">No hay reportes registrados.</div>`;
+        return;
+    }
 
-        if (response.ok) {
-            cargarReportesAdmin();
-        } else {
-            alert("No se pudo actualizar el estado del reporte.");
-        }
-    } catch (error) {
-        console.error("Error al resolver:", error);
+    contenedor.innerHTML = reportes.map(r => `
+        <div class="p-4 flex flex-col space-y-3">
+            <div class="flex items-start justify-between">
+                <div class="flex items-center space-x-3">
+                    ${r.foto_url 
+                        ? `<img src="${r.foto_url}" class="w-14 h-14 object-cover rounded-2xl border border-slate-200">` 
+                        : `<div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400"><i class="fa-solid fa-image"></i></div>`}
+                    <div>
+                        <h4 class="font-black text-slate-900 text-sm leading-tight">${r.titulo}</h4>
+                        <p class="text-[11px] text-slate-500 mt-0.5">${r.categoria}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+                <div class="flex items-center space-x-2">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${getBadgeGravedad(r.gravedad)}">
+                        ${r.gravedad}
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${getBadgeEstado(r.estado || 'Pendiente')}">
+                        ${r.estado || 'Pendiente'}
+                    </span>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <button onclick="abrirModalEditar('${r.id}')" class="px-3 py-1.5 bg-slate-100 text-slate-700 font-bold rounded-xl text-xs active:scale-95">
+                        Editar
+                    </button>
+                    <button onclick="eliminarReporte('${r.id}')" class="p-1.5 bg-rose-50 text-rose-600 rounded-xl text-xs active:scale-95">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getBadgeGravedad(gravedad) {
+    switch (gravedad) {
+        case 'alta': return 'bg-rose-100 text-rose-700 border border-rose-200';
+        case 'media': return 'bg-amber-100 text-amber-700 border border-amber-200';
+        default: return 'bg-emerald-100 text-emerald-700 border border-emerald-200';
     }
 }
 
-// Acción: Eliminar Reporte definitivamente de PostgreSQL
-async function borrarReporte(id) {
-    if (!confirm(`¿Estás seguro de ELIMINAR DEFINITIVAMENTE el reporte #${id}? Esta acción borrará el registro en Supabase.`)) return;
+function getBadgeEstado(estado) {
+    switch (estado) {
+        case 'Resuelto': return 'bg-brand-500 text-white';
+        case 'En Proceso': return 'bg-sky-500 text-white';
+        default: return 'bg-slate-200 text-slate-700';
+    }
+}
+
+async function abrirModalEditar(id) {
+    try {
+        const res = await fetch(`/api/reportes/${id}`);
+        if (!res.ok) throw new Error('No se pudo cargar el reporte');
+        const r = await res.json();
+
+        document.getElementById('edit-id').value = r.id;
+        document.getElementById('edit-titulo').value = r.titulo;
+        document.getElementById('edit-categoria').value = r.categoria;
+        document.getElementById('edit-gravedad').value = r.gravedad;
+        document.getElementById('edit-estado').value = r.estado || 'Pendiente';
+        document.getElementById('edit-descripcion').value = r.descripcion;
+
+        document.getElementById('modal-editar').classList.remove('hidden');
+    } catch (err) {
+        alert('Error al obtener datos del reporte');
+    }
+}
+
+function cerrarModalEditar() {
+    document.getElementById('modal-editar').classList.add('hidden');
+}
+
+async function guardarEdicionReporte(e) {
+    e.preventDefault();
+    const id = document.getElementById('edit-id').value;
+
+    const payload = {
+        titulo: document.getElementById('edit-titulo').value,
+        categoria: document.getElementById('edit-categoria').value,
+        gravedad: document.getElementById('edit-gravedad').value,
+        estado: document.getElementById('edit-estado').value,
+        descripcion: document.getElementById('edit-descripcion').value
+    };
 
     try {
-        const response = await fetch(`/api/reportes/${id}`, {
-            method: 'DELETE'
+        const res = await fetch(`/api/reportes/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         });
 
-        if (response.ok) {
-            cargarReportesAdmin();
-        } else {
-            alert("No se pudo eliminar el reporte.");
-        }
-    } catch (error) {
-        console.error("Error al eliminar:", error);
+        if (!res.ok) throw new Error('Error al actualizar');
+        
+        cerrarModalEditar();
+        cargarReportesAdmin();
+    } catch (err) {
+        alert('Error al guardar cambios');
+    }
+}
+
+async function eliminarReporte(id) {
+    if (!confirm('¿Seguro que deseas eliminar este reporte?')) return;
+
+    try {
+        const res = await fetch(`/api/reportes/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Error al eliminar');
+        cargarReportesAdmin();
+    } catch (err) {
+        alert('No se pudo eliminar el reporte');
     }
 }

@@ -1,296 +1,240 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Profesional - EcoMapa Fray Bentos</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Panel de Administración | EcoMapa Fray Bentos</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FontAwesome Vector Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
     <style>
-        body { 
-            background-color: #050d08; 
-            color: #ffffff;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-        }
-
-        .ambient-bg {
-            position: fixed;
-            width: 100vw;
-            height: 100vh;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .falling-element {
-            position: absolute;
-            top: -10vh;
-            animation: fallDown linear infinite;
-            opacity: 0.5;
-        }
-        @keyframes fallDown {
-            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 0; }
-            15% { opacity: 0.6; }
-            85% { opacity: 0.6; }
-            100% { transform: translateY(110vh) translateX(40px) rotate(360deg); opacity: 0; }
-        }
-
-        .navbar-custom, .container-mobile {
-            position: relative;
+        #admin-map {
+            height: 320px;
+            border-radius: 1rem;
             z-index: 10;
         }
-
-        .navbar-custom {
-            background: rgba(13, 33, 20, 0.9) !important;
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(32, 201, 151, 0.25);
+        @media (min-width: 768px) {
+            #admin-map { height: 420px; }
         }
-
-        .report-card-mobile {
-            background: rgba(13, 33, 20, 0.85);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(32, 201, 151, 0.35);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            color: #ffffff;
-            transition: all 0.3s ease;
-        }
-
-        .badge-gps { 
-            background-color: rgba(13, 110, 253, 0.3); 
-            color: #ffffff; 
-            border: 1px solid rgba(13, 110, 253, 0.5); 
-            font-weight: 600; 
-        }
-        .badge-gps:hover { 
-            background-color: #0d6efd; 
-            color: #fff; 
-        }
-
-        .img-preview-mobile { 
-            width: 100%; 
-            max-height: 220px; 
-            object-fit: cover; 
-            border-radius: 14px; 
-            cursor: pointer; 
-            border: 1px solid rgba(32, 201, 151, 0.4);
-        }
-
-        .success-modal-content {
-            background: #ffffff;
-            color: #198754;
-            border-radius: 28px;
-            padding: 35px 25px;
-            text-align: center;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.7);
-        }
-        .success-icon-box {
-            width: 75px;
-            height: 75px;
-            background: rgba(25, 135, 84, 0.12);
-            color: #198754;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 34px;
-            margin: 0 auto 20px auto;
-            border: 2px solid rgba(25, 135, 84, 0.2);
+        .touch-scroller {
+            -webkit-overflow-scrolling: touch;
         }
     </style>
 </head>
-<body>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased selection:bg-brand-500 selection:text-white pb-12">
 
-    <div class="ambient-bg" id="ambientBg"></div>
+    <!-- Header Mobile-First -->
+    <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-lg border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 bg-brand-500 rounded-xl flex items-center justify-center text-white text-lg shadow-md shadow-brand-500/20">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-xl font-black tracking-tight leading-none text-white">
+                        EcoMapa <span class="text-brand-400">Admin</span>
+                    </h1>
+                    <span class="text-[10px] sm:text-xs text-slate-400 font-medium">Panel de Control y Gestión</span>
+                </div>
+            </div>
 
-    <nav class="navbar navbar-dark navbar-custom px-3 py-3 shadow-sm">
-        <div class="container-fluid">
-            <span class="navbar-brand fw-bold fs-6"><i class="fa-solid fa-shield-halved text-success me-2"></i>Admin EcoMapa</span>
-            <div class="d-flex align-items-center">
-                {% if current_user.is_authenticated %}
-                    <span class="small me-2 d-none d-md-inline text-white fw-semibold"><i class="fa-solid fa-user-circle me-1 text-success"></i> {{ current_user.email }}</span>
-                {% endif %}
-                <a href="/logout" class="btn btn-outline-danger btn-sm rounded-pill px-2 me-1">Salir</a>
-                <a href="/" class="btn btn-outline-light btn-sm rounded-pill px-2">Mapa</a>
+            <div class="flex items-center space-x-2">
+                <a href="/" class="p-2.5 sm:px-4 sm:py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-globe text-brand-400"></i>
+                    <span class="hidden sm:inline">Ir al Sitio</span>
+                </a>
+                <a href="/logout" class="p-2.5 sm:px-4 sm:py-2 bg-rose-600/20 text-rose-300 hover:bg-rose-600 hover:text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span class="hidden sm:inline">Salir</span>
+                </a>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <div class="container container-mobile my-4 px-3" style="max-width: 650px;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold text-white m-0 fs-5"><i class="fa-solid fa-list-check me-2 text-success"></i>Gestión de Incidencias</h4>
-            <span class="badge bg-success bg-opacity-25 text-success px-3 py-2 rounded-pill fw-semibold border border-success border-opacity-25">Sistema Activo</span>
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8 space-y-6">
+
+        <!-- Métricas Rápidas (KPIs para Mobile) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] sm:text-xs font-bold uppercase text-slate-400 tracking-wider">Total</p>
+                    <p id="kpi-total" class="text-xl sm:text-2xl font-black text-slate-900">0</p>
+                </div>
+                <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 text-sm">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] sm:text-xs font-bold uppercase text-amber-500 tracking-wider">Pendientes</p>
+                    <p id="kpi-pendientes" class="text-xl sm:text-2xl font-black text-amber-600">0</p>
+                </div>
+                <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600 text-sm">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] sm:text-xs font-bold uppercase text-brand-600 tracking-wider">Resueltos</p>
+                    <p id="kpi-resueltos" class="text-xl sm:text-2xl font-black text-brand-600">0</p>
+                </div>
+                <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600 text-sm">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-[10px] sm:text-xs font-bold uppercase text-rose-500 tracking-wider">Urgentes</p>
+                    <p id="kpi-urgentes" class="text-xl sm:text-2xl font-black text-rose-600">0</p>
+                </div>
+                <div class="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600 text-sm">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+            </div>
         </div>
 
-        <div id="tabla-admin-body" class="row g-3">
-            {% if reportes %}
-                {% for r in reportes %}
-                    <div class="col-12 reporte-item" data-id="{{ r.id }}">
-                        <div class="report-card-mobile p-4">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="d-flex gap-1 align-items-center">
-                                    <span class="badge 
-                                        {% if r.gravedad == 'Alta' %}bg-danger
-                                        {% elif r.gravedad == 'Media' %}bg-warning text-dark
-                                        {% else %}bg-secondary{% endif %}">
-                                        {{ r.gravedad or 'Normal' }}
-                                    </span>
-                                    <span class="badge bg-info text-dark fw-bold">{{ r.estado }}</span>
-                                </div>
-                                <div class="small text-white fw-semibold">
-                                    <i class="fa-regular fa-clock me-1 text-success"></i>{{ r.tiempo_transcurrido or 'Hace un momento' }}
-                                </div>
-                            </div>
+        <!-- Mapa de Monitoreo Admin -->
+        <div class="bg-white p-3 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div class="flex items-center justify-between mb-3 px-1">
+                <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center">
+                    <i class="fa-solid fa-map-location-dot text-brand-600 mr-2"></i> Monitoreo General de Incidentes
+                </h2>
+                <span class="text-[10px] sm:text-xs text-slate-400">Actualizado en vivo</span>
+            </div>
+            <div id="admin-map" class="w-full"></div>
+        </div>
 
-                            <h4 class="fw-bold text-success mb-2" style="color: #20c997 !important; font-size: 1.25rem;">
-                                {{ r.categoria }}
-                            </h4>
+        <!-- Lista / Tabla de Reportes -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center">
+                    <i class="fa-solid fa-table-list text-brand-600 mr-2"></i> Gestión de Reportes
+                </h2>
+                <button onclick="cargarReportesAdmin()" class="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition active:scale-95 shadow-sm flex items-center space-x-1">
+                    <i class="fa-solid fa-rotate-right text-brand-600"></i>
+                    <span>Refrescar</span>
+                </button>
+            </div>
 
-                            <p class="text-white mb-2 fs-6">{{ r.descripcion }}</p>
+            <!-- Vista Móvil: Tarjetas Touch -->
+            <div id="contenedor-tarjetas-mobile" class="block sm:hidden divide-y divide-slate-100">
+                <div class="p-8 text-center text-xs text-slate-400">Cargando reportes...</div>
+            </div>
 
-                            <div class="small text-white mb-3 fw-semibold">
-                                <i class="fa-regular fa-calendar-days me-1 text-success"></i>{{ r.fecha_creacion or 'Fecha no disponible' }}
-                            </div>
+            <!-- Vista Escritorio/Tablet: Tabla Completa -->
+            <div class="hidden sm:block overflow-x-auto touch-scroller">
+                <table class="w-full text-left text-xs text-slate-600">
+                    <thead class="bg-slate-100/70 text-slate-700 uppercase font-black tracking-wider text-[10px]">
+                        <tr>
+                            <th class="py-3 px-4">Evidencia</th>
+                            <th class="py-3 px-4">Título y Categoría</th>
+                            <th class="py-3 px-4">Gravedad</th>
+                            <th class="py-3 px-4">Estado</th>
+                            <th class="py-3 px-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-reportes-body" class="divide-y divide-slate-100">
+                        <tr>
+                            <td colspan="5" class="py-8 text-center text-slate-400">Cargando reportes...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 
-                            {% if r.foto_path %}
-                                <div class="mb-3">
-                                    <img src="{{ r.foto_path }}" alt="Evidencia" class="img-preview-mobile shadow-sm" data-bs-toggle="modal" data-bs-target="#imgModal" onclick="document.getElementById('modalImageContainer').src='{{ r.foto_path }}'">
-                                </div>
-                            {% endif %}
+    <!-- Modal Móvil para Editar Reporte -->
+    <div id="modal-editar" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                <h3 class="font-black text-slate-900 text-base sm:text-lg flex items-center">
+                    <i class="fa-solid fa-pen-to-square text-brand-600 mr-2"></i> Modificar Reporte
+                </h3>
+                <button onclick="cerrarModalEditar()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold text-sm flex items-center justify-center active:scale-95">✕</button>
+            </div>
 
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-2 border-top border-success border-opacity-25 mt-3">
-                                <div>
-                                    <a href="https://www.google.com/maps/search/?api=1&query={{ r.latitud }},{{ r.longitud }}" target="_blank" class="badge badge-gps px-3 py-2 rounded-pill text-decoration-none d-inline-block text-white">
-                                        <i class="fa-solid fa-location-dot me-1"></i> Ver en GPS
-                                    </a>
-                                </div>
+            <form id="form-editar-reporte" class="space-y-4">
+                <input type="hidden" id="edit-id">
 
-                                <button class="btn btn-success rounded-pill px-4 py-2 resolver-btn fw-semibold shadow-sm" data-id="{{ r.id }}" style="background: #198754; border: none;">
-                                    <i class="fa-solid fa-check me-1"></i> Resolver
-                                </button>
-                            </div>
-                        </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Título</label>
+                    <input type="text" id="edit-titulo" required class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Categoría</label>
+                        <select id="edit-categoria" required class="w-full border border-slate-200 rounded-xl px-2.5 py-2.5 text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white">
+                            <option value="Residuos">Residuos</option>
+                            <option value="Saneamiento">Saneamiento</option>
+                            <option value="Alumbrado">Alumbrado</option>
+                            <option value="Espacios Verdes">Espacios Verdes</option>
+                            <option value="Vialidad">Vialidad</option>
+                            <option value="Otro">Otro</option>
+                        </select>
                     </div>
-                {% endfor %}
-            {% else %}
-                <div class="col-12 text-center py-5" id="no-reports-msg">
-                    <div class="report-card-mobile p-4 text-white">No hay incidencias registradas en este momento.</div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Gravedad</label>
+                        <select id="edit-gravedad" required class="w-full border border-slate-200 rounded-xl px-2.5 py-2.5 text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white">
+                            <option value="baja">Baja</option>
+                            <option value="media">Media</option>
+                            <option value="alta">Alta</option>
+                        </select>
+                    </div>
                 </div>
-            {% endif %}
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Estado de Resolución</label>
+                    <select id="edit-estado" required class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white text-brand-700">
+                        <option value="Pendiente">Pendiente</option>
+                        <option value="En Proceso">En Proceso</option>
+                        <option value="Resuelto">Resuelto / Limpiado</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Descripción</label>
+                    <textarea id="edit-descripcion" rows="3" required class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                </div>
+
+                <div class="pt-2 flex space-x-3">
+                    <button type="button" onclick="cerrarModalEditar()" class="w-1/2 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">Cancelar</button>
+                    <button type="submit" class="w-1/2 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-brand-600/30 active:scale-95">Guardar Cambios</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Visor Modal de Fotos -->
-    <div class="modal fade" id="imgModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content bg-dark border-1 border-success border-opacity-50 rounded-4 overflow-hidden shadow-lg">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title text-white fw-bold"><i class="fa-solid fa-image me-2 text-success"></i>Evidencia Fotográfica</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body text-center p-4">
-                    <img id="modalImageContainer" src="" class="img-fluid rounded-3 shadow" style="max-height: 75vh;" alt="Evidencia Ampliada">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Éxito Estilo App -->
-    <div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content success-modal-content">
-                <div class="success-icon-box">
-                    <i class="fa-solid fa-check"></i>
-                </div>
-                <h3 class="fw-bold mb-2" style="color: #198754;">¡Incidencia Resuelta con Éxito!</h3>
-                <p class="text-muted small mb-4 px-3">El reporte ha sido solucionado y actualizado correctamente en el sistema ambiental de Fray Bentos.</p>
-                <button type="button" class="btn btn-success rounded-pill py-2 px-4 fw-semibold shadow-sm" data-bs-dismiss="modal" style="background: #198754; border: none;" onclick="window.location.reload();">Aceptar</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Fondo animado de elementos ecológicos
-            const bg = document.getElementById('ambientBg');
-            const iconos = ['fa-leaf', 'fa-seedling', 'fa-tree'];
-            for (let i = 0; i < 14; i++) {
-                const el = document.createElement('i');
-                el.className = `fa-solid ${iconos[Math.floor(Math.random() * iconos.length)]} falling-element`;
-                el.style.left = `${Math.random() * 100}%`;
-                el.style.animationDuration = `${8 + Math.random() * 6}s`;
-                el.style.animationDelay = `${Math.random() * 5}s`;
-                el.style.fontSize = `${14 + Math.random() * 14}px`;
-                el.style.color = `rgba(32, 201, 151, ${0.15 + Math.random() * 0.25})`;
-                bg.appendChild(el);
-            }
-
-            // Lógica para resolver incidencias correctamente
-            const successModal = new bootstrap.Modal(document.getElementById('successModal'));
-
-            document.querySelectorAll('.resolver-btn').forEach(button => {
-                button.addEventListener('click', async function() {
-                    const reporteId = this.getAttribute('data-id');
-                    
-                    // Deshabilitar botón temporalmente para evitar doble clic
-                    this.disabled = true;
-                    const originalHTML = this.innerHTML;
-                    this.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Guardando...';
-
-                    try {
-                        // Realiza la petición POST apuntando a la ruta correcta de Flask
-                        const response = await fetch(`/admin/reporte/${reporteId}/estado`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                            },
-                            body: 'estado=Resuelto'
-                        });
-
-                        const data = await response.json();
-
-                        if (response.ok && data.success) {
-                            // Buscar y desvanecer la tarjeta del reporte correspondiente
-                            const tarjetaItem = document.querySelector(`.reporte-item[data-id="${reporteId}"]`);
-                            if (tarjetaItem) {
-                                tarjetaItem.style.transition = 'all 0.5s ease';
-                                tarjetaItem.style.transform = 'scale(0.9)';
-                                tarjetaItem.style.opacity = '0';
-                                setTimeout(() => {
-                                    tarjetaItem.remove();
-                                    
-                                    // Verificar si ya no quedan reportes para mostrar el mensaje de vacío
-                                    const contenedor = document.getElementById('tabla-admin-body');
-                                    if (contenedor && contenedor.querySelectorAll('.reporte-item').length === 0) {
-                                        contenedor.innerHTML = `
-                                            <div class="col-12 text-center py-5">
-                                                <div class="report-card-mobile p-4 text-white">No hay incidencias registradas en este momento.</div>
-                                            </div>
-                                        `;
-                                    }
-                                }, 500);
-                            }
-
-                            // Mostrar modal de éxito estilizado
-                            successModal.show();
-                        } else {
-                            alert('Hubo un error al procesar la solicitud: ' + (data.error || 'Error desconocido'));
-                            this.disabled = false;
-                            this.innerHTML = originalHTML;
-                        }
-                    } catch (error) {
-                        console.error('Error de red:', error);
-                        alert('No se pudo conectar con el servidor.');
-                        this.disabled = false;
-                        this.innerHTML = originalHTML;
-                    }
-                });
-            });
-        });
-    </script>
+    <!-- Leaflet JS y Lógica Admin -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/static/js/admin.js"></script>
 </body>
 </html>
