@@ -9,44 +9,65 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4 font-sans">
-    <div class="bg-slate-800/80 border border-slate-700 max-w-md w-full rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl backdrop-blur">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4 font-sans relative overflow-hidden">
+
+    <!-- Fondo sutil con luces de neón ecológicas -->
+    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="bg-slate-900/90 border border-slate-800 max-w-md w-full rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl backdrop-blur-xl relative z-10">
         <div class="text-center space-y-3">
-            <div class="w-16 h-16 bg-emerald-500/20 border border-emerald-400/30 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
+            <div class="w-16 h-16 bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-2xl shadow-inner">
                 <i class="fa-solid fa-user-shield"></i>
             </div>
             <h2 class="text-2xl font-black text-white">Panel de Administración</h2>
-            <p class="text-slate-400 text-xs">Acceso reservado para la gestión de incidentes y moderación municipal.</p>
+            <p class="text-slate-400 text-xs">Acceso restringido para personal autorizado e inspectores municipales.</p>
         </div>
 
-        <form class="space-y-4" onsubmit="event.preventDefault(); alert('Modo de prueba: inicio de sesión correcto');">
+        <!-- Mensaje de notificación interactivo dentro del formulario (Sin alerts desplegables) -->
+        <div id="login-status" class="hidden p-3 rounded-xl text-xs font-bold text-center bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <i class="fa-solid fa-circle-check"></i> Credenciales de prueba validadas. Redirigiendo...
+        </div>
+
+        <form id="form-login" class="space-y-4">
             <div>
                 <label class="block text-xs font-bold text-slate-300 mb-1">Correo Electrónico</label>
                 <div class="relative">
-                    <i class="fa-solid fa-envelope absolute left-4 top-3 text-slate-500 text-sm"></i>
-                    <input type="email" required placeholder="admin@ecomapa.org" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    <i class="fa-solid fa-envelope absolute left-4 top-3.5 text-slate-500 text-xs"></i>
+                    <input type="email" id="email" required placeholder="admin@ecomapa.org" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
                 </div>
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-slate-300 mb-1">Contraseña</label>
                 <div class="relative">
-                    <i class="fa-solid fa-lock absolute left-4 top-3 text-slate-500 text-sm"></i>
-                    <input type="password" required placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                    <i class="fa-solid fa-lock absolute left-4 top-3.5 text-slate-500 text-xs"></i>
+                    <input type="password" id="password" required placeholder="••••••••" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
                 </div>
             </div>
 
-            <button type="submit" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl transition text-sm shadow-lg shadow-emerald-950">
+            <button type="submit" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl transition text-xs uppercase tracking-wider shadow-lg shadow-emerald-950">
                 Iniciar Sesión
             </button>
         </form>
 
         <div class="text-center pt-2">
-            <a href="/" class="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition flex items-center justify-center gap-1">
+            <a href="/" class="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition flex items-center justify-center gap-1.5">
                 <i class="fa-solid fa-arrow-left"></i>
                 <span>Volver al Mapa Principal</span>
             </a>
         </div>
     </div>
+
+    <script>
+        document.getElementById('form-login').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const statusDiv = document.getElementById('login-status');
+            statusDiv.classList.remove('hidden');
+            
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1200);
+        });
+    </script>
 </body>
 </html>

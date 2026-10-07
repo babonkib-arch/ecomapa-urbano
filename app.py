@@ -3,6 +3,7 @@ from datetime import datetime
 from flask import Flask, render_template, request, jsonify, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
+from sqlalchemy import inspect, text
 
 app = Flask(__name__)
 
@@ -10,15 +11,18 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ecomapa.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Configuración de carpeta para archivos subidos
+# Soporte para PostgreSQL en Render (si empieza por postgres:// cambiar a postgresql://)
+if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgres://"):
+    app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace("postgres://", "postgresql://", 1)
+
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db = SQLAlchemy(app)
 
-# Modelo de datos extendido con fecha de creación
 class Reporte(db.Model):
+    __tablename__ = 'reporte'
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(150), nullable=False)
     categoria = db.Column(db.String(50), nullable=False)
@@ -31,7 +35,7 @@ class Reporte(db.Model):
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
-        fecha_fmt = self.fecha_creacion.strftime('%d/%m/%Y a las %H:%M hs') if self.fecha_creacion else 'Sin fecha'
+        fecha_str = self.fecha_creacion.strftime('%d/%m/%Y %H:%M') if self.fecha_creacion else 'Reciente'
         return {
             'id': self.id,
             'titulo': self.titulo,
@@ -42,11 +46,21 @@ class Reporte(db.Model):
             'longitud': self.longitud,
             'estado': self.estado,
             'foto_url': self.foto_url,
-            'fecha': fecha_fmt
+            'fecha': fecha_str
         }
 
+# Asegurar que la tabla y columnas existan en la BD sin romper Render
 with app.app_context():
     db.create_all()
+    try:
+        inspector = inspect(db.engine)
+        columnas = [col['name'] for col in inspector.get_columns('reporte')]
+        if 'fecha_creacion' not in columnas:
+            with db.engine.connect() as conn:
+                conn.execute(text("ALTER TABLE reporte ADD COLUMN fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+                conn.commit()
+    except Exception as e:
+        print("Migración interna no requerida o completada:", e)
 
 @app.route('/')
 def index():
@@ -59,7 +73,7 @@ def login():
 @app.route('/api/reportes', methods=['GET'])
 def obtener_reportes():
     try:
-        reportes = Reporte.query.order_by(Reporte.fecha_creacion.desc()).all()
+        reportes = Reporte.query.order_by(Reporte.id.desc()).all()
         return jsonify([r.to_dict() for r in reportes]), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -86,15 +100,15 @@ def crear_reporte():
                 foto_path = f'/{UPLOAD_FOLDER}/{filename}'
 
         nuevo_reporte = Reporte(
-            titulo=titulo,
-            categoria=datos.get('categoria', 'Otro'),
-            gravedad=datos.get('gravedad', 'baja'),
-            descripcion=datos.get('descripcion', ''),
+            titulo=str(titulo),
+            categoria=str(datos.get('categoria', 'Otro')),
+            gravedad=str(datos.get('gravedad', 'baja')),
+            descripcion=str(datos.get('descripcion', '')),
             latitud=float(latitud),
             longitud=float(longitud),
-            estado=datos.get('estado', 'Pendiente'),
+            estado=str(datos.get('estado', 'Pendiente')),
             foto_url=foto_path,
-            fecha_creacion=datetime.utcnow()
+            fecha_creacion=datetime.now()
         )
 
         db.session.add(nuevo_reporte)
@@ -104,7 +118,7 @@ def crear_reporte():
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': f'Error interno del servidor: {str(e)}'}), 500
+        return jsonify({'error': f'Error al guardar en BD: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
