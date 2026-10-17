@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initAdminMap() {
-    // Inicializar mapa centrado en Fray Bentos
     adminMap = L.map('admin-map').setView([-33.1333, -58.3000], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -49,7 +48,6 @@ function actualizarKPIs(reportes) {
 }
 
 function renderizarMapaAdmin(reportes) {
-    // Limpiar marcadores
     adminMarkers.forEach(m => adminMap.removeLayer(m));
     adminMarkers = [];
 
@@ -74,10 +72,13 @@ function renderizarMapaAdmin(reportes) {
 
         marker.bindPopup(`
             <div class="p-1 font-sans text-xs space-y-2">
-                ${foto ? `<img src="${foto}" class="w-full h-24 object-cover rounded-lg border border-slate-200 shadow-sm">` : ''}
+                ${foto ? `<img src="${foto}" class="w-full h-24 object-cover rounded-lg border border-slate-200 shadow-sm cursor-pointer" onclick="verImagenZoom('${foto}', '${r.titulo || r.categoria}')">` : ''}
                 <div>
                     <p class="font-bold text-slate-900 mb-0.5">${r.titulo || r.categoria}</p>
                     <p class="text-[11px] text-slate-500">${r.categoria} • <span class="uppercase font-semibold">${r.gravedad}</span></p>
+                    <a href="https://www.google.com/maps?q=${r.latitud},${r.longitud}" target="_blank" class="inline-block mt-1 text-[10px] font-bold text-emerald-600 hover:underline">
+                        📍 Abrir en Google Maps GPS
+                    </a>
                 </div>
             </div>
         `);
@@ -101,12 +102,15 @@ function renderizarTablaAdmin(reportes) {
             <tr class="hover:bg-slate-50/80 transition">
                 <td class="py-3 px-4">
                     ${foto 
-                        ? `<img src="${foto}" class="w-12 h-12 object-cover rounded-xl border border-slate-200 cursor-pointer hover:scale-105 transition" onclick="Swal.fire({imageUrl: '${foto}', background: '#0f172a', showConfirmButton: false, showCloseButton: true})">` 
+                        ? `<img src="${foto}" class="w-12 h-12 object-cover rounded-xl border border-slate-200 cursor-pointer hover:scale-105 transition" onclick="verImagenZoom('${foto}', '${r.titulo || r.categoria}')">` 
                         : `<div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 text-xs"><i class="fa-solid fa-image"></i></div>`}
                 </td>
                 <td class="py-3 px-4">
                     <p class="font-bold text-slate-900">${r.titulo || r.categoria || 'Incidente'}</p>
                     <span class="text-[10px] text-slate-500">${r.categoria}</span>
+                    <a href="https://www.google.com/maps?q=${r.latitud},${r.longitud}" target="_blank" class="block text-[10px] font-bold text-emerald-600 hover:underline mt-0.5">
+                        📍 Ver GPS Intendencia
+                    </a>
                 </td>
                 <td class="py-3 px-4">
                     <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase ${getBadgeGravedad(r.gravedad)}">
@@ -147,11 +151,14 @@ function renderizarTarjetasMobile(reportes) {
                 <div class="flex items-start justify-between">
                     <div class="flex items-center space-x-3">
                         ${foto 
-                            ? `<img src="${foto}" class="w-14 h-14 object-cover rounded-2xl border border-slate-200">` 
+                            ? `<img src="${foto}" class="w-14 h-14 object-cover rounded-2xl border border-slate-200 cursor-pointer" onclick="verImagenZoom('${foto}', '${r.titulo || r.categoria}')">` 
                             : `<div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400"><i class="fa-solid fa-image"></i></div>`}
                         <div>
                             <h4 class="font-black text-slate-900 text-sm leading-tight">${r.titulo || r.categoria}</h4>
                             <p class="text-[11px] text-slate-500 mt-0.5">${r.categoria}</p>
+                            <a href="https://www.google.com/maps?q=${r.latitud},${r.longitud}" target="_blank" class="text-[10px] font-bold text-emerald-600 hover:underline">
+                                📍 Abrir en Google Maps GPS
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -178,6 +185,22 @@ function renderizarTarjetasMobile(reportes) {
             </div>
         `;
     }).join('');
+}
+
+function verImagenZoom(url, titulo) {
+    Swal.fire({
+        title: titulo || 'Evidencia de Fotografía',
+        imageUrl: url,
+        imageAlt: 'Foto de Evidencia',
+        background: '#0f172a',
+        color: '#f8fafc',
+        showConfirmButton: false,
+        showCloseButton: true,
+        customClass: {
+            popup: 'rounded-3xl border border-emerald-500/40 max-w-3xl shadow-2xl',
+            image: 'rounded-2xl max-h-[75vh] object-contain w-full'
+        }
+    });
 }
 
 function getBadgeGravedad(gravedad) {

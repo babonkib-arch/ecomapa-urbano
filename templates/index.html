@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <!-- SweetAlert2 -->
+    <!-- SweetAlert2 para Zoom y Alertas -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
@@ -131,7 +131,7 @@
         <span>Toca cualquier punto del mapa para crear un reporte</span>
     </div>
 
-    <!-- MODAL DE REPORTE (CENTRADO EN PANTALLA) -->
+    <!-- MODAL DE REPORTE -->
     <div id="report-modal-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[1500] hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none">
         <div id="report-card" class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 transform scale-95 transition-all duration-300 max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -161,7 +161,7 @@
                             <option value="💡 Alumbrado Público">💡 Alumbrado Público</option>
                             <option value="🚰 Agua / Saneamiento">🚰 Agua / Saneamiento</option>
                             <option value="🛣️ Baches / Calles dañadas">🛣️ Baches / Calles dañadas</option>
-                            <option value="🐕 Animales Sueltos / Peticiones">🐕 Animales Sueltos / Peticiones</option>
+                            <option value="🐕 Animales Sueltos">🐕 Animales Sueltos</option>
                             <option value="🚗 Vehículos Abandonados">🚗 Vehículos Abandonados</option>
                             <option value="🦟 Plagas / Vectores">🦟 Plagas / Vectores</option>
                             <option value="🔊 Contaminación Sonora">🔊 Contaminación Sonora</option>
@@ -188,7 +188,7 @@
                     <label class="block text-xs font-bold text-slate-300 mb-1">Tomar Foto con Cámara / Evidencia</label>
                     <input type="file" id="input-foto" accept="image/*" capture="environment" class="w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-500 file:text-slate-950 hover:file:bg-emerald-400 cursor-pointer">
                     <div id="preview-container" class="mt-2 hidden">
-                        <img id="foto-preview" class="h-24 rounded-xl object-cover border border-slate-700 w-full">
+                        <img id="foto-preview" class="h-24 rounded-xl object-cover border border-slate-700 w-full cursor-pointer" onclick="verImagenZoom(this.src, 'Previsualización')">
                     </div>
                 </div>
 
@@ -200,7 +200,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE ÉXITO CON ANIMACIÓN DE TICK -->
+    <!-- MODAL DE ÉXITO -->
     <div id="modal-success" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[3000] hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-emerald-500/40 text-slate-100 max-w-sm w-full rounded-3xl p-6 text-center shadow-2xl space-y-4">
             <div class="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-400 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">
@@ -226,7 +226,6 @@
         let map, tempMarker, reportesLayer;
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Inicializar Mapa centrado en Fray Bentos
             map = L.map('map').setView([-33.1381, -58.2988], 14);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -252,7 +251,6 @@
                     const shareText = encodeURIComponent(`🚨 Reporte en EcoMapa Fray Bentos: ${r.titulo} (${r.categoria}). Revisa la ubicación aquí:`);
                     const shareUrl = encodeURIComponent(window.location.href);
 
-                    // Badge de gravedad para el popup
                     let badgeGravedad = '<span class="text-emerald-400 font-bold">🟢 Baja</span>';
                     if (r.gravedad === 'alta' || String(r.gravedad).includes('Alta')) {
                         badgeGravedad = '<span class="text-rose-400 font-bold">🔴 Alta</span>';
@@ -262,7 +260,7 @@
 
                     const popupContent = `
                         <div class="space-y-2.5 text-xs p-1 font-sans">
-                            ${r.foto_url ? `<img src="${r.foto_url}" class="w-full h-32 object-cover rounded-xl border border-slate-700 shadow-md">` : ''}
+                            ${r.foto_url ? `<img src="${r.foto_url}" class="w-full h-32 object-cover rounded-xl border border-slate-700 shadow-md cursor-pointer hover:opacity-90 transition" onclick="verImagenZoom('${r.foto_url}', '${r.titulo}')" title="Haz clic para hacer zoom">` : ''}
                             
                             <div>
                                 <div class="flex items-center justify-between gap-2 mb-1">
@@ -277,7 +275,7 @@
                                 <span class="uppercase font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">${r.estado || 'Pendiente'}</span>
                             </div>
 
-                            <!-- BOTONES PARA COMPARTIR EN REDES SOCIALES (CON INSTAGRAM) -->
+                            <!-- BOTONES PARA COMPARTIR EN REDES SOCIALES (INCLUYE INSTAGRAM) -->
                             <div class="pt-2 border-t border-slate-800 space-y-1">
                                 <span class="text-[10px] text-slate-400 font-bold block">Compartir reporte:</span>
                                 <div class="grid grid-cols-5 gap-1.5">
@@ -301,7 +299,6 @@
                         </div>
                     `;
                     
-                    // Icono personalizado según semáforo
                     let colorPin = '#10b981';
                     if (r.gravedad === 'alta' || String(r.gravedad).includes('Alta')) colorPin = '#f43f5e';
                     else if (r.gravedad === 'media' || String(r.gravedad).includes('Media')) colorPin = '#f59e0b';
@@ -320,6 +317,22 @@
             } catch (err) {
                 console.error("Error al cargar reportes:", err);
             }
+        }
+
+        function verImagenZoom(url, titulo) {
+            Swal.fire({
+                title: titulo || 'Evidencia de Fotografía',
+                imageUrl: url,
+                imageAlt: 'Foto de Evidencia',
+                background: '#0f172a',
+                color: '#f8fafc',
+                showConfirmButton: false,
+                showCloseButton: true,
+                customClass: {
+                    popup: 'rounded-3xl border border-emerald-500/40 max-w-3xl shadow-2xl',
+                    image: 'rounded-2xl max-h-[75vh] object-contain w-full'
+                }
+            });
         }
 
         function compartirInstagram() {

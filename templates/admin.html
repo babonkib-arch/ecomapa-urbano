@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <!-- SweetAlert2 para Notificaciones y Diálogos Animados Premium -->
+    <!-- SweetAlert2 para Notificaciones y Modal Zoom de Foto -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
@@ -68,12 +68,13 @@
             <div id="card-{{ r.id }}" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col md:flex-row gap-5 items-start md:items-center justify-between">
                 
                 <div class="flex gap-4 items-start w-full md:w-auto">
-                    <!-- Foto Preview -->
+                    <!-- Foto Preview con Zoom -->
                     {% if foto %}
-                        <div class="relative group cursor-pointer flex-shrink-0" onclick="verImagenFull('{{ foto }}')">
+                        <div class="relative group cursor-pointer flex-shrink-0" onclick="verImagenZoom('{{ foto }}', '{{ r.titulo or r.categoria }}')">
                             <img src="{{ foto }}" class="w-24 h-24 object-cover rounded-xl border border-slate-700 shadow-md group-hover:scale-105 transition-all duration-300">
-                            <div class="absolute inset-0 bg-slate-950/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs transition">
-                                <i class="fa-solid fa-magnifying-glass-plus"></i>
+                            <div class="absolute inset-0 bg-slate-950/50 rounded-xl opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-emerald-400 text-xs transition">
+                                <i class="fa-solid fa-magnifying-glass-plus text-base"></i>
+                                <span class="text-[9px] font-bold mt-0.5">Zoom</span>
                             </div>
                         </div>
                     {% else %}
@@ -100,10 +101,13 @@
 
                         <p class="text-xs text-slate-400 line-clamp-2">{{ r.descripcion or 'Sin descripción proporcionada.' }}</p>
 
-                        <!-- Ubicación y Fecha -->
-                        <div class="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
+                        <!-- Ubicación, Fecha y Enlace Google Maps -->
+                        <div class="flex items-center gap-4 text-[11px] text-slate-400 pt-1 flex-wrap">
                             <span><i class="fa-solid fa-calendar-days text-emerald-400"></i> {{ r.fecha or r.fecha_creacion or 'Reciente' }}</span>
-                            <span><i class="fa-solid fa-location-dot text-emerald-400"></i> Lat: {{ r.latitud }}, Lng: {{ r.longitud }}</span>
+                            <a href="https://www.google.com/maps?q={{ r.latitud }},{{ r.longitud }}" target="_blank" class="text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 rounded-lg border border-emerald-500/30 transition" title="Abrir ubicación en Google Maps GPS para la Intendencia">
+                                <i class="fa-solid fa-map-location-dot"></i>
+                                <span>Abrir en Google Maps GPS</span>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -170,14 +174,19 @@
             document.getElementById('tick-modal').classList.add('hidden');
         }
 
-        function verImagenFull(url) {
+        function verImagenZoom(url, titulo) {
             Swal.fire({
+                title: titulo || 'Evidencia de Fotografía',
                 imageUrl: url,
-                imageAlt: 'Evidencia',
+                imageAlt: 'Foto de Evidencia',
                 background: '#0f172a',
+                color: '#f8fafc',
                 showConfirmButton: false,
                 showCloseButton: true,
-                customClass: { popup: 'rounded-3xl border border-slate-700' }
+                customClass: {
+                    popup: 'rounded-3xl border border-emerald-500/40 max-w-3xl shadow-2xl',
+                    image: 'rounded-2xl max-h-[75vh] object-contain w-full'
+                }
             });
         }
 
