@@ -151,6 +151,25 @@ def cambiar_estado(reporte_id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/reportes/<int:reporte_id>', methods=['PUT'])
+@admin_required
+def editar_reporte(reporte_id):
+    try:
+        reporte = Reporte.query.get_or_404(reporte_id)
+        datos = request.get_json() or {}
+
+        reporte.titulo = datos.get('titulo', reporte.titulo)
+        reporte.categoria = datos.get('categoria', reporte.categoria)
+        reporte.gravedad = datos.get('gravedad', reporte.gravedad)
+        reporte.estado = datos.get('estado', reporte.estado)
+        reporte.descripcion = datos.get('descripcion', reporte.descripcion)
+
+        db.session.commit()
+        return jsonify({'mensaje': 'Reporte actualizado correctamente'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/reportes/<int:reporte_id>', methods=['DELETE'])
 @admin_required
 def eliminar_reporte(reporte_id):
@@ -162,6 +181,15 @@ def eliminar_reporte(reporte_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reportes/<int:reporte_id>', methods=['GET'])
+@admin_required
+def obtener_reporte_individual(reporte_id):
+    try:
+        reporte = Reporte.query.get_or_404(reporte_id)
+        return jsonify(reporte.to_dict()), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 404
 
 @app.route('/api/reportes', methods=['GET'])
 def obtener_reportes():
