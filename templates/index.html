@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
         @keyframes bgGradient {
@@ -27,8 +29,9 @@
             background: #0f172a !important;
             color: #f8fafc !important;
             border: 1px solid #334155 !important;
-            border-radius: 1rem !important;
+            border-radius: 1.25rem !important;
             padding: 0.5rem !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
         }
         .leaflet-popup-tip {
             background: #0f172a !important;
@@ -37,9 +40,9 @@
 </head>
 <body class="bg-slate-950 text-slate-100 h-screen overflow-hidden font-sans relative">
 
-    <!-- MODAL BIENVENIDA -->
+    <!-- MODAL BIENVENIDA CON GUÍA E INFORMACIÓN INSTITUCIONAL -->
     <div id="welcome-modal" class="fixed inset-0 animate-gradient-bg z-[2000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-        <div class="bg-slate-900/90 border border-emerald-500/30 max-w-2xl w-full rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-6 backdrop-blur-xl relative z-10 my-auto">
+        <div class="bg-slate-900/95 border border-emerald-500/30 max-w-2xl w-full rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-6 backdrop-blur-xl relative z-10 my-auto max-h-[90vh] overflow-y-auto">
             <div class="flex justify-center">
                 <div class="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-400/60 rounded-3xl flex items-center justify-center text-emerald-400 text-4xl shadow-lg shadow-emerald-950/50 transform rotate-3">
                     <i class="fa-solid fa-leaf animate-bounce"></i>
@@ -51,8 +54,49 @@
                     EcoMapa <span class="text-emerald-400">Fray Bentos</span>
                 </h1>
                 <p class="text-slate-300 text-xs sm:text-sm max-w-lg mx-auto">
-                    Plataforma participativa ciudadana para el reporte, monitoreo y gestión ambiental en tiempo real.
+                    Plataforma participativa ciudadana para el reporte, monitoreo y gestión ambiental urbana en tiempo real.
                 </p>
+            </div>
+
+            <!-- GUÍA PASO A PASO E INFORMACIÓN -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left pt-2">
+                <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl space-y-1">
+                    <div class="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                        <span class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center text-[10px]">1</span>
+                        Ubica en el Mapa
+                    </div>
+                    <p class="text-[11px] text-slate-400">Haz clic en el punto exacto de Fray Bentos donde detectes una incidencia.</p>
+                </div>
+                <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl space-y-1">
+                    <div class="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                        <span class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center text-[10px]">2</span>
+                        Detalla el Problema
+                    </div>
+                    <p class="text-[11px] text-slate-400">Selecciona la categoría, adjunta una foto como evidencia y elige la gravedad.</p>
+                </div>
+                <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl space-y-1">
+                    <div class="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                        <span class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center text-[10px]">3</span>
+                        Comparte y Gestiona
+                    </div>
+                    <p class="text-[11px] text-slate-400">Difunde en redes sociales para visibilizar el caso y monitorea su solución.</p>
+                </div>
+            </div>
+
+            <!-- LEYENDA DE SEMÁFOROS DE GRAVEDAD -->
+            <div class="bg-slate-950/60 border border-slate-800 p-3.5 rounded-2xl text-left space-y-2">
+                <span class="text-[11px] font-bold text-slate-300 block uppercase tracking-wider">Sistema de Semáforos de Gravedad:</span>
+                <div class="grid grid-cols-3 gap-2 text-[11px]">
+                    <div class="flex items-center gap-1.5 text-emerald-400 font-medium">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> 🟢 Baja (Leve)
+                    </div>
+                    <div class="flex items-center gap-1.5 text-amber-400 font-medium">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 🟡 Media (Atención)
+                    </div>
+                    <div class="flex items-center gap-1.5 text-rose-400 font-medium">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> 🔴 Alta (Urgente)
+                    </div>
+                </div>
             </div>
 
             <button onclick="cerrarBienvenida()" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl transition shadow-xl shadow-emerald-950/60 flex items-center justify-center gap-2 text-sm tracking-wide">
@@ -89,7 +133,7 @@
 
     <!-- MODAL DE REPORTE (CENTRADO EN PANTALLA) -->
     <div id="report-modal-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[1500] hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none">
-        <div id="report-card" class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 transform scale-95 transition-all duration-300">
+        <div id="report-card" class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 transform scale-95 transition-all duration-300 max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
                 <h3 class="font-black text-base text-white flex items-center gap-2">
                     <i class="fa-solid fa-camera text-emerald-400"></i> Registrar Nuevo Reporte
@@ -108,23 +152,29 @@
                     <input type="text" id="titulo" required placeholder="Ej. Acumulación de residuos en la esquina" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Categoría</label>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Categoría del Incidente</label>
                         <select id="categoria" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
-                            <option value="Basura">Basura / Residuos</option>
-                            <option value="Arbolado">Arbolado / Podas</option>
-                            <option value="Alumbrado">Alumbrado Público</option>
-                            <option value="Saneamiento">Agua / Saneamiento</option>
-                            <option value="Otro">Otros</option>
+                            <option value="🗑️ Basura / Residuos">🗑️ Basura / Residuos</option>
+                            <option value="🌳 Arbolado / Podas">🌳 Arbolado / Podas</option>
+                            <option value="💡 Alumbrado Público">💡 Alumbrado Público</option>
+                            <option value="🚰 Agua / Saneamiento">🚰 Agua / Saneamiento</option>
+                            <option value="🛣️ Baches / Calles dañadas">🛣️ Baches / Calles dañadas</option>
+                            <option value="🐕 Animales Sueltos / Peticiones">🐕 Animales Sueltos / Peticiones</option>
+                            <option value="🚗 Vehículos Abandonados">🚗 Vehículos Abandonados</option>
+                            <option value="🦟 Plagas / Vectores">🦟 Plagas / Vectores</option>
+                            <option value="🔊 Contaminación Sonora">🔊 Contaminación Sonora</option>
+                            <option value="🏕️ Espacios Públicos / Plazas">🏕️ Espacios Públicos / Plazas</option>
+                            <option value="⚠️ Otro Incidente">⚠️ Otro Incidente</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Gravedad</label>
-                        <select id="gravedad" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
-                            <option value="baja">Baja</option>
-                            <option value="media">Media</option>
-                            <option value="alta">Alta / Urgente</option>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Gravedad (Semáforo)</label>
+                        <select id="gravedad" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 font-bold">
+                            <option value="baja" class="text-emerald-400 font-bold">🟢 Baja (Leve)</option>
+                            <option value="media" class="text-amber-400 font-bold">🟡 Media (Atención)</option>
+                            <option value="alta" class="text-rose-400 font-bold">🔴 Alta / Urgente</option>
                         </select>
                     </div>
                 </div>
@@ -135,8 +185,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Tomar Foto con Cámara</label>
-                    <!-- capture="environment" abre directamente la cámara posterior en móviles -->
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Tomar Foto con Cámara / Evidencia</label>
                     <input type="file" id="input-foto" accept="image/*" capture="environment" class="w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-500 file:text-slate-950 hover:file:bg-emerald-400 cursor-pointer">
                     <div id="preview-container" class="mt-2 hidden">
                         <img id="foto-preview" class="h-24 rounded-xl object-cover border border-slate-700 w-full">
@@ -200,22 +249,102 @@
                 const data = await res.json();
 
                 data.forEach(r => {
+                    const shareText = encodeURIComponent(`🚨 Reporte en EcoMapa Fray Bentos: ${r.titulo} (${r.categoria}). Revisa la ubicación aquí:`);
+                    const shareUrl = encodeURIComponent(window.location.href);
+
+                    // Badge de gravedad para el popup
+                    let badgeGravedad = '<span class="text-emerald-400 font-bold">🟢 Baja</span>';
+                    if (r.gravedad === 'alta' || String(r.gravedad).includes('Alta')) {
+                        badgeGravedad = '<span class="text-rose-400 font-bold">🔴 Alta</span>';
+                    } else if (r.gravedad === 'media' || String(r.gravedad).includes('Media')) {
+                        badgeGravedad = '<span class="text-amber-400 font-bold">🟡 Media</span>';
+                    }
+
                     const popupContent = `
-                        <div class="space-y-2 text-xs">
-                            ${r.foto_url ? `<img src="${r.foto_url}" class="w-full h-32 object-cover rounded-lg border border-slate-700">` : ''}
-                            <div class="font-bold text-emerald-400 text-sm">${r.titulo}</div>
-                            <div class="text-slate-300">${r.descripcion || 'Sin descripción'}</div>
-                            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800">
-                                <span><i class="fa-solid fa-clock"></i> ${r.fecha}</span>
-                                <span class="uppercase font-bold text-emerald-300">${r.estado}</span>
+                        <div class="space-y-2.5 text-xs p-1 font-sans">
+                            ${r.foto_url ? `<img src="${r.foto_url}" class="w-full h-32 object-cover rounded-xl border border-slate-700 shadow-md">` : ''}
+                            
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <span class="font-bold text-white text-sm">${r.titulo}</span>
+                                    ${badgeGravedad}
+                                </div>
+                                <p class="text-slate-300 text-[11px] leading-relaxed">${r.descripcion || 'Sin descripción adicional.'}</p>
+                            </div>
+
+                            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-slate-800">
+                                <span><i class="fa-solid fa-clock text-emerald-400"></i> ${r.fecha || 'Reciente'}</span>
+                                <span class="uppercase font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">${r.estado || 'Pendiente'}</span>
+                            </div>
+
+                            <!-- BOTONES PARA COMPARTIR EN REDES SOCIALES (CON INSTAGRAM) -->
+                            <div class="pt-2 border-t border-slate-800 space-y-1">
+                                <span class="text-[10px] text-slate-400 font-bold block">Compartir reporte:</span>
+                                <div class="grid grid-cols-5 gap-1.5">
+                                    <a href="https://api.whatsapp.com/send?text=${shareText}%20${shareUrl}" target="_blank" class="bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-400 p-2 rounded-lg text-center transition border border-emerald-500/30" title="WhatsApp">
+                                        <i class="fa-brands fa-whatsapp text-sm"></i>
+                                    </a>
+                                    <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" class="bg-blue-600/30 hover:bg-blue-600/50 text-blue-400 p-2 rounded-lg text-center transition border border-blue-500/30" title="Facebook">
+                                        <i class="fa-brands fa-facebook-f text-sm"></i>
+                                    </a>
+                                    <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" class="bg-sky-500/30 hover:bg-sky-500/50 text-sky-400 p-2 rounded-lg text-center transition border border-sky-500/30" title="X / Twitter">
+                                        <i class="fa-brands fa-x-twitter text-sm"></i>
+                                    </a>
+                                    <button onclick="compartirInstagram()" class="bg-gradient-to-tr from-amber-500/30 via-rose-500/30 to-purple-500/30 hover:opacity-80 text-rose-300 p-2 rounded-lg text-center transition border border-rose-500/30" title="Instagram">
+                                        <i class="fa-brands fa-instagram text-sm"></i>
+                                    </button>
+                                    <button onclick="copiarEnlace()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg text-center transition border border-slate-700" title="Copiar Enlace">
+                                        <i class="fa-solid fa-link text-sm"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `;
-                    L.marker([r.latitud, r.longitud]).addTo(reportesLayer).bindPopup(popupContent);
+                    
+                    // Icono personalizado según semáforo
+                    let colorPin = '#10b981';
+                    if (r.gravedad === 'alta' || String(r.gravedad).includes('Alta')) colorPin = '#f43f5e';
+                    else if (r.gravedad === 'media' || String(r.gravedad).includes('Media')) colorPin = '#f59e0b';
+
+                    const customMarker = L.circleMarker([r.latitud, r.longitud], {
+                        radius: 9,
+                        fillColor: colorPin,
+                        color: '#ffffff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    });
+
+                    customMarker.addTo(reportesLayer).bindPopup(popupContent);
                 });
             } catch (err) {
                 console.error("Error al cargar reportes:", err);
             }
+        }
+
+        function compartirInstagram() {
+            navigator.clipboard.writeText(window.location.href);
+            Swal.fire({
+                icon: 'info',
+                title: 'Enlace copiado para Instagram',
+                text: 'Abre Instagram e intégralo en tu Historia o Publicación.',
+                background: '#0f172a',
+                color: '#f8fafc',
+                confirmButtonColor: '#10b981'
+            });
+        }
+
+        function copiarEnlace() {
+            navigator.clipboard.writeText(window.location.href);
+            Swal.fire({
+                icon: 'success',
+                title: '¡Enlace copiado!',
+                text: 'Se copió el enlace directo al portapapeles.',
+                timer: 1500,
+                showConfirmButton: false,
+                background: '#0f172a',
+                color: '#f8fafc'
+            });
         }
 
         function abrirMenuReporte(lat, lng) {
@@ -285,9 +414,18 @@
                     document.getElementById('preview-container').classList.add('hidden');
                     document.getElementById('modal-success').classList.remove('hidden');
                     cargarReportes();
+                } else {
+                    throw new Error('No se pudo procesar el reporte');
                 }
             } catch (err) {
-                alert("Error al enviar el reporte");
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al publicar',
+                    text: 'Ocurrió un fallo de conexión al guardar el reporte.',
+                    background: '#0f172a',
+                    color: '#f8fafc',
+                    confirmButtonColor: '#10b981'
+                });
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Publicar Reporte</span>`;
