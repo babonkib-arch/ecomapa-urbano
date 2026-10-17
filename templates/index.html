@@ -247,7 +247,6 @@
                 const res = await fetch('/api/reportes');
                 const data = await res.json();
 
-                // Detectar si la URL contiene un reporte compartido específico (ej: ?reporte=5)
                 const urlParams = new URLSearchParams(window.location.search);
                 const reporteIdCompartido = urlParams.get('reporte');
 
@@ -267,7 +266,7 @@
 
                     const popupContent = `
                         <div class="space-y-2.5 text-xs p-1 font-sans">
-                            ${r.foto_url ? `<img src="${r.foto_url}" class="w-full h-32 object-cover rounded-xl border border-slate-700 shadow-md cursor-pointer hover:opacity-90 transition" onclick="verImagenZoom('${r.foto_url}', '${r.titulo}')" title="Haz clic para hacer zoom">` : ''}
+                            ${r.foto_url ? `<img src="${r.foto_url}" class="w-full h-32 object-cover rounded-xl border border-slate-700 shadow-md cursor-pointer hover:opacity-90 transition" onclick="verImagenZoom('${r.foto_url}', '${r.titulo}')" title="Haz clic para ampliar">` : ''}
                             
                             <div>
                                 <div class="flex items-center justify-between gap-2 mb-1">
@@ -282,7 +281,7 @@
                                 <span class="uppercase font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">${r.estado || 'Pendiente'}</span>
                             </div>
 
-                            <!-- BOTONES PARA COMPARTIR EL ENLACE DIRECTO DEL REPORTE -->
+                            <!-- BOTONES PARA COMPARTIR EL ENLACE DIRECTO -->
                             <div class="pt-2 border-t border-slate-800 space-y-1">
                                 <span class="text-[10px] text-slate-400 font-bold block">Compartir reporte:</span>
                                 <div class="grid grid-cols-5 gap-1.5">
@@ -321,13 +320,11 @@
 
                     customMarker.addTo(reportesLayer).bindPopup(popupContent);
 
-                    // Capturar si este es el marcador del reporte compartido
                     if (reporteIdCompartido && String(r.id) === String(reporteIdCompartido)) {
                         markerAperturaAuto = { marker: customMarker, lat: r.latitud, lng: r.longitud };
                     }
                 });
 
-                // Si se abrió mediante enlace compartido, saltar bienvenida y abrir el popup exacto
                 if (markerAperturaAuto) {
                     document.getElementById('welcome-modal').classList.add('hidden');
                     map.setView([markerAperturaAuto.lat, markerAperturaAuto.lng], 16);
@@ -341,18 +338,22 @@
             }
         }
 
+        // FUNCIÓN ZOOM DE FOTO CON BOTÓN VOLVER AL MAPA
         function verImagenZoom(url, titulo) {
             Swal.fire({
-                title: titulo || 'Evidencia de Fotografía',
+                title: `<span class="text-sm font-bold text-white">${titulo || 'Evidencia de Fotografía'}</span>`,
                 imageUrl: url,
                 imageAlt: 'Foto de Evidencia',
                 background: '#0f172a',
                 color: '#f8fafc',
-                showConfirmButton: false,
                 showCloseButton: true,
+                showConfirmButton: true,
+                confirmButtonText: '<i class="fa-solid fa-arrow-left me-1"></i> Volver al Mapa',
+                confirmButtonColor: '#10b981',
                 customClass: {
-                    popup: 'rounded-3xl border border-emerald-500/40 max-w-3xl shadow-2xl',
-                    image: 'rounded-2xl max-h-[75vh] object-contain w-full'
+                    popup: 'rounded-3xl border border-emerald-500/40 max-w-lg shadow-2xl p-4',
+                    image: 'rounded-2xl max-h-[55vh] object-contain w-full my-2 border border-slate-700 cursor-pointer',
+                    confirmButton: 'w-full py-3 rounded-xl font-black text-slate-950 uppercase text-xs shadow-lg'
                 }
             });
         }
