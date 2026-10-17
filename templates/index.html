@@ -247,9 +247,16 @@
                 const res = await fetch('/api/reportes');
                 const data = await res.json();
 
+                // Detectar si la URL contiene un reporte compartido específico (ej: ?reporte=5)
+                const urlParams = new URLSearchParams(window.location.search);
+                const reporteIdCompartido = urlParams.get('reporte');
+
+                let markerAperturaAuto = null;
+
                 data.forEach(r => {
-                    const shareText = encodeURIComponent(`🚨 Reporte en EcoMapa Fray Bentos: ${r.titulo} (${r.categoria}). Revisa la ubicación aquí:`);
-                    const shareUrl = encodeURIComponent(window.location.href);
+                    const reporteDirectLink = `${window.location.origin}/?reporte=${r.id}`;
+                    const shareText = encodeURIComponent(`🚨 Reporte en EcoMapa Fray Bentos: ${r.titulo} (${r.categoria}). Revisa la ubicación exacta y los detalles aquí:`);
+                    const shareUrl = encodeURIComponent(reporteDirectLink);
 
                     let badgeGravedad = '<span class="text-emerald-400 font-bold">🟢 Baja</span>';
                     if (r.gravedad === 'alta' || String(r.gravedad).includes('Alta')) {
@@ -275,7 +282,7 @@
                                 <span class="uppercase font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">${r.estado || 'Pendiente'}</span>
                             </div>
 
-                            <!-- BOTONES PARA COMPARTIR EN REDES SOCIALES (INCLUYE INSTAGRAM) -->
+                            <!-- BOTONES PARA COMPARTIR EL ENLACE DIRECTO DEL REPORTE -->
                             <div class="pt-2 border-t border-slate-800 space-y-1">
                                 <span class="text-[10px] text-slate-400 font-bold block">Compartir reporte:</span>
                                 <div class="grid grid-cols-5 gap-1.5">
@@ -288,10 +295,10 @@
                                     <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" class="bg-sky-500/30 hover:bg-sky-500/50 text-sky-400 p-2 rounded-lg text-center transition border border-sky-500/30" title="X / Twitter">
                                         <i class="fa-brands fa-x-twitter text-sm"></i>
                                     </a>
-                                    <button onclick="compartirInstagram()" class="bg-gradient-to-tr from-amber-500/30 via-rose-500/30 to-purple-500/30 hover:opacity-80 text-rose-300 p-2 rounded-lg text-center transition border border-rose-500/30" title="Instagram">
+                                    <button onclick="compartirInstagram('${reporteDirectLink}')" class="bg-gradient-to-tr from-amber-500/30 via-rose-500/30 to-purple-500/30 hover:opacity-80 text-rose-300 p-2 rounded-lg text-center transition border border-rose-500/30" title="Instagram">
                                         <i class="fa-brands fa-instagram text-sm"></i>
                                     </button>
-                                    <button onclick="copiarEnlace()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg text-center transition border border-slate-700" title="Copiar Enlace">
+                                    <button onclick="copiarEnlace('${reporteDirectLink}')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg text-center transition border border-slate-700" title="Copiar Enlace">
                                         <i class="fa-solid fa-link text-sm"></i>
                                     </button>
                                 </div>
@@ -313,7 +320,22 @@
                     });
 
                     customMarker.addTo(reportesLayer).bindPopup(popupContent);
+
+                    // Capturar si este es el marcador del reporte compartido
+                    if (reporteIdCompartido && String(r.id) === String(reporteIdCompartido)) {
+                        markerAperturaAuto = { marker: customMarker, lat: r.latitud, lng: r.longitud };
+                    }
                 });
+
+                // Si se abrió mediante enlace compartido, saltar bienvenida y abrir el popup exacto
+                if (markerAperturaAuto) {
+                    document.getElementById('welcome-modal').classList.add('hidden');
+                    map.setView([markerAperturaAuto.lat, markerAperturaAuto.lng], 16);
+                    setTimeout(() => {
+                        markerAperturaAuto.marker.openPopup();
+                    }, 400);
+                }
+
             } catch (err) {
                 console.error("Error al cargar reportes:", err);
             }
@@ -335,8 +357,8 @@
             });
         }
 
-        function compartirInstagram() {
-            navigator.clipboard.writeText(window.location.href);
+        function compartirInstagram(url) {
+            navigator.clipboard.writeText(url);
             Swal.fire({
                 icon: 'info',
                 title: 'Enlace copiado para Instagram',
@@ -347,12 +369,12 @@
             });
         }
 
-        function copiarEnlace() {
-            navigator.clipboard.writeText(window.location.href);
+        function copiarEnlace(url) {
+            navigator.clipboard.writeText(url);
             Swal.fire({
                 icon: 'success',
                 title: '¡Enlace copiado!',
-                text: 'Se copió el enlace directo al portapapeles.',
+                text: 'Se copió el enlace directo al reporte.',
                 timer: 1500,
                 showConfirmButton: false,
                 background: '#0f172a',
