@@ -40,7 +40,7 @@ class Reporte(db.Model):
     latitud = db.Column(db.Float, nullable=False)
     longitud = db.Column(db.Float, nullable=False)
     estado = db.Column(db.String(20), default='Pendiente')
-    foto_url = db.Column(db.Text, nullable=True)  # Text para almacenar imágenes en Base64 de forma segura
+    foto_url = db.Column(db.Text, nullable=True)  # Campo TEXT habilitado para guardar Base64
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -67,20 +67,26 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Inicialización de BD y creación del Administrador por defecto de forma segura
+# Inicialización de BD y migración automática de columna en PostgreSQL
 with app.app_context():
     db.create_all()
     try:
         inspector = inspect(db.engine)
         columnas = [col['name'] for col in inspector.get_columns('reporte')]
+        
         if 'fecha_creacion' not in columnas:
             with db.engine.connect() as conn:
                 conn.execute(text("ALTER TABLE reporte ADD COLUMN fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
                 conn.commit()
+
+        # Forzar tipo TEXT en foto_url para almacenar imágenes Base64 sin límite de caracteres
+        with db.engine.connect() as conn:
+            conn.execute(text("ALTER TABLE reporte ALTER COLUMN foto_url TYPE TEXT;"))
+            conn.commit()
     except Exception as e:
         print("Verificación de esquema completada:", e)
 
-    # Crear cuenta de admin por defecto si no existe ninguna (sin exponer credenciales en consola)
+    # Crear cuenta de admin por defecto si no existe ninguna
     if not UsuarioAdmin.query.first():
         admin_defecto = UsuarioAdmin(
             email='admin@ecomapa.org',
@@ -130,7 +136,6 @@ def admin_dashboard():
     admins = UsuarioAdmin.query.all()
     return render_template('admin.html', reportes=reportes, admins=admins, admin_email=session.get('admin_email'))
 
-# Ruta API para registrar nuevos administradores de forma segura
 @app.route('/api/admin/registrar', methods=['POST'])
 @admin_required
 def registrar_admin():
