@@ -1,10 +1,10 @@
 import os
+import base64
 from datetime import datetime
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
 from sqlalchemy import inspect, text
 
 app = Flask(__name__)
@@ -19,10 +19,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Soporte para PostgreSQL en Render
 if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgres://"):
     app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace("postgres://", "postgresql://", 1)
-
-UPLOAD_FOLDER = os.path.join('static', 'uploads')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db = SQLAlchemy(app)
 
@@ -44,7 +40,7 @@ class Reporte(db.Model):
     latitud = db.Column(db.Float, nullable=False)
     longitud = db.Column(db.Float, nullable=False)
     estado = db.Column(db.String(20), default='Pendiente')
-    foto_url = db.Column(db.String(300), nullable=True)
+    foto_url = db.Column(db.Text, nullable=True)  # Text para almacenar imágenes en Base64 de forma segura
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
 
     def to_dict(self):
@@ -71,7 +67,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Inicialización de BD y creación del Administrador por defecto
+# Inicialización de BD y creación del Administrador por defecto de forma segura
 with app.app_context():
     db.create_all()
     try:
@@ -84,7 +80,7 @@ with app.app_context():
     except Exception as e:
         print("Verificación de esquema completada:", e)
 
-    # Crear cuenta de admin por defecto si no existe ninguna
+    # Crear cuenta de admin por defecto si no existe ninguna (sin exponer credenciales en consola)
     if not UsuarioAdmin.query.first():
         admin_defecto = UsuarioAdmin(
             email='admin@ecomapa.org',
@@ -92,7 +88,6 @@ with app.app_context():
         )
         db.session.add(admin_defecto)
         db.session.commit()
-        print("Administrador por defecto creado: admin@ecomapa.org / admin123")
 
 @app.route('/')
 def index():
@@ -132,7 +127,35 @@ def logout():
 @admin_required
 def admin_dashboard():
     reportes = Reporte.query.order_by(Reporte.id.desc()).all()
-    return render_template('admin.html', reportes=reportes, admin_email=session.get('admin_email'))
+    admins = UsuarioAdmin.query.all()
+    return render_template('admin.html', reportes=reportes, admins=admins, admin_email=session.get('admin_email'))
+
+# Ruta API para registrar nuevos administradores de forma segura
+@app.route('/api/admin/registrar', methods=['POST'])
+@admin_required
+def registrar_admin():
+    try:
+        datos = request.get_json() or {}
+        email = datos.get('email', '').strip().lower()
+        password = datos.get('password', '').strip()
+
+        if not email or not password:
+            return jsonify({'error': 'El correo y la contraseña son obligatorios'}), 400
+
+        existing = UsuarioAdmin.query.filter_by(email=email).first()
+        if existing:
+            return jsonify({'error': 'Ya existe un administrador con este correo'}), 400
+
+        nuevo_admin = UsuarioAdmin(
+            email=email,
+            password_hash=generate_password_hash(password)
+        )
+        db.session.add(nuevo_admin)
+        db.session.commit()
+        return jsonify({'mensaje': 'Administrador registrado con éxito'}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/reportes/<int:reporte_id>/estado', methods=['PUT'])
 @admin_required
@@ -211,14 +234,14 @@ def crear_reporte():
         if not titulo or latitud is None or longitud is None:
             return jsonify({'error': 'Faltan campos obligatorios'}), 400
 
-        foto_path = None
+        foto_data_url = None
         if 'foto' in request.files:
             file = request.files['foto']
             if file and file.filename != '':
-                filename = secure_filename(file.filename)
-                save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(save_path)
-                foto_path = f'/{UPLOAD_FOLDER}/{filename}'
+                file_bytes = file.read()
+                encoded_string = base64.b64encode(file_bytes).decode('utf-8')
+                mimetype = file.mimetype or 'image/jpeg'
+                foto_data_url = f"data:{mimetype};base64,{encoded_string}"
 
         nuevo_reporte = Reporte(
             titulo=str(titulo),
@@ -228,7 +251,7 @@ def crear_reporte():
             latitud=float(latitud),
             longitud=float(longitud),
             estado='Pendiente',
-            foto_url=foto_path,
+            foto_url=foto_data_url,
             fecha_creacion=datetime.now()
         )
 

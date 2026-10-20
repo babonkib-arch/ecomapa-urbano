@@ -52,7 +52,55 @@
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-        <div class="flex items-center justify-between">
+        
+        <!-- SECCIÓN DE GESTIÓN Y REGISTRO DE ADMINISTRADORES -->
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                    <h3 class="text-lg font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-user-gear text-emerald-400"></i> Registro y Gestión de Administradores
+                    </h3>
+                    <p class="text-xs text-slate-400">Agrega nuevos correos y claves autorizadas para acceder a este panel de control.</p>
+                </div>
+                <button onclick="toggleFormAdmin()" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs transition flex items-center gap-2 shadow-lg">
+                    <i class="fa-solid fa-user-plus"></i> Nuevo Administrador
+                </button>
+            </div>
+
+            <!-- Formulario oculto para registrar admin -->
+            <div id="admin-form-container" class="hidden pt-4 border-t border-slate-800">
+                <form id="form-nuevo-admin" onsubmit="registrarNuevoAdmin(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Correo Electrónico</label>
+                        <input type="email" id="nuevo-admin-email" required placeholder="admin@ecomapa.org" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Contraseña</label>
+                        <input type="password" id="nuevo-admin-password" required placeholder="••••••••" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs transition uppercase shadow-md">
+                            Registrar Admin
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de administradores actuales -->
+            <div class="pt-2">
+                <span class="text-xs font-bold text-slate-400 block mb-2">Administradores Autorizados en el Sistema:</span>
+                <div class="flex flex-wrap gap-2">
+                    {% for admin in admins %}
+                    <div class="bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl text-xs flex items-center gap-2">
+                        <i class="fa-solid fa-shield text-emerald-400"></i>
+                        <span class="font-medium text-slate-200">{{ admin.email }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
             <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
                 <i class="fa-solid fa-list-check text-emerald-400"></i> Reportes Registrados
             </h2>
@@ -61,7 +109,7 @@
             </span>
         </div>
 
-        <!-- Cards Grid -->
+        <!-- Cards Grid de Reportes -->
         <div class="grid grid-cols-1 gap-4">
             {% for r in reportes %}
             {% set foto = r.foto_url or r.foto_path or r.foto %}
@@ -135,6 +183,50 @@
     </main>
 
     <script>
+        function toggleFormAdmin() {
+            const container = document.getElementById('admin-form-container');
+            container.classList.toggle('hidden');
+        }
+
+        async function registrarNuevoAdmin(e) {
+            e.preventDefault();
+            const email = document.getElementById('nuevo-admin-email').value;
+            const password = document.getElementById('nuevo-admin-password').value;
+
+            try {
+                const res = await fetch('/api/admin/registrar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Administrador Registrado!',
+                        text: 'El nuevo correo ya puede iniciar sesión.',
+                        background: '#0f172a',
+                        color: '#f8fafc',
+                        confirmButtonColor: '#10b981'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error(data.error || 'No se pudo registrar');
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de registro',
+                    text: err.message,
+                    background: '#0f172a',
+                    color: '#f8fafc',
+                    confirmButtonColor: '#10b981'
+                });
+            }
+        }
+
         async function actualizarEstado(id, nuevoEstado, esDirecto = false) {
             try {
                 const res = await fetch(`/api/reportes/${id}/estado`, {
@@ -165,6 +257,7 @@
 
         function cerrarTickModal() {
             document.getElementById('tick-modal').classList.add('hidden');
+            location.reload();
         }
 
         function verImagenZoom(url, titulo) {

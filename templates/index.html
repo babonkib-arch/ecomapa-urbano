@@ -40,6 +40,56 @@
 </head>
 <body class="bg-slate-950 text-slate-100 h-screen overflow-hidden font-sans relative">
 
+    <!-- MENÚ LATERAL DESPLEGABLE (HAMBURGUESA) -->
+    <div id="drawer-overlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[2500] hidden transition-opacity opacity-0" onclick="toggleMenuHamburguesa()"></div>
+    <div id="drawer-menu" class="fixed top-0 left-0 w-80 max-w-[85vw] h-full bg-slate-900 border-r border-slate-800 z-[2600] shadow-2xl transform -translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-500 p-2 rounded-xl text-slate-950 font-black text-sm">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <h3 class="font-black text-white text-base">EcoMapa Info</h3>
+            </div>
+            <button onclick="toggleMenuHamburguesa()" class="text-slate-400 hover:text-white p-1.5 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
+            <div class="space-y-1.5">
+                <h4 class="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-users"></i> ¿Quiénes Somos?
+                </h4>
+                <p class="text-slate-300 leading-relaxed">
+                    Somos una iniciativa tecnológica comunitaria enfocada en la innovación urbana y el desarrollo sostenible de Fray Bentos.
+                </p>
+            </div>
+            <div class="space-y-1.5">
+                <h4 class="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-circle-question"></i> ¿Para Qué Sirve EcoMapa?
+                </h4>
+                <p class="text-slate-300 leading-relaxed">
+                    Sirve como puente digital directo entre la ciudadanía y las autoridades locales para reportar y resolver incidentes urbanos de manera ágil.
+                </p>
+            </div>
+            <div class="space-y-1.5">
+                <h4 class="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-bullseye"></i> ¿Qué Buscamos?
+                </h4>
+                <p class="text-slate-300 leading-relaxed">
+                    Fomentar la participación ciudadana activa, la transparencia institucional y la rápida optimización de los espacios públicos urbanos.
+                </p>
+            </div>
+            <div class="space-y-1.5">
+                <h4 class="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-flag-checkered"></i> Fin de Nuestro Servicio
+                </h4>
+                <p class="text-slate-300 leading-relaxed">
+                    Garantizar una ciudad más limpia, ordenada y conectada mediante herramientas tecnológicas de acceso libre y universal para todos los vecinos.
+                </p>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL BIENVENIDA CON GUÍA E INFORMACIÓN INSTITUCIONAL -->
     <div id="welcome-modal" class="fixed inset-0 animate-gradient-bg z-[2000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
         <div class="bg-slate-900/95 border border-emerald-500/30 max-w-2xl w-full rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-6 backdrop-blur-xl relative z-10 my-auto max-h-[90vh] overflow-y-auto">
@@ -109,18 +159,29 @@
     <!-- ENCABEZADO PRINCIPAL -->
     <header class="h-16 bg-slate-950/90 backdrop-blur border-b border-slate-800 flex items-center justify-between px-4 sm:px-6 z-10 relative">
         <div class="flex items-center gap-3">
-            <div class="bg-emerald-500 p-2.5 rounded-xl text-slate-950 font-black text-base shadow-lg shadow-emerald-500/20">
-                <i class="fa-solid fa-leaf"></i>
-            </div>
-            <div>
-                <h1 class="font-black text-sm tracking-wide text-white">EcoMapa FB</h1>
-                <span class="text-[10px] text-emerald-400 font-semibold block -mt-0.5">Fray Bentos Sustentable</span>
+            <button onclick="toggleMenuHamburguesa()" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-emerald-400 rounded-xl border border-slate-800 transition flex items-center justify-center shadow-md" title="Menú Institucional">
+                <i class="fa-solid fa-bars text-base"></i>
+            </button>
+            <div class="flex items-center gap-2.5">
+                <div class="bg-emerald-500 p-2.5 rounded-xl text-slate-950 font-black text-base shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-sm tracking-wide text-white">EcoMapa FB</h1>
+                    <span class="text-[10px] text-emerald-400 font-semibold block -mt-0.5">Fray Bentos Sustentable</span>
+                </div>
             </div>
         </div>
-        <a href="/login" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-200 transition flex items-center gap-2 border border-slate-700 shadow-md">
-            <i class="fa-solid fa-user-shield text-emerald-400"></i>
-            <span>Acceso Admin</span>
-        </a>
+        <div class="flex items-center gap-2">
+            <button onclick="centrarUbicacionUsuario()" class="px-3.5 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-emerald-500/30 shadow-md" title="Mi Ubicación GPS">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span class="hidden sm:inline">Mi GPS</span>
+            </button>
+            <a href="/login" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-200 transition flex items-center gap-2 border border-slate-700 shadow-md">
+                <i class="fa-solid fa-user-shield text-emerald-400"></i>
+                <span>Acceso Admin</span>
+            </a>
+        </div>
     </header>
 
     <!-- MAPA LEAFLET -->
@@ -223,7 +284,23 @@
             document.getElementById('welcome-modal').classList.add('hidden');
         }
 
-        let map, tempMarker, reportesLayer;
+        function toggleMenuHamburguesa() {
+            const menu = document.getElementById('drawer-menu');
+            const overlay = document.getElementById('drawer-overlay');
+            const isOpen = menu.classList.contains('translate-x-0');
+            if (isOpen) {
+                menu.classList.remove('translate-x-0');
+                menu.classList.add('-translate-x-full');
+                overlay.classList.add('hidden', 'opacity-0');
+            } else {
+                menu.classList.remove('-translate-x-full');
+                menu.classList.add('translate-x-0');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            }
+        }
+
+        let map, tempMarker, reportesLayer, userMarker;
 
         document.addEventListener('DOMContentLoaded', () => {
             map = L.map('map').setView([-33.1381, -58.2988], 14);
@@ -238,8 +315,58 @@
                 abrirMenuReporte(e.latlng.lat, e.latlng.lng);
             });
 
+            // Activar geolocalización automática al cargar
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    map.setView([lat, lng], 15);
+                    
+                    if (userMarker) map.removeLayer(userMarker);
+                    userMarker = L.circleMarker([lat, lng], {
+                        radius: 8,
+                        fillColor: '#3b82f6',
+                        color: '#ffffff',
+                        weight: 2,
+                        fillOpacity: 1
+                    }).addTo(map).bindPopup("<b>¡Estás aquí!</b>").openPopup();
+                }, () => {
+                    console.log("Geolocalización denegada o no disponible.");
+                }, { timeout: 10000 });
+            }
+
             cargarReportes();
         });
+
+        function centrarUbicacionUsuario() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    map.setView([lat, lng], 16);
+                    if (userMarker) {
+                        userMarker.setLatLng([lat, lng]).openPopup();
+                    } else {
+                        userMarker = L.circleMarker([lat, lng], {
+                            radius: 8,
+                            fillColor: '#3b82f6',
+                            color: '#ffffff',
+                            weight: 2,
+                            fillOpacity: 1
+                        }).addTo(map).bindPopup("<b>¡Estás aquí!</b>").openPopup();
+                    }
+                }, () => {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'GPS no disponible',
+                        text: 'No se pudo obtener tu ubicación actual.',
+                        background: '#0f172a',
+                        color: '#f8fafc',
+                        confirmButtonColor: '#10b981'
+                    });
+                });
+            }
+        }
 
         async function cargarReportes() {
             reportesLayer.clearLayers();
@@ -281,7 +408,6 @@
                                 <span class="uppercase font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">${r.estado || 'Pendiente'}</span>
                             </div>
 
-                            <!-- BOTONES PARA COMPARTIR EL ENLACE DIRECTO -->
                             <div class="pt-2 border-t border-slate-800 space-y-1">
                                 <span class="text-[10px] text-slate-400 font-bold block">Compartir reporte:</span>
                                 <div class="grid grid-cols-5 gap-1.5">
@@ -338,7 +464,7 @@
             }
         }
 
-        // FUNCIÓN ZOOM DE FOTO CON BOTÓN VOLVER AL MAPA
+        // FUNCIÓN ZOOM DE FOTO MODAL-ONLY (Sin expandir toda la página)
         function verImagenZoom(url, titulo) {
             Swal.fire({
                 title: `<span class="text-sm font-bold text-white">${titulo || 'Evidencia de Fotografía'}</span>`,
