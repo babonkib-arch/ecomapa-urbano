@@ -342,6 +342,36 @@
             setInterval(cargarReportes, 10000);
         });
 
+        function centrarUbicacionUsuario() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    map.setView([lat, lng], 16);
+                    if (userMarker) {
+                        userMarker.setLatLng([lat, lng]).openPopup();
+                    } else {
+                        userMarker = L.circleMarker([lat, lng], {
+                            radius: 8,
+                            fillColor: '#3b82f6',
+                            color: '#ffffff',
+                            weight: 2,
+                            fillOpacity: 1
+                        }).addTo(map).bindPopup("<b>¡Estás aquí!</b>").openPopup();
+                    }
+                }, () => {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'GPS no disponible',
+                        text: 'No se pudo obtener tu ubicación actual.',
+                        background: '#0f172a',
+                        color: '#f8fafc',
+                        confirmButtonColor: '#10b981'
+                    });
+                });
+            }
+        }
+
         async function cargarReportes() {
             try {
                 const res = await fetch('/api/reportes');
@@ -411,12 +441,12 @@
                     else if (r.gravedad === 'media' || String(r.gravedad).includes('Media')) colorPin = '#f59e0b';
 
                     if (markersMap[r.id]) {
-                        // Si el pin ya existe, solo actualizamos sus datos de manera invisible sin borrarlo
+                        // Si el pin ya existe, solo actualizamos sus datos en segundo plano sin borrarlo ni parpadear
                         markersMap[r.id].setLatLng([r.latitud, r.longitud]);
                         markersMap[r.id].setStyle({ fillColor: colorPin });
                         markersMap[r.id].setPopupContent(popupContent);
                     } else {
-                        // Si es nuevo, lo creamos y lo añadimos al mapa
+                        // Si es un reporte nuevo, lo creamos y añadimos al mapa
                         const customMarker = L.circleMarker([r.latitud, r.longitud], {
                             radius: 9,
                             fillColor: colorPin,
@@ -434,137 +464,11 @@
                     }
                 });
 
-                // Remover del mapa solo los pines que hayan sido eliminados en la base de datos
+                // Remover del mapa únicamente los pines que hayan sido borrados de la base de datos
                 Object.keys(markersMap).forEach(id => {
                     if (!idsEnBase.has(id)) {
                         reportesLayer.removeLayer(markersMap[id]);
                         delete markersMap[id];
-                    }
-                });
-
-                if (markerAperturaAuto) {
-                    document.getElementById('welcome-modal').classList.add('hidden');
-                    map.setView([markerAperturaAuto.lat, markerAperturaAuto.lng], 16);
-                    setTimeout(() => {
-                        markerAperturaAuto.marker.openPopup();
-                    }, 400);
-                }
-
-            } catch (err) {
-                console.error("Error al cargar reportes:", err);
-            }
-        }
-
-        function centrarUbicacionUsuario() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    map.setView([lat, lng], 16);
-                    if (userMarker) {
-                        userMarker.setLatLng([lat, lng]).openPopup();
-                    } else {
-                        userMarker = L.circleMarker([lat, lng], {
-                            radius: 8,
-                            fillColor: '#3b82f6',
-                            color: '#ffffff',
-                            weight: 2,
-                            fillOpacity: 1
-                        }).addTo(map).bindPopup("<b>¡Estás aquí!</b>").openPopup();
-                    }
-                }, () => {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'GPS no disponible',
-                        text: 'No se pudo obtener tu ubicación actual.',
-                        background: '#0f172a',
-                        color: '#f8fafc',
-                        confirmButtonColor: '#10b981'
-                    });
-                });
-            }
-        }
-
-        async function cargarReportes() {
-            reportesLayer.clearLayers();
-            try {
-                const res = await fetch('/api/reportes');
-                const data = await res.json();
-
-                const urlParams = new URLSearchParams(window.location.search);
-                const reporteIdCompartido = urlParams.get('reporte');
-
-                let markerAperturaAuto = null;
-
-                data.forEach(r => {
-                    const reporteDirectLink = `${window.location.origin}/?reporte=${r.id}`;
-                    const shareText = encodeURIComponent(`🚨 Reporte en EcoMapa Fray Bentos: ${r.titulo} (${r.categoria}). Revisa la ubicación exacta y los detalles aquí:`);
-                    const shareUrl = encodeURIComponent(reporteDirectLink);
-
-                    let badgeGravedad = '<span class="text-emerald-400 font-bold">🟢 Baja</span>';
-                    if (r.gravedad === 'alta' || String(r.gravedad).includes('Alta')) {
-                        badgeGravedad = '<span class="text-rose-400 font-bold">🔴 Alta</span>';
-                    } else if (r.gravedad === 'media' || String(r.gravedad).includes('Media')) {
-                        badgeGravedad = '<span class="text-amber-400 font-bold">🟡 Media</span>';
-                    }
-
-                    const popupContent = `
-                        <div class="space-y-2.5 text-xs p-1 font-sans">
-                            ${r.foto_url ? `<img src="${r.foto_url}" class="w-full h-32 object-cover rounded-xl border border-slate-700 shadow-md cursor-pointer hover:opacity-90 transition" onclick="verImagenZoom('${r.foto_url}', '${r.titulo}')" title="Haz clic para ampliar">` : ''}
-                            
-                            <div>
-                                <div class="flex items-center justify-between gap-2 mb-1">
-                                    <span class="font-bold text-white text-sm">${r.titulo}</span>
-                                    ${badgeGravedad}
-                                </div>
-                                <p class="text-slate-300 text-[11px] leading-relaxed">${r.descripcion || 'Sin descripción adicional.'}</p>
-                            </div>
-
-                            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-slate-800">
-                                <span><i class="fa-solid fa-clock text-emerald-400"></i> ${r.fecha || 'Reciente'}</span>
-                                <span class="uppercase font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">${r.estado || 'Pendiente'}</span>
-                            </div>
-
-                            <div class="pt-2 border-t border-slate-800 space-y-1">
-                                <span class="text-[10px] text-slate-400 font-bold block">Compartir reporte:</span>
-                                <div class="grid grid-cols-5 gap-1.5">
-                                    <a href="https://api.whatsapp.com/send?text=${shareText}%20${shareUrl}" target="_blank" class="bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-400 p-2 rounded-lg text-center transition border border-emerald-500/30" title="WhatsApp">
-                                        <i class="fa-brands fa-whatsapp text-sm"></i>
-                                    </a>
-                                    <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" class="bg-blue-600/30 hover:bg-blue-600/50 text-blue-400 p-2 rounded-lg text-center transition border border-blue-500/30" title="Facebook">
-                                        <i class="fa-brands fa-facebook-f text-sm"></i>
-                                    </a>
-                                    <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" class="bg-sky-500/30 hover:bg-sky-500/50 text-sky-400 p-2 rounded-lg text-center transition border border-sky-500/30" title="X / Twitter">
-                                        <i class="fa-brands fa-x-twitter text-sm"></i>
-                                    </a>
-                                    <button onclick="compartirInstagram('${reporteDirectLink}')" class="bg-gradient-to-tr from-amber-500/30 via-rose-500/30 to-purple-500/30 hover:opacity-80 text-rose-300 p-2 rounded-lg text-center transition border border-rose-500/30" title="Instagram">
-                                        <i class="fa-brands fa-instagram text-sm"></i>
-                                    </button>
-                                    <button onclick="copiarEnlace('${reporteDirectLink}')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg text-center transition border border-slate-700" title="Copiar Enlace">
-                                        <i class="fa-solid fa-link text-sm"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    
-                    let colorPin = '#10b981';
-                    if (r.gravedad === 'alta' || String(r.gravedad).includes('Alta')) colorPin = '#f43f5e';
-                    else if (r.gravedad === 'media' || String(r.gravedad).includes('Media')) colorPin = '#f59e0b';
-
-                    const customMarker = L.circleMarker([r.latitud, r.longitud], {
-                        radius: 9,
-                        fillColor: colorPin,
-                        color: '#ffffff',
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.9
-                    });
-
-                    customMarker.addTo(reportesLayer).bindPopup(popupContent);
-
-                    if (reporteIdCompartido && String(r.id) === String(reporteIdCompartido)) {
-                        markerAperturaAuto = { marker: customMarker, lat: r.latitud, lng: r.longitud };
                     }
                 });
 
