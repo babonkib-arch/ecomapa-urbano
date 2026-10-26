@@ -335,7 +335,10 @@
                 }, { timeout: 10000 });
             }
 
-            cargarReportes();
+           cargarReportes();
+
+            // Sincronizar el mapa automáticamente cada 10 segundos en tiempo real
+            setInterval(cargarReportes, 10000);
         });
 
         function centrarUbicacionUsuario() {
