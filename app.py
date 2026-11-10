@@ -1,545 +1,268 @@
 import os
-
 import base64
-
 from datetime import datetime
-
 from functools import wraps
-
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
-
 from flask_sqlalchemy import SQLAlchemy
-
 from werkzeug.security import generate_password_hash, check_password_hash
-
-from sqlalchemy import inspect, text
-
-
+from sqlalchemy import inspect, text, case
 
 app = Flask(__name__)
 
-
-
 # Llave secreta para manejar sesiones de forma segura
-
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'eco_mapa_secret_key_2026_fray_bentos')
 
-
-
 # Configuración de base de datos
-
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ecomapa.db')
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-
-
 # Soporte para PostgreSQL en Render
-
 if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgres://"):
-
     app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace("postgres://", "postgresql://", 1)
-
-
 
 db = SQLAlchemy(app)
 
-
-
 # Modelo de Administradores
-
 class UsuarioAdmin(db.Model):
-
     __tablename__ = 'usuario_admin'
-
     id = db.Column(db.Integer, primary_key=True)
-
     email = db.Column(db.String(120), unique=True, nullable=False)
-
     password_hash = db.Column(db.String(256), nullable=False)
 
-
-
 # Modelo de Reportes
-
 class Reporte(db.Model):
-
     __tablename__ = 'reporte'
-
     id = db.Column(db.Integer, primary_key=True)
-
     titulo = db.Column(db.String(150), nullable=False)
-
     categoria = db.Column(db.String(50), nullable=False)
-
     gravedad = db.Column(db.String(20), nullable=False)
-
     descripcion = db.Column(db.Text, nullable=True)
-
     latitud = db.Column(db.Float, nullable=False)
-
     longitud = db.Column(db.Float, nullable=False)
-
     estado = db.Column(db.String(20), default='Pendiente')
-
-    foto_url = db.Column(db.Text, nullable=True)  # Campo TEXT habilitado para guardar Base64
-
+    foto_url = db.Column(db.Text, nullable=True)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
 
-
-
     def to_dict(self):
-
         fecha_str = self.fecha_creacion.strftime('%d/%m/%Y %H:%M') if self.fecha_creacion else 'Reciente'
-
         return {
-
             'id': self.id,
-
             'titulo': self.titulo,
-
             'categoria': self.categoria,
-
             'gravedad': self.gravedad,
-
             'descripcion': self.descripcion,
-
             'latitud': self.latitud,
-
             'longitud': self.longitud,
-
             'estado': self.estado,
-
             'foto_url': self.foto_url,
-
             'fecha': fecha_str
-
         }
 
-
-
-# Decorador para proteger las rutas de administrador
-
 def admin_required(f):
-
     @wraps(f)
-
     def decorated_function(*args, **kwargs):
-
         if not session.get('admin_logged_in'):
-
             return redirect(url_for('login'))
-
         return f(*args, **kwargs)
-
     return decorated_function
 
-
-
-# Inicialización de BD y migración automática de columna en PostgreSQL
-
 with app.app_context():
-
     db.create_all()
-
     try:
-
         inspector = inspect(db.engine)
-
         columnas = [col['name'] for col in inspector.get_columns('reporte')]
-
-       
-
         if 'fecha_creacion' not in columnas:
-
             with db.engine.connect() as conn:
-
                 conn.execute(text("ALTER TABLE reporte ADD COLUMN fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
-
                 conn.commit()
-
-
-
-        # Forzar tipo TEXT en foto_url para almacenar imágenes Base64 sin límite de caracteres
-
         with db.engine.connect() as conn:
-
             conn.execute(text("ALTER TABLE reporte ALTER COLUMN foto_url TYPE TEXT;"))
-
             conn.commit()
-
     except Exception as e:
-
         print("Verificación de esquema completada:", e)
 
-
-
-    # Crear cuenta de admin por defecto si no existe ninguna
-
     if not UsuarioAdmin.query.first():
-
         admin_defecto = UsuarioAdmin(
-
             email='admin@ecomapa.org',
-
             password_hash=generate_password_hash('admin123')
-
         )
-
         db.session.add(admin_defecto)
-
         db.session.commit()
 
-
-
 @app.route('/')
-
 def index():
-
     return render_template('index.html')
 
-
-
 @app.route('/login', methods=['GET'])
-
 def login():
-
     if session.get('admin_logged_in'):
-
         return redirect(url_for('admin_dashboard'))
-
     return render_template('login.html')
 
-
-
 @app.route('/api/login', methods=['POST'])
-
 def api_login():
-
     datos = request.get_json() or {}
-
     email = datos.get('email', '').strip().lower()
-
     password = datos.get('password', '').strip()
 
-
-
     if not email or not password:
-
         return jsonify({'error': 'Por favor completa todos los campos'}), 400
-
-
 
     admin = UsuarioAdmin.query.filter_by(email=email).first()
 
-
-
     if admin and check_password_hash(admin.password_hash, password):
-
         session['admin_logged_in'] = True
-
         session['admin_email'] = admin.email
-
         return jsonify({'mensaje': 'Inicio de sesión exitoso', 'redirect': '/admin'}), 200
-
     else:
-
         return jsonify({'error': 'Correo o contraseña incorrectos'}), 401
 
-
-
 @app.route('/logout')
-
 def logout():
-
     session.pop('admin_logged_in', None)
-
     session.pop('admin_email', None)
-
     return redirect(url_for('index'))
 
-
-
 @app.route('/admin')
-
 @admin_required
-
 def admin_dashboard():
+    orden = request.args.get('orden', 'mas_nuevos')
+    query = Reporte.query
+    
+    if orden == 'mas_viejos':
+        query = query.order_by(Reporte.id.asc())
+    elif orden == 'gravedad':
+        gravedad_order = case(
+            (Reporte.gravedad.ilike('%alta%'), 1),
+            (Reporte.gravedad.ilike('%media%'), 2),
+            else_=3
+        )
+        query = query.order_by(gravedad_order, Reporte.id.desc())
+    else:
+        query = query.order_by(Reporte.id.desc())
 
-    reportes = Reporte.query.order_by(Reporte.id.desc()).all()
-
+    reportes = query.all()
     admins = UsuarioAdmin.query.all()
-
-    return render_template('admin.html', reportes=reportes, admins=admins, admin_email=session.get('admin_email'))
-
-
+    return render_template('admin.html', reportes=reportes, admins=admins, admin_email=session.get('admin_email'), orden_actual=orden)
 
 @app.route('/api/admin/registrar', methods=['POST'])
-
 @admin_required
-
 def registrar_admin():
-
     try:
-
         datos = request.get_json() or {}
-
         email = datos.get('email', '').strip().lower()
-
         password = datos.get('password', '').strip()
 
-
-
         if not email or not password:
-
             return jsonify({'error': 'El correo y la contraseña son obligatorios'}), 400
 
-
-
         existing = UsuarioAdmin.query.filter_by(email=email).first()
-
         if existing:
-
             return jsonify({'error': 'Ya existe un administrador con este correo'}), 400
 
-
-
         nuevo_admin = UsuarioAdmin(
-
             email=email,
-
             password_hash=generate_password_hash(password)
-
         )
-
         db.session.add(nuevo_admin)
-
         db.session.commit()
-
         return jsonify({'mensaje': 'Administrador registrado con éxito'}), 201
-
     except Exception as e:
-
         db.session.rollback()
-
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/admin/<int:admin_id>', methods=['DELETE'])
+@admin_required
+def eliminar_admin(admin_id):
+    try:
+        admin_a_borrar = UsuarioAdmin.query.get_or_404(admin_id)
+        if admin_a_borrar.email == session.get('admin_email'):
+            return jsonify({'error': 'No puedes eliminar tu propia cuenta de administrador activa'}), 400
 
+        db.session.delete(admin_a_borrar)
+        db.session.commit()
+        return jsonify({'mensaje': 'Administrador eliminado correctamente'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/reportes/<int:reporte_id>/estado', methods=['PUT'])
-
 @admin_required
-
 def cambiar_estado(reporte_id):
-
     try:
-
         reporte = Reporte.query.get_or_404(reporte_id)
-
         datos = request.get_json() or {}
-
         nuevo_estado = datos.get('estado')
-
-       
-
+        
         if nuevo_estado in ['Pendiente', 'En Proceso', 'Resuelto']:
-
             reporte.estado = nuevo_estado
-
             db.session.commit()
-
             return jsonify({'mensaje': 'Estado actualizado con éxito'}), 200
-
         return jsonify({'error': 'Estado no válido'}), 400
-
     except Exception as e:
-
         db.session.rollback()
-
         return jsonify({'error': str(e)}), 500
-
-
-
-@app.route('/api/reportes/<int:reporte_id>', methods=['PUT'])
-
-@admin_required
-
-def editar_reporte(reporte_id):
-
-    try:
-
-        reporte = Reporte.query.get_or_404(reporte_id)
-
-        datos = request.get_json() or {}
-
-
-
-        reporte.titulo = datos.get('titulo', reporte.titulo)
-
-        reporte.categoria = datos.get('categoria', reporte.categoria)
-
-        reporte.gravedad = datos.get('gravedad', reporte.gravedad)
-
-        reporte.estado = datos.get('estado', reporte.estado)
-
-        reporte.descripcion = datos.get('descripcion', reporte.descripcion)
-
-
-
-        db.session.commit()
-
-        return jsonify({'mensaje': 'Reporte actualizado correctamente'}), 200
-
-    except Exception as e:
-
-        db.session.rollback()
-
-        return jsonify({'error': str(e)}), 500
-
-
 
 @app.route('/api/reportes/<int:reporte_id>', methods=['DELETE'])
-
 @admin_required
-
 def eliminar_reporte(reporte_id):
-
     try:
-
         reporte = Reporte.query.get_or_404(reporte_id)
-
         db.session.delete(reporte)
-
         db.session.commit()
-
         return jsonify({'mensaje': 'Reporte eliminado correctamente'}), 200
-
     except Exception as e:
-
         db.session.rollback()
-
         return jsonify({'error': str(e)}), 500
-
-
-
-@app.route('/api/reportes/<int:reporte_id>', methods=['GET'])
-
-@admin_required
-
-def obtener_reporte_individual(reporte_id):
-
-    try:
-
-        reporte = Reporte.query.get_or_404(reporte_id)
-
-        return jsonify(reporte.to_dict()), 200
-
-    except Exception as e:
-
-        return jsonify({'error': str(e)}), 404
-
-
 
 @app.route('/api/reportes', methods=['GET'])
-
 def obtener_reportes():
-
     try:
-
         reportes = Reporte.query.order_by(Reporte.id.desc()).all()
-
         return jsonify([r.to_dict() for r in reportes]), 200
-
     except Exception as e:
-
         return jsonify({'error': str(e)}), 500
 
-
-
 @app.route('/api/reportes', methods=['POST'])
-
 def crear_reporte():
-
     try:
-
         datos = request.form if request.form else (request.get_json() or {})
-
-
-
         titulo = datos.get('titulo')
-
         latitud = datos.get('latitud')
-
         longitud = datos.get('longitud')
 
-
-
         if not titulo or latitud is None or longitud is None:
-
             return jsonify({'error': 'Faltan campos obligatorios'}), 400
 
-
-
         foto_data_url = None
-
         if 'foto' in request.files:
-
             file = request.files['foto']
-
             if file and file.filename != '':
-
                 file_bytes = file.read()
-
                 encoded_string = base64.b64encode(file_bytes).decode('utf-8')
-
                 mimetype = file.mimetype or 'image/jpeg'
-
                 foto_data_url = f"data:{mimetype};base64,{encoded_string}"
 
-
-
         nuevo_reporte = Reporte(
-
             titulo=str(titulo),
-
             categoria=str(datos.get('categoria', 'Otro')),
-
             gravedad=str(datos.get('gravedad', 'baja')),
-
             descripcion=str(datos.get('descripcion', '')),
-
             latitud=float(latitud),
-
             longitud=float(longitud),
-
             estado='Pendiente',
-
             foto_url=foto_data_url,
-
             fecha_creacion=datetime.now()
-
         )
 
-
-
         db.session.add(nuevo_reporte)
-
         db.session.commit()
-
-
 
         return jsonify({'mensaje': 'Reporte guardado con éxito', 'reporte': nuevo_reporte.to_dict()}), 201
 
-
-
     except Exception as e:
-
         db.session.rollback()
-
         return jsonify({'error': f'Error al guardar en BD: {str(e)}'}), 500
 
-
-
 if __name__ == '__main__':
-
-    app.run(debug=True) 
+    app.run(debug=True)
