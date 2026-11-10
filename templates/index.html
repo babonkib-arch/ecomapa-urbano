@@ -277,11 +277,14 @@
         </div>
     </div>
 
-    <!-- Leaflet JS & Scripts -->
+  <!-- Leaflet JS & Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         function cerrarBienvenida() {
-            document.getElementById('welcome-modal').classList.add('hidden');
+            const modal = document.getElementById('welcome-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
         }
 
         function toggleMenuHamburguesa() {
