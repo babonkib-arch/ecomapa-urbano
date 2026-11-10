@@ -58,10 +58,9 @@ class Reporte(db.Model):
     latitud = db.Column(db.Float, nullable=False)
     longitud = db.Column(db.Float, nullable=False)
     estado = db.Column(db.String(20), default='Pendiente')
-    foto_url = db.Column(db.Text, nullable=True)  # Campo TEXT habilitado para guardar Base64
+    foto_url = db.Column(db.Text, nullable=True)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relación con comentarios
     comentarios = db.relationship('Comentario', backref='reporte', lazy=True, cascade='all, delete-orphan')
 
     def to_dict(self):
@@ -80,7 +79,6 @@ class Reporte(db.Model):
             'comentarios': [c.to_dict() for c in self.comentarios]
         }
 
-# Decorador para proteger las rutas de administrador
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -89,25 +87,21 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Inicialización de BD y migración automática
 with app.app_context():
     db.create_all()
     try:
         inspector = inspect(db.engine)
         columnas = [col['name'] for col in inspector.get_columns('reporte')]
-        
         if 'fecha_creacion' not in columnas:
             with db.engine.connect() as conn:
                 conn.execute(text("ALTER TABLE reporte ADD COLUMN fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
                 conn.commit()
-
         with db.engine.connect() as conn:
             conn.execute(text("ALTER TABLE reporte ALTER COLUMN foto_url TYPE TEXT;"))
             conn.commit()
     except Exception as e:
         print("Verificación de esquema completada:", e)
 
-    # Crear cuenta de admin por defecto si no existe ninguna
     if not UsuarioAdmin.query.first():
         admin_defecto = UsuarioAdmin(
             email='admin@ecomapa.org',
@@ -153,14 +147,11 @@ def logout():
 @app.route('/admin')
 @admin_required
 def admin_dashboard():
-    # Permitir ordenar desde la vista de admin mediante parámetros GET (ej: ?orden=gravedad, mas_nuevos, mas_viejos)
     orden = request.args.get('orden', 'mas_nuevos')
-    
     query = Reporte.query
     if orden == 'mas_viejos':
         query = query.order_by(Reporte.fecha_creacion.asc())
     elif orden == 'gravedad':
-        # Orden personalizado de gravedad: Alta -> Media -> Baja
         gravedad_order = case(
             (Reporte.gravedad.ilike('%alta%'), 1),
             (Reporte.gravedad.ilike('%media%'), 2),
@@ -200,14 +191,11 @@ def registrar_admin():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-# Nueva ruta para eliminar administradores (Gestión completa CRUD)
 @app.route('/api/admin/<int:admin_id>', methods=['DELETE'])
 @admin_required
 def eliminar_admin(admin_id):
     try:
         admin_a_borrar = UsuarioAdmin.query.get_or_404(admin_id)
-        
-        # Evitar que el admin activo se borre a sí mismo por accidente
         if admin_a_borrar.email == session.get('admin_email'):
             return jsonify({'error': 'No puedes eliminar tu propia cuenta de administrador activa'}), 400
 
@@ -235,25 +223,6 @@ def cambiar_estado(reporte_id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/reportes/<int:reporte_id>', methods=['PUT'])
-@admin_required
-def editar_reporte(reporte_id):
-    try:
-        reporte = Reporte.query.get_or_404(reporte_id)
-        datos = request.get_json() or {}
-
-        reporte.titulo = datos.get('titulo', reporte.titulo)
-        reporte.categoria = datos.get('categoria', reporte.categoria)
-        reporte.gravedad = datos.get('gravedad', reporte.gravedad)
-        reporte.estado = datos.get('estado', reporte.estado)
-        reporte.descripcion = datos.get('descripcion', reporte.descripcion)
-
-        db.session.commit()
-        return jsonify({'mensaje': 'Reporte actualizado correctamente'}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
 @app.route('/api/reportes/<int:reporte_id>', methods=['DELETE'])
 @admin_required
 def eliminar_reporte(reporte_id):
@@ -266,22 +235,13 @@ def eliminar_reporte(reporte_id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/reportes/<int:reporte_id>', methods=['GET'])
-def obtener_reporte_individual(reporte_id):
-    try:
-        reporte = Reporte.query.get_or_404(reporte_id)
-        return jsonify(reporte.to_dict()), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 404
-
-# Nueva ruta para agregar comentarios y reseñas en tiempo real a un reporte
 @app.route('/api/reportes/<int:reporte_id>/comentarios', methods=['POST'])
 def agregar_comentario(reporte_id):
     try:
         reporte = Reporte.query.get_or_404(reporte_id)
         datos = request.get_json() or {}
         texto = datos.get('texto', '').strip()
-        autor = datos.get('autor', 'Ciudadano / Inspector').strip()
+        autor = datos.get('autor', 'Ciudadano Fray Bentos').strip()
 
         if not texto:
             return jsonify({'error': 'El comentario no puede estar vacío'}), 400
@@ -311,7 +271,6 @@ def obtener_reportes():
 def crear_reporte():
     try:
         datos = request.form if request.form else (request.get_json() or {})
-
         titulo = datos.get('titulo')
         latitud = datos.get('latitud')
         longitud = datos.get('longitud')
