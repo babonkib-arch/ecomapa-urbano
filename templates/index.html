@@ -309,6 +309,317 @@
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap'
             }).addTo(map);
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoMapa Urbano Fray Bentos - Fray Bentos Sustentable</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <!-- SweetAlert2 para Zoom y Alertas -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        @keyframes bgGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animate-gradient-bg {
+            background: linear-gradient(-45deg, #022c22, #064e3b, #0f172a, #022c22);
+            background-size: 400% 400%;
+            animation: bgGradient 15s ease infinite;
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: #0f172a !important;
+            color: #f8fafc !important;
+            border: 1px solid #334155 !important;
+            border-radius: 1.25rem !important;
+            padding: 0.5rem !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
+        }
+        .leaflet-popup-tip {
+            background: #0f172a !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen overflow-hidden font-sans relative">
+
+    <!-- MENÚ LATERAL DESPLEGABLE (HAMBURGUESA) -->
+    <div id="drawer-overlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[2500] hidden transition-opacity opacity-0" onclick="toggleMenuHamburguesa()"></div>
+    <div id="drawer-menu" class="fixed top-0 left-0 w-80 max-w-[85vw] h-full bg-slate-900 border-r border-slate-800 z-[2600] shadow-2xl transform -translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-500 p-2 rounded-xl text-slate-950 font-black text-sm">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <h3 class="font-black text-white text-base">EcoMapa Info</h3>
+            </div>
+            <button onclick="toggleMenuHamburguesa()" class="text-slate-400 hover:text-white p-1.5 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
+            <div class="space-y-1.5">
+                <h4 class="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-users"></i> ¿Quiénes Somos?
+                </h4>
+                <p class="text-slate-300 leading-relaxed">
+                    Somos una iniciativa tecnológica comunitaria enfocada en la innovación urbana y el desarrollo sostenible de Fray Bentos.
+                </p>
+            </div>
+            <div class="space-y-1.5">
+                <h4 class="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-circle-question"></i> ¿Para Qué Sirve EcoMapa?
+                </h4>
+                <p class="text-slate-300 leading-relaxed">
+                    Sirve como puente digital directo entre la ciudadanía y las autoridades locales para reportar y resolver incidentes urbanos de manera ágil.
+                </p>
+            </div>
+            <div class="space-y-1.5">
+                <h4 class="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-bullseye"></i> ¿Qué Buscamos?
+                </h4>
+                <p class="text-slate-300 leading-relaxed">
+                    Fomentar la participación ciudadana activa, la transparencia institucional y la rápida optimización de los espacios públicos urbanos.
+                </p>
+            </div>
+            <div class="space-y-1.5">
+                <h4 class="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-flag-checkered"></i> Fin de Nuestro Servicio
+                </h4>
+                <p class="text-slate-300 leading-relaxed">
+                    Garantizar una ciudad más limpia, ordenada y conectada mediante herramientas tecnológicas de acceso libre y universal para todos los vecinos.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BIENVENIDA CON GUÍA E INFORMACIÓN INSTITUCIONAL -->
+    <div id="welcome-modal" class="fixed inset-0 animate-gradient-bg z-[2000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+        <div class="bg-slate-900/95 border border-emerald-500/30 max-w-2xl w-full rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-6 backdrop-blur-xl relative z-10 my-auto max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-center">
+                <div class="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-400/60 rounded-3xl flex items-center justify-center text-emerald-400 text-4xl shadow-lg shadow-emerald-950/50 transform rotate-3">
+                    <i class="fa-solid fa-leaf animate-bounce"></i>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                    EcoMapa <span class="text-emerald-400">Urbano Fray Bentos</span>
+                </h1>
+                <p class="text-slate-300 text-xs sm:text-sm max-w-lg mx-auto">
+                    Plataforma participativa ciudadana para el reporte, monitoreo y gestión ambiental urbana en tiempo real.
+                </p>
+            </div>
+
+            <!-- GUÍA PASO A PASO E INFORMACIÓN -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left pt-2">
+                <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl space-y-1">
+                    <div class="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                        <span class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center text-[10px]">1</span>
+                        Ubicación en el Mapa
+                    </div>
+                    <p class="text-[11px] text-slate-400">Haz clic en el punto exacto de Fray Bentos donde detectes una incidencia.</p>
+                </div>
+                <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl space-y-1">
+                    <div class="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                        <span class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center text-[10px]">2</span>
+                        Detalla el Problema
+                    </div>
+                    <p class="text-[11px] text-slate-400">Selecciona la categoría, adjunta una foto como evidencia y elige la gravedad.</p>
+                </div>
+                <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl space-y-1">
+                    <div class="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                        <span class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center text-[10px]">3</span>
+                        Comparte y Gestiona
+                    </div>
+                    <p class="text-[11px] text-slate-400">Difunde en redes sociales para visibilizar el caso y monitorea su solución.</p>
+                </div>
+            </div>
+
+            <!-- LEYENDA DE SEMÁFOROS DE GRAVEDAD -->
+            <div class="bg-slate-950/60 border border-slate-800 p-3.5 rounded-2xl text-left space-y-2">
+                <span class="text-[11px] font-bold text-slate-300 block uppercase tracking-wider">Sistema de Semáforos de Gravedad:</span>
+                <div class="grid grid-cols-3 gap-2 text-[11px]">
+                    <div class="flex items-center gap-1.5 text-emerald-400 font-medium">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> 🟢 Baja (Leve)
+                    </div>
+                    <div class="flex items-center gap-1.5 text-amber-400 font-medium">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 🟡 Media (Atención)
+                    </div>
+                    <div class="flex items-center gap-1.5 text-rose-400 font-medium">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> 🔴 Alta (Urgente)
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="cerrarBienvenida()" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl transition shadow-xl shadow-emerald-950/60 flex items-center justify-center gap-2 text-sm tracking-wide">
+                <span>Comenzar a Explorar</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ENCABEZADO PRINCIPAL -->
+    <header class="h-16 bg-slate-950/90 backdrop-blur border-b border-slate-800 flex items-center justify-between px-4 sm:px-6 z-10 relative">
+        <div class="flex items-center gap-3">
+            <button onclick="toggleMenuHamburguesa()" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-emerald-400 rounded-xl border border-slate-800 transition flex items-center justify-center shadow-md" title="Menú Institucional">
+                <i class="fa-solid fa-bars text-base"></i>
+            </button>
+            <div class="flex items-center gap-2.5">
+                <div class="bg-emerald-500 p-2.5 rounded-xl text-slate-950 font-black text-base shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-sm tracking-wide text-white">EcoMapa Urbano Fray Bentos</h1>
+                    <span class="text-[10px] text-emerald-400 font-semibold block -mt-0.5">Fray Bentos Sustentable</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="centrarUbicacionUsuario()" class="px-3.5 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-emerald-500/30 shadow-md" title="Mi Ubicación GPS">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span class="hidden sm:inline">Mi GPS</span>
+            </button>
+            <a href="/login" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-200 transition flex items-center gap-2 border border-slate-700 shadow-md">
+                <i class="fa-solid fa-user-shield text-emerald-400"></i>
+                <span>Acceso Admin</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- MAPA LEAFLET -->
+    <div id="map" class="w-full h-[calc(100vh-4rem)] z-0"></div>
+
+    <div id="instruction-badge" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900/95 text-emerald-400 border border-emerald-500/40 shadow-2xl px-4 py-2 rounded-full text-xs font-bold z-10 flex items-center gap-2 pointer-events-none backdrop-blur">
+        <i class="fa-solid fa-hand-pointer animate-bounce"></i>
+        <span>Toca cualquier punto del mapa para crear un reporte</span>
+    </div>
+
+    <!-- MODAL DE REPORTE -->
+    <div id="report-modal-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[1500] hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none">
+        <div id="report-card" class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 transform scale-95 transition-all duration-300 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-black text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-camera text-emerald-400"></i> Registrar Nuevo Reporte
+                </h3>
+                <button onclick="cerrarMenuReporte()" class="text-slate-400 hover:text-white p-1 transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form id="form-reporte" class="space-y-4">
+                <input type="hidden" id="latitud">
+                <input type="hidden" id="longitud">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Título del reporte *</label>
+                    <input type="text" id="titulo" required placeholder="Ej. Acumulación de residuos en la esquina" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Categoría del Incidente</label>
+                        <select id="categoria" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                            <option value="🗑️ Basura / Residuos">🗑️ Basura / Residuos</option>
+                            <option value="🌳 Arbolado / Podas">🌳 Arbolado / Podas</option>
+                            <option value="💡 Alumbrado Público">💡 Alumbrado Público</option>
+                            <option value="🚰 Agua / Saneamiento">🚰 Agua / Saneamiento</option>
+                            <option value="🛣️ Baches / Calles dañadas">🛣️ Baches / Calles dañadas</option>
+                            <option value="🐕 Animales Sueltos">🐕 Animales Sueltos</option>
+                            <option value="🚗 Vehículos Abandonados">🚗 Vehículos Abandonados</option>
+                            <option value="🦟 Plagas / Vectores">🦟 Plagas / Vectores</option>
+                            <option value="🔊 Contaminación Sonora">🔊 Contaminación Sonora</option>
+                            <option value="🏕️ Espacios Públicos / Plazas">🏕️ Espacios Públicos / Plazas</option>
+                            <option value="⚠️ Otro Incidente">⚠️ Otro Incidente</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Gravedad (Semáforo)</label>
+                        <select id="gravedad" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 font-bold">
+                            <option value="baja" class="text-emerald-400 font-bold">🟢 Baja (Leve)</option>
+                            <option value="media" class="text-amber-400 font-bold">🟡 Media (Atención)</option>
+                            <option value="alta" class="text-rose-400 font-bold">🔴 Alta / Urgente</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Descripción</label>
+                    <textarea id="descripcion" rows="2" placeholder="Agrega contexto o detalles adicionales..." class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Tomar Foto con Cámara / Evidencia</label>
+                    <input type="file" id="input-foto" accept="image/*" capture="environment" class="w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-500 file:text-slate-950 hover:file:bg-emerald-400 cursor-pointer">
+                    <div id="preview-container" class="mt-2 hidden">
+                        <img id="foto-preview" class="h-24 rounded-xl object-cover border border-slate-700 w-full cursor-pointer" onclick="verImagenZoom(this.src, 'Previsualización')">
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-submit" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl transition flex items-center justify-center gap-2 text-xs uppercase tracking-wider shadow-lg shadow-emerald-950">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Publicar Reporte</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE ÉXITO -->
+    <div id="modal-success" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[3000] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-emerald-500/40 text-slate-100 max-w-sm w-full rounded-3xl p-6 text-center shadow-2xl space-y-4">
+            <div class="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-400 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">
+                <i class="fa-solid fa-check animate-bounce"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-2xl font-black text-white" id="success-title">¡Reporte Publicado!</h3>
+                <p class="text-xs text-slate-400" id="success-desc">Tu contribución ya está visible en el mapa participativo de Fray Bentos.</p>
+            </div>
+            <button onclick="cerrarModalExito()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition shadow-lg">
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <!-- Leaflet JS & Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        function cerrarBienvenida() {
+            document.getElementById('welcome-modal').classList.add('hidden');
+        }
+
+        function toggleMenuHamburguesa() {
+            const menu = document.getElementById('drawer-menu');
+            const overlay = document.getElementById('drawer-overlay');
+            const isOpen = menu.classList.contains('translate-x-0');
+            if (isOpen) {
+                menu.classList.remove('translate-x-0');
+                menu.classList.add('-translate-x-full');
+                overlay.classList.add('hidden', 'opacity-0');
+            } else {
+                menu.classList.remove('-translate-x-full');
+                menu.classList.add('translate-x-0');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            }
+        }
+
+        let map, reportesLayer, userMarker;
+        let markersMap = {}; // Diccionario para rastrear pines activos y evitar parpadeos
+
+        document.addEventListener('DOMContentLoaded', () => {
+            map = L.map('map').setView([-33.1381, -58.2988], 14);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
 
             reportesLayer = L.layerGroup().addTo(map);
 
@@ -386,7 +697,7 @@
                 data.forEach(r => {
                     idsEnBase.add(String(r.id));
                     const reporteDirectLink = `${window.location.origin}/?reporte=${r.id}`;
-                    const shareText = encodeURIComponent(`🚨 Reporte en EcoMapa Fray Bentos: ${r.titulo} (${r.categoria}). Revisa la ubicación exacta y los detalles aquí:`);
+                    const shareText = encodeURIComponent(`🚨 Reporte en EcoMapa Urbano Fray Bentos: ${r.titulo} (${r.categoria}). Revisa la ubicación exacta y los detalles aquí:`);
                     const shareUrl = encodeURIComponent(reporteDirectLink);
 
                     let badgeGravedad = '<span class="text-emerald-400 font-bold">🟢 Baja</span>';
@@ -396,9 +707,28 @@
                         badgeGravedad = '<span class="text-amber-400 font-bold">🟡 Media</span>';
                     }
 
+                    // HTML de la sección de comentarios y reseñas en tiempo real
+                    let comentariosHtml = `<div class="space-y-1.5 max-h-28 overflow-y-auto pr-1 my-1.5 border-t border-slate-800 pt-2" id="comentarios-lista-${r.id}">`;
+                    if (r.comentarios && r.comentarios.length > 0) {
+                        r.comentarios.forEach(c => {
+                            comentariosHtml += `
+                                <div class="bg-slate-800/80 p-2 rounded-xl text-[11px] space-y-0.5 border border-slate-700/50">
+                                    <div class="flex justify-between text-[9px] text-slate-400">
+                                        <span class="font-bold text-emerald-400">${c.autor}</span>
+                                        <span>${c.fecha}</span>
+                                    </div>
+                                    <p class="text-slate-200">${c.texto}</p>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        comentariosHtml += `<p class="text-[10px] text-slate-500 italic text-center py-1">Sin reseñas o comentarios aún.</p>`;
+                    }
+                    comentariosHtml += `</div>`;
+
                     const popupContent = `
-                        <div class="space-y-2.5 text-xs p-1 font-sans">
-                            ${r.foto_url ? `<img src="${r.foto_url}" class="w-full h-32 object-cover rounded-xl border border-slate-700 shadow-md cursor-pointer hover:opacity-90 transition" onclick="verImagenZoom('${r.foto_url}', '${r.titulo}')" title="Haz clic para ampliar">` : ''}
+                        <div class="w-64 sm:w-72 space-y-2 text-xs p-1 font-sans">
+                            ${r.foto_url ? `<img src="${r.foto_url}" class="w-full h-28 object-cover rounded-xl border border-slate-700 shadow-md cursor-pointer hover:opacity-90 transition" onclick="verImagenZoom('${r.foto_url}', '${r.titulo}')" title="Haz clic para ampliar">` : ''}
                             
                             <div>
                                 <div class="flex items-center justify-between gap-2 mb-1">
@@ -406,6 +736,18 @@
                                     ${badgeGravedad}
                                 </div>
                                 <p class="text-slate-300 text-[11px] leading-relaxed">${r.descripcion || 'Sin descripción adicional.'}</p>
+                            </div>
+
+                            <!-- SECCIÓN DE COMENTARIOS / RESEÑAS EN TIEMPO REAL -->
+                            <div class="space-y-1 pt-1">
+                                <span class="text-[10px] font-bold text-slate-400 block uppercase tracking-wider"><i class="fa-solid fa-comments text-emerald-400 me-1"></i> Reseñas y Notas:</span>
+                                ${comentariosHtml}
+                                <div class="flex gap-1.5 pt-1">
+                                    <input type="text" id="input-comentario-${r.id}" placeholder="Escribe un comentario..." class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-emerald-500">
+                                    <button onclick="enviarComentario(${r.id})" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-lg text-[11px] transition shadow">
+                                        <i class="fa-solid fa-paper-plane"></i>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-slate-800">
@@ -441,12 +783,10 @@
                     else if (r.gravedad === 'media' || String(r.gravedad).includes('Media')) colorPin = '#f59e0b';
 
                     if (markersMap[r.id]) {
-                        // Si el pin ya existe, solo actualizamos sus datos en segundo plano sin borrarlo ni parpadear
                         markersMap[r.id].setLatLng([r.latitud, r.longitud]);
                         markersMap[r.id].setStyle({ fillColor: colorPin });
                         markersMap[r.id].setPopupContent(popupContent);
                     } else {
-                        // Si es un reporte nuevo, lo creamos y añadimos al mapa
                         const customMarker = L.circleMarker([r.latitud, r.longitud], {
                             radius: 9,
                             fillColor: colorPin,
@@ -464,7 +804,6 @@
                     }
                 });
 
-                // Remover del mapa únicamente los pines que hayan sido borrados de la base de datos
                 Object.keys(markersMap).forEach(id => {
                     if (!idsEnBase.has(id)) {
                         reportesLayer.removeLayer(markersMap[id]);
@@ -485,7 +824,31 @@
             }
         }
 
-        // FUNCIÓN ZOOM DE FOTO MODAL-ONLY (Sin expandir toda la página)
+        // Función para enviar comentarios en tiempo real desde el mapa
+        async function enviarComentario(reporteId) {
+            const input = document.getElementById(`input-comentario-${reporteId}`);
+            const texto = input.value.trim();
+            if (!texto) return;
+
+            try {
+                const res = await fetch(`/api/reportes/${reporteId}/comentarios`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ texto: texto, autor: 'Ciudadano Fray Bentos' })
+                });
+
+                if (res.ok) {
+                    input.value = '';
+                    cargarReportes(); // Refresca instantáneamente el mapa y los comentarios
+                } else {
+                    throw new Error('No se pudo enviar el comentario');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // FUNCIÓN ZOOM DE FOTO MODAL-ONLY
         function verImagenZoom(url, titulo) {
             Swal.fire({
                 title: `<span class="text-sm font-bold text-white">${titulo || 'Evidencia de Fotografía'}</span>`,

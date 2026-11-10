@@ -5,7 +5,7 @@ from functools import wraps
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import inspect, text
+from sqlalchemy import inspect, text, case
 
 app = Flask(__name__)
 
@@ -29,6 +29,24 @@ class UsuarioAdmin(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
 
+# Modelo de Comentarios / Reseñas en Tiempo Real
+class Comentario(db.Model):
+    __tablename__ = 'comentario'
+    id = db.Column(db.Integer, primary_key=True)
+    reporte_id = db.Column(db.Integer, db.ForeignKey('reporte.id', ondelete='CASCADE'), nullable=False)
+    autor = db.Column(db.String(100), nullable=False, default='Ciudadano')
+    texto = db.Column(db.Text, nullable=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'reporte_id': self.reporte_id,
+            'autor': self.autor,
+            'texto': self.texto,
+            'fecha': self.fecha_creacion.strftime('%d/%m/%Y %H:%M') if self.fecha_creacion else ''
+        }
+
 # Modelo de Reportes
 class Reporte(db.Model):
     __tablename__ = 'reporte'
@@ -42,6 +60,9 @@ class Reporte(db.Model):
     estado = db.Column(db.String(20), default='Pendiente')
     foto_url = db.Column(db.Text, nullable=True)  # Campo TEXT habilitado para guardar Base64
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relación con comentarios
+    comentarios = db.relationship('Comentario', backref='reporte', lazy=True, cascade='all, delete-orphan')
 
     def to_dict(self):
         fecha_str = self.fecha_creacion.strftime('%d/%m/%Y %H:%M') if self.fecha_creacion else 'Reciente'
@@ -55,7 +76,8 @@ class Reporte(db.Model):
             'longitud': self.longitud,
             'estado': self.estado,
             'foto_url': self.foto_url,
-            'fecha': fecha_str
+            'fecha': fecha_str,
+            'comentarios': [c.to_dict() for c in self.comentarios]
         }
 
 # Decorador para proteger las rutas de administrador
@@ -67,7 +89,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Inicialización de BD y migración automática de columna en PostgreSQL
+# Inicialización de BD y migración automática
 with app.app_context():
     db.create_all()
     try:
@@ -79,7 +101,6 @@ with app.app_context():
                 conn.execute(text("ALTER TABLE reporte ADD COLUMN fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
                 conn.commit()
 
-        # Forzar tipo TEXT en foto_url para almacenar imágenes Base64 sin límite de caracteres
         with db.engine.connect() as conn:
             conn.execute(text("ALTER TABLE reporte ALTER COLUMN foto_url TYPE TEXT;"))
             conn.commit()
@@ -132,9 +153,26 @@ def logout():
 @app.route('/admin')
 @admin_required
 def admin_dashboard():
-    reportes = Reporte.query.order_by(Reporte.id.desc()).all()
+    # Permitir ordenar desde la vista de admin mediante parámetros GET (ej: ?orden=gravedad, mas_nuevos, mas_viejos)
+    orden = request.args.get('orden', 'mas_nuevos')
+    
+    query = Reporte.query
+    if orden == 'mas_viejos':
+        query = query.order_by(Reporte.fecha_creacion.asc())
+    elif orden == 'gravedad':
+        # Orden personalizado de gravedad: Alta -> Media -> Baja
+        gravedad_order = case(
+            (Reporte.gravedad.ilike('%alta%'), 1),
+            (Reporte.gravedad.ilike('%media%'), 2),
+            else_=3
+        )
+        query = query.order_by(gravedad_order, Reporte.fecha_creacion.desc())
+    else:
+        query = query.order_by(Reporte.fecha_creacion.desc())
+
+    reportes = query.all()
     admins = UsuarioAdmin.query.all()
-    return render_template('admin.html', reportes=reportes, admins=admins, admin_email=session.get('admin_email'))
+    return render_template('admin.html', reportes=reportes, admins=admins, admin_email=session.get('admin_email'), orden_actual=orden)
 
 @app.route('/api/admin/registrar', methods=['POST'])
 @admin_required
@@ -158,6 +196,24 @@ def registrar_admin():
         db.session.add(nuevo_admin)
         db.session.commit()
         return jsonify({'mensaje': 'Administrador registrado con éxito'}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Nueva ruta para eliminar administradores (Gestión completa CRUD)
+@app.route('/api/admin/<int:admin_id>', methods=['DELETE'])
+@admin_required
+def eliminar_admin(admin_id):
+    try:
+        admin_a_borrar = UsuarioAdmin.query.get_or_404(admin_id)
+        
+        # Evitar que el admin activo se borre a sí mismo por accidente
+        if admin_a_borrar.email == session.get('admin_email'):
+            return jsonify({'error': 'No puedes eliminar tu propia cuenta de administrador activa'}), 400
+
+        db.session.delete(admin_a_borrar)
+        db.session.commit()
+        return jsonify({'mensaje': 'Administrador eliminado correctamente'}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
@@ -211,13 +267,37 @@ def eliminar_reporte(reporte_id):
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/reportes/<int:reporte_id>', methods=['GET'])
-@admin_required
 def obtener_reporte_individual(reporte_id):
     try:
         reporte = Reporte.query.get_or_404(reporte_id)
         return jsonify(reporte.to_dict()), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 404
+
+# Nueva ruta para agregar comentarios y reseñas en tiempo real a un reporte
+@app.route('/api/reportes/<int:reporte_id>/comentarios', methods=['POST'])
+def agregar_comentario(reporte_id):
+    try:
+        reporte = Reporte.query.get_or_404(reporte_id)
+        datos = request.get_json() or {}
+        texto = datos.get('texto', '').strip()
+        autor = datos.get('autor', 'Ciudadano / Inspector').strip()
+
+        if not texto:
+            return jsonify({'error': 'El comentario no puede estar vacío'}), 400
+
+        nuevo_comentario = Comentario(
+            reporte_id=reporte.id,
+            autor=autor,
+            texto=texto,
+            fecha_creacion=datetime.now()
+        )
+        db.session.add(nuevo_comentario)
+        db.session.commit()
+        return jsonify({'mensaje': 'Comentario agregado con éxito', 'comentario': nuevo_comentario.to_dict()}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/reportes', methods=['GET'])
 def obtener_reportes():
