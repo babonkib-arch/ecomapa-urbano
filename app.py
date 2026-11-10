@@ -1,312 +1,604 @@
-import os
-import base64
-from datetime import datetime
-from functools import wraps
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import inspect, text, case
-
-app = Flask(__name__)
-
-# Llave secreta para manejar sesiones de forma segura
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'eco_mapa_secret_key_2026_fray_bentos')
-
-# Configuración de base de datos
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///ecomapa.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Soporte para PostgreSQL en Render
-if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgres://"):
-    app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace("postgres://", "postgresql://", 1)
-
-db = SQLAlchemy(app)
-
-# Modelo de Administradores
-class UsuarioAdmin(db.Model):
-    __tablename__ = 'usuario_admin'
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
-
-# Modelo de Comentarios / Reseñas en Tiempo Real
-class Comentario(db.Model):
-    __tablename__ = 'comentario'
-    id = db.Column(db.Integer, primary_key=True)
-    reporte_id = db.Column(db.Integer, db.ForeignKey('reporte.id', ondelete='CASCADE'), nullable=False)
-    autor = db.Column(db.String(100), nullable=False, default='Ciudadano')
-    texto = db.Column(db.Text, nullable=False)
-    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'reporte_id': self.reporte_id,
-            'autor': self.autor,
-            'texto': self.texto,
-            'fecha': self.fecha_creacion.strftime('%d/%m/%Y %H:%M') if self.fecha_creacion else ''
-        }
-
-# Modelo de Reportes
-class Reporte(db.Model):
-    __tablename__ = 'reporte'
-    id = db.Column(db.Integer, primary_key=True)
-    titulo = db.Column(db.String(150), nullable=False)
-    categoria = db.Column(db.String(50), nullable=False)
-    gravedad = db.Column(db.String(20), nullable=False)
-    descripcion = db.Column(db.Text, nullable=True)
-    latitud = db.Column(db.Float, nullable=False)
-    longitud = db.Column(db.Float, nullable=False)
-    estado = db.Column(db.String(20), default='Pendiente')
-    foto_url = db.Column(db.Text, nullable=True)
-    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoMapa Urbano Fray Bentos - Fray Bentos Sustentable</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    comentarios = db.relationship('Comentario', backref='reporte', lazy=True, cascade='all, delete-orphan')
-
-    def to_dict(self):
-        fecha_str = self.fecha_creacion.strftime('%d/%m/%Y %H:%M') if self.fecha_creacion else 'Reciente'
-        return {
-            'id': self.id,
-            'titulo': self.titulo,
-            'categoria': self.categoria,
-            'gravedad': self.gravedad,
-            'descripcion': self.descripcion,
-            'latitud': self.latitud,
-            'longitud': self.longitud,
-            'estado': self.estado,
-            'foto_url': self.foto_url,
-            'fecha': fecha_str,
-            'comentarios': [c.to_dict() for c in self.comentarios]
+    <style>
+        @keyframes bgGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animate-gradient-bg {
+            background: linear-gradient(-45deg, #022c22, #064e3b, #0f172a, #022c22);
+            background-size: 400% 400%;
+            animation: bgGradient 15s ease infinite;
         }
 
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('admin_logged_in'):
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
+        .leaflet-popup-content-wrapper {
+            background: #0f172a !important;
+            color: #f8fafc !important;
+            border: 1px solid #334155 !important;
+            border-radius: 1.25rem !important;
+            padding: 0.5rem !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
+        }
+        .leaflet-popup-tip {
+            background: #0f172a !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen overflow-hidden font-sans relative">
 
-with app.app_context():
-    db.create_all()
-    try:
-        inspector = inspect(db.engine)
-        columnas = [col['name'] for col in inspector.get_columns('reporte')]
-        if 'fecha_creacion' not in columnas:
-            with db.engine.connect() as conn:
-                conn.execute(text("ALTER TABLE reporte ADD COLUMN fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
-                conn.commit()
-        with db.engine.connect() as conn:
-            conn.execute(text("ALTER TABLE reporte ALTER COLUMN foto_url TYPE TEXT;"))
-            conn.commit()
-    except Exception as e:
-        print("Verificación de esquema completada:", e)
+    <div id="drawer-overlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[2500] hidden transition-opacity opacity-0" onclick="toggleMenuHamburguesa()"></div>
+    <div id="drawer-menu" class="fixed top-0 left-0 w-80 max-w-[85vw] h-full bg-slate-900 border-r border-slate-800 z-[2600] shadow-2xl transform -translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-5 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-500 p-2 rounded-xl text-slate-950 font-black text-sm">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <h3 class="font-black text-white text-base">EcoMapa Info</h3>
+            </div>
+            <button onclick="toggleMenuHamburguesa()" class="text-slate-400 hover:text-white p-1.5 transition cursor-pointer">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
+            <div class="space-y-1.5">
+                <h4 class="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-users"></i> ¿Quiénes Somos?
+                </h4>
+                <p class="text-slate-300 leading-relaxed">
+                    Somos una iniciativa tecnológica comunitaria enfocada en la innovación urbana y el desarrollo sostenible de Fray Bentos.
+                </p>
+            </div>
+            <div class="space-y-1.5">
+                <h4 class="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-circle-question"></i> ¿Para Qué Sirve EcoMapa?
+                </h4>
+                <p class="text-slate-300 leading-relaxed">
+                    Sirve como puente digital directo entre la ciudadanía y las autoridades locales para reportar y resolver incidentes urbanos de manera ágil.
+                </p>
+            </div>
+            <div class="space-y-1.5">
+                <h4 class="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-bullseye"></i> ¿Qué Buscamos?
+                </h4>
+                <p class="text-slate-300 leading-relaxed">
+                    Fomentar la participación ciudadana activa, la transparencia institucional y la rápida optimización de los espacios públicos urbanos.
+                </p>
+            </div>
+            <div class="space-y-1.5">
+                <h4 class="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-flag-checkered"></i> Fin de Nuestro Servicio
+                </h4>
+                <p class="text-slate-300 leading-relaxed">
+                    Garantizar una ciudad más limpia, ordenada y conectada mediante herramientas tecnológicas de acceso libre y universal para todos los vecinos.
+                </p>
+            </div>
+        </div>
+    </div>
 
-    if not UsuarioAdmin.query.first():
-        admin_defecto = UsuarioAdmin(
-            email='admin@ecomapa.org',
-            password_hash=generate_password_hash('admin123')
-        )
-        db.session.add(admin_defecto)
-        db.session.commit()
+    <div id="welcome-modal" class="fixed inset-0 animate-gradient-bg z-[2000] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+        <div class="bg-slate-900/95 border border-emerald-500/30 max-w-2xl w-full rounded-3xl p-6 sm:p-8 text-center shadow-2xl space-y-6 backdrop-blur-xl relative z-10 my-auto max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-center">
+                <div class="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-400/60 rounded-3xl flex items-center justify-center text-emerald-400 text-4xl shadow-lg shadow-emerald-950/50 transform rotate-3">
+                    <i class="fa-solid fa-leaf animate-bounce"></i>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                    EcoMapa <span class="text-emerald-400">Urbano Fray Bentos</span>
+                </h1>
+                <p class="text-slate-300 text-xs sm:text-sm max-w-lg mx-auto">
+                    Plataforma participativa ciudadana para el reporte, monitoreo y gestión ambiental urbana en tiempo real.
+                </p>
+            </div>
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left pt-2">
+                <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl space-y-1">
+                    <div class="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                        <span class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center text-[10px]">1</span>
+                        Ubicación en el Mapa
+                    </div>
+                    <p class="text-[11px] text-slate-400">Haz clic en el punto exacto de Fray Bentos donde detectes una incidencia.</p>
+                </div>
+                <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl space-y-1">
+                    <div class="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                        <span class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center text-[10px]">2</span>
+                        Detalla el Problema
+                    </div>
+                    <p class="text-[11px] text-slate-400">Selecciona la categoría, adjunta una foto como evidencia y elige la gravedad.</p>
+                </div>
+                <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl space-y-1">
+                    <div class="text-emerald-400 font-bold text-xs flex items-center gap-1.5">
+                        <span class="w-5 h-5 bg-emerald-500/20 rounded-full flex items-center justify-center text-[10px]">3</span>
+                        Comparte y Gestiona
+                    </div>
+                    <p class="text-[11px] text-slate-400">Difunde en redes sociales para visibilizar el caso y monitorea su solución.</p>
+                </div>
+            </div>
 
-@app.route('/login', methods=['GET'])
-def login():
-    if session.get('admin_logged_in'):
-        return redirect(url_for('admin_dashboard'))
-    return render_template('login.html')
+            <div class="bg-slate-950/60 border border-slate-800 p-3.5 rounded-2xl text-left space-y-2">
+                <span class="text-[11px] font-bold text-slate-300 block uppercase tracking-wider">Sistema de Semáforos de Gravedad:</span>
+                <div class="grid grid-cols-3 gap-2 text-[11px]">
+                    <div class="flex items-center gap-1.5 text-emerald-400 font-medium">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> 🟢 Baja (Leve)
+                    </div>
+                    <div class="flex items-center gap-1.5 text-amber-400 font-medium">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 🟡 Media (Atención)
+                    </div>
+                    <div class="flex items-center gap-1.5 text-rose-400 font-medium">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> 🔴 Alta (Urgente)
+                    </div>
+                </div>
+            </div>
 
-@app.route('/api/login', methods=['POST'])
-def api_login():
-    datos = request.get_json() or {}
-    email = datos.get('email', '').strip().lower()
-    password = datos.get('password', '').strip()
+            <button onclick="cerrarBienvenida()" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-2xl transition shadow-xl shadow-emerald-950/60 flex items-center justify-center gap-2 text-sm tracking-wide cursor-pointer">
+                <span>Comenzar a Explorar</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
 
-    if not email or not password:
-        return jsonify({'error': 'Por favor completa todos los campos'}), 400
+    <header class="h-16 bg-slate-950/90 backdrop-blur border-b border-slate-800 flex items-center justify-between px-4 sm:px-6 z-10 relative">
+        <div class="flex items-center gap-3">
+            <button onclick="toggleMenuHamburguesa()" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-emerald-400 rounded-xl border border-slate-800 transition flex items-center justify-center shadow-md cursor-pointer" title="Menú Institucional">
+                <i class="fa-solid fa-bars text-base"></i>
+            </button>
+            <div class="flex items-center gap-2.5">
+                <div class="bg-emerald-500 p-2.5 rounded-xl text-slate-950 font-black text-base shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-sm tracking-wide text-white">EcoMapa Urbano Fray Bentos</h1>
+                    <span class="text-[10px] text-emerald-400 font-semibold block -mt-0.5">Fray Bentos Sustentable</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="centrarUbicacionUsuario()" class="px-3.5 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-emerald-500/30 shadow-md cursor-pointer" title="Mi Ubicación GPS">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span class="hidden sm:inline">Mi GPS</span>
+            </button>
+            <a href="/login" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-200 transition flex items-center gap-2 border border-slate-700 shadow-md">
+                <i class="fa-solid fa-user-shield text-emerald-400"></i>
+                <span>Acceso Admin</span>
+            </a>
+        </div>
+    </header>
 
-    admin = UsuarioAdmin.query.filter_by(email=email).first()
+    <div id="map" class="w-full h-[calc(100vh-4rem)] z-0"></div>
 
-    if admin and check_password_hash(admin.password_hash, password):
-        session['admin_logged_in'] = True
-        session['admin_email'] = admin.email
-        return jsonify({'mensaje': 'Inicio de sesión exitoso', 'redirect': '/admin'}), 200
-    else:
-        return jsonify({'error': 'Correo o contraseña incorrectos'}), 401
+    <div id="instruction-badge" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900/95 text-emerald-400 border border-emerald-500/40 shadow-2xl px-4 py-2 rounded-full text-xs font-bold z-10 flex items-center gap-2 pointer-events-none backdrop-blur">
+        <i class="fa-solid fa-hand-pointer animate-bounce"></i>
+        <span>Toca cualquier punto del mapa para crear un reporte</span>
+    </div>
 
-@app.route('/logout')
-def logout():
-    session.pop('admin_logged_in', None)
-    session.pop('admin_email', None)
-    return redirect(url_for('index'))
+    <div id="report-modal-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[1500] hidden flex items-center justify-center p-4 transition-all duration-300 opacity-0 pointer-events-none">
+        <div id="report-card" class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 transform scale-95 transition-all duration-300 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-black text-base text-white flex items-center gap-2">
+                    <i class="fa-solid fa-camera text-emerald-400"></i> Registrar Nuevo Reporte
+                </h3>
+                <button onclick="cerrarMenuReporte()" class="text-slate-400 hover:text-white p-1 transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
 
-@app.route('/admin')
-@admin_required
-def admin_dashboard():
-    orden = request.args.get('orden', 'mas_nuevos')
-    query = Reporte.query
-    if orden == 'mas_viejos':
-        query = query.order_by(Reporte.fecha_creacion.asc())
-    elif orden == 'gravedad':
-        gravedad_order = case(
-            (Reporte.gravedad.ilike('%alta%'), 1),
-            (Reporte.gravedad.ilike('%media%'), 2),
-            else_=3
-        )
-        query = query.order_by(gravedad_order, Reporte.fecha_creacion.desc())
-    else:
-        query = query.order_by(Reporte.fecha_creacion.desc())
+            <form id="form-reporte" class="space-y-4">
+                <input type="hidden" id="latitud">
+                <input type="hidden" id="longitud">
 
-    reportes = query.all()
-    admins = UsuarioAdmin.query.all()
-    return render_template('admin.html', reportes=reportes, admins=admins, admin_email=session.get('admin_email'), orden_actual=orden)
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Título del reporte *</label>
+                    <input type="text" id="titulo" required placeholder="Ej. Acumulación de residuos en la esquina" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                </div>
 
-@app.route('/api/admin/registrar', methods=['POST'])
-@admin_required
-def registrar_admin():
-    try:
-        datos = request.get_json() or {}
-        email = datos.get('email', '').strip().lower()
-        password = datos.get('password', '').strip()
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Categoría del Incidente</label>
+                        <select id="categoria" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500">
+                            <option value="🗑️ Basura / Residuos">🗑️ Basura / Residuos</option>
+                            <option value="🌳 Arbolado / Podas">🌳 Arbolado / Podas</option>
+                            <option value="💡 Alumbrado Público">💡 Alumbrado Público</option>
+                            <option value="🚰 Agua / Saneamiento">🚰 Agua / Saneamiento</option>
+                            <option value="🛣️ Baches / Calles dañadas">🛣️ Baches / Calles dañadas</option>
+                            <option value="🐕 Animales Sueltos">🐕 Animales Sueltos</option>
+                            <option value="🚗 Vehículos Abandonados">🚗 Vehículos Abandonados</option>
+                            <option value="🦟 Plagas / Vectores">🦟 Plagas / Vectores</option>
+                            <option value="🔊 Contaminación Sonora">🔊 Contaminación Sonora</option>
+                            <option value="🏕️ Espacios Públicos / Plazas">🏕️ Espacios Públicos / Plazas</option>
+                            <option value="⚠️ Otro Incidente">⚠️ Otro Incidente</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Gravedad (Semáforo)</label>
+                        <select id="gravedad" class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-emerald-500 font-bold">
+                            <option value="baja" class="text-emerald-400 font-bold">🟢 Baja (Leve)</option>
+                            <option value="media" class="text-amber-400 font-bold">🟡 Media (Atención)</option>
+                            <option value="alta" class="text-rose-400 font-bold">🔴 Alta / Urgente</option>
+                        </select>
+                    </div>
+                </div>
 
-        if not email or not password:
-            return jsonify({'error': 'El correo y la contraseña son obligatorios'}), 400
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Descripción</label>
+                    <textarea id="descripcion" rows="2" placeholder="Agrega contexto o detalles adicionales..." class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"></textarea>
+                </div>
 
-        existing = UsuarioAdmin.query.filter_by(email=email).first()
-        if existing:
-            return jsonify({'error': 'Ya existe un administrador con este correo'}), 400
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Tomar Foto con Cámara / Evidencia</label>
+                    <input type="file" id="input-foto" accept="image/*" capture="environment" class="w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-500 file:text-slate-950 hover:file:bg-emerald-400 cursor-pointer">
+                    <div id="preview-container" class="mt-2 hidden">
+                        <img id="foto-preview" class="h-24 rounded-xl object-cover border border-slate-700 w-full cursor-pointer" onclick="verImagenZoom(this.src, 'Previsualización')">
+                    </div>
+                </div>
 
-        nuevo_admin = UsuarioAdmin(
-            email=email,
-            password_hash=generate_password_hash(password)
-        )
-        db.session.add(nuevo_admin)
-        db.session.commit()
-        return jsonify({'mensaje': 'Administrador registrado con éxito'}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+                <button type="submit" id="btn-submit" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl transition flex items-center justify-center gap-2 text-xs uppercase tracking-wider shadow-lg shadow-emerald-950 cursor-pointer">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Publicar Reporte</span>
+                </button>
+            </form>
+        </div>
+    </div>
 
-@app.route('/api/admin/<int:admin_id>', methods=['DELETE'])
-@admin_required
-def eliminar_admin(admin_id):
-    try:
-        admin_a_borrar = UsuarioAdmin.query.get_or_404(admin_id)
-        if admin_a_borrar.email == session.get('admin_email'):
-            return jsonify({'error': 'No puedes eliminar tu propia cuenta de administrador activa'}), 400
+    <div id="modal-success" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[3000] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-emerald-500/40 text-slate-100 max-w-sm w-full rounded-3xl p-6 text-center shadow-2xl space-y-4">
+            <div class="w-20 h-20 bg-emerald-500/20 border-2 border-emerald-400 text-emerald-400 rounded-full flex items-center justify-center mx-auto text-4xl shadow-inner">
+                <i class="fa-solid fa-check animate-bounce"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-2xl font-black text-white" id="success-title">¡Reporte Publicado!</h3>
+                <p class="text-xs text-slate-400" id="success-desc">Tu contribución ya está visible en el mapa participativo de Fray Bentos.</p>
+            </div>
+            <button onclick="cerrarModalExito()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider transition shadow-lg cursor-pointer">
+                Entendido
+            </button>
+        </div>
+    </div>
 
-        db.session.delete(admin_a_borrar)
-        db.session.commit()
-        return jsonify({'mensaje': 'Administrador eliminado correctamente'}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        function cerrarBienvenida() {
+            const modal = document.getElementById('welcome-modal');
+            if (modal) modal.classList.add('hidden');
+        }
 
-@app.route('/api/reportes/<int:reporte_id>/estado', methods=['PUT'])
-@admin_required
-def cambiar_estado(reporte_id):
-    try:
-        reporte = Reporte.query.get_or_404(reporte_id)
-        datos = request.get_json() or {}
-        nuevo_estado = datos.get('estado')
-        
-        if nuevo_estado in ['Pendiente', 'En Proceso', 'Resuelto']:
-            reporte.estado = nuevo_estado
-            db.session.commit()
-            return jsonify({'mensaje': 'Estado actualizado con éxito'}), 200
-        return jsonify({'error': 'Estado no válido'}), 400
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        function toggleMenuHamburguesa() {
+            const menu = document.getElementById('drawer-menu');
+            const overlay = document.getElementById('drawer-overlay');
+            const isOpen = menu.classList.contains('translate-x-0');
+            if (isOpen) {
+                menu.classList.remove('translate-x-0');
+                menu.classList.add('-translate-x-full');
+                overlay.classList.add('hidden', 'opacity-0');
+            } else {
+                menu.classList.remove('-translate-x-full');
+                menu.classList.add('translate-x-0');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            }
+        }
 
-@app.route('/api/reportes/<int:reporte_id>', methods=['DELETE'])
-@admin_required
-def eliminar_reporte(reporte_id):
-    try:
-        reporte = Reporte.query.get_or_404(reporte_id)
-        db.session.delete(reporte)
-        db.session.commit()
-        return jsonify({'mensaje': 'Reporte eliminado correctamente'}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        let map, reportesLayer, userMarker;
+        let markersMap = {};
 
-@app.route('/api/reportes/<int:reporte_id>/comentarios', methods=['POST'])
-def agregar_comentario(reporte_id):
-    try:
-        reporte = Reporte.query.get_or_404(reporte_id)
-        datos = request.get_json() or {}
-        texto = datos.get('texto', '').strip()
-        autor = datos.get('autor', 'Ciudadano Fray Bentos').strip()
+        document.addEventListener('DOMContentLoaded', () => {
+            map = L.map('map').setView([-33.1381, -58.2988], 14);
 
-        if not texto:
-            return jsonify({'error': 'El comentario no puede estar vacío'}), 400
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
 
-        nuevo_comentario = Comentario(
-            reporte_id=reporte.id,
-            autor=autor,
-            texto=texto,
-            fecha_creacion=datetime.now()
-        )
-        db.session.add(nuevo_comentario)
-        db.session.commit()
-        return jsonify({'mensaje': 'Comentario agregado con éxito', 'comentario': nuevo_comentario.to_dict()}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+            reportesLayer = L.layerGroup().addTo(map);
 
-@app.route('/api/reportes', methods=['GET'])
-def obtener_reportes():
-    try:
-        reportes = Reporte.query.order_by(Reporte.id.desc()).all()
-        return jsonify([r.to_dict() for r in reportes]), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+            map.on('click', (e) => {
+                abrirMenuReporte(e.latlng.lat, e.latlng.lng);
+            });
 
-@app.route('/api/reportes', methods=['POST'])
-def crear_reporte():
-    try:
-        datos = request.form if request.form else (request.get_json() or {})
-        titulo = datos.get('titulo')
-        latitud = datos.get('latitud')
-        longitud = datos.get('longitud')
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    map.setView([lat, lng], 15);
+                    
+                    if (userMarker) map.removeLayer(userMarker);
+                    userMarker = L.circleMarker([lat, lng], {
+                        radius: 8,
+                        fillColor: '#3b82f6',
+                        color: '#ffffff',
+                        weight: 2,
+                        fillOpacity: 1
+                    }).addTo(map).bindPopup("<b>¡Estás aquí!</b>").openPopup();
+                }, () => {
+                    console.log("Geolocalización denegada o no disponible.");
+                }, { timeout: 10000 });
+            }
 
-        if not titulo or latitud is None or longitud is None:
-            return jsonify({'error': 'Faltan campos obligatorios'}), 400
+            cargarReportes();
+            setInterval(cargarReportes, 10000);
+        });
 
-        foto_data_url = None
-        if 'foto' in request.files:
-            file = request.files['foto']
-            if file and file.filename != '':
-                file_bytes = file.read()
-                encoded_string = base64.b64encode(file_bytes).decode('utf-8')
-                mimetype = file.mimetype or 'image/jpeg'
-                foto_data_url = f"data:{mimetype};base64,{encoded_string}"
+        function centrarUbicacionUsuario() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    map.setView([lat, lng], 16);
+                    if (userMarker) {
+                        userMarker.setLatLng([lat, lng]).openPopup();
+                    } else {
+                        userMarker = L.circleMarker([lat, lng], {
+                            radius: 8,
+                            fillColor: '#3b82f6',
+                            color: '#ffffff',
+                            weight: 2,
+                            fillOpacity: 1
+                        }).addTo(map).bindPopup("<b>¡Estás aquí!</b>").openPopup();
+                    }
+                }, () => {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'GPS no disponible',
+                        text: 'No se pudo obtener tu ubicación actual.',
+                        background: '#0f172a',
+                        color: '#f8fafc',
+                        confirmButtonColor: '#10b981'
+                    });
+                });
+            }
+        }
 
-        nuevo_reporte = Reporte(
-            titulo=str(titulo),
-            categoria=str(datos.get('categoria', 'Otro')),
-            gravedad=str(datos.get('gravedad', 'baja')),
-            descripcion=str(datos.get('descripcion', '')),
-            latitud=float(latitud),
-            longitud=float(longitud),
-            estado='Pendiente',
-            foto_url=foto_data_url,
-            fecha_creacion=datetime.now()
-        )
+        async function cargarReportes() {
+            try {
+                const res = await fetch('/api/reportes');
+                const data = await res.json();
 
-        db.session.add(nuevo_reporte)
-        db.session.commit()
+                const urlParams = new URLSearchParams(window.location.search);
+                const reporteIdCompartido = urlParams.get('reporte');
 
-        return jsonify({'mensaje': 'Reporte guardado con éxito', 'reporte': nuevo_reporte.to_dict()}), 201
+                let markerAperturaAuto = null;
+                let idsEnBase = new Set();
 
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': f'Error al guardar en BD: {str(e)}'}), 500
+                data.forEach(r => {
+                    idsEnBase.add(String(r.id));
+                    const reporteDirectLink = `${window.location.origin}/?reporte=${r.id}`;
+                    const shareText = encodeURIComponent(`🚨 Reporte en EcoMapa Urbano Fray Bentos: ${r.titulo} (${r.categoria}). Revisa la ubicación exacta y los detalles aquí:`);
+                    const shareUrl = encodeURIComponent(reporteDirectLink);
 
-if __name__ == '__main__':
-    app.run(debug=True)
+                    let badgeGravedad = '<span class="text-emerald-400 font-bold">🟢 Baja</span>';
+                    if (r.gravedad === 'alta' || String(r.gravedad).includes('Alta')) {
+                        badgeGravedad = '<span class="text-rose-400 font-bold">🔴 Alta</span>';
+                    } else if (r.gravedad === 'media' || String(r.gravedad).includes('Media')) {
+                        badgeGravedad = '<span class="text-amber-400 font-bold">🟡 Media</span>';
+                    }
+
+                    const popupContent = `
+                        <div class="w-64 sm:w-72 space-y-2 text-xs p-1 font-sans">
+                            ${r.foto_url ? `<img src="${r.foto_url}" class="w-full h-28 object-cover rounded-xl border border-slate-700 shadow-md cursor-pointer hover:opacity-90 transition" onclick="verImagenZoom('${r.foto_url}', '${r.titulo}')" title="Haz clic para ampliar">` : ''}
+                            
+                            <div>
+                                <div class="flex items-center justify-between gap-2 mb-1">
+                                    <span class="font-bold text-white text-sm">${r.titulo}</span>
+                                    ${badgeGravedad}
+                                </div>
+                                <p class="text-slate-300 text-[11px] leading-relaxed">${r.descripcion || 'Sin descripción adicional.'}</p>
+                            </div>
+
+                            <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1.5 border-t border-slate-800">
+                                <span><i class="fa-solid fa-clock text-emerald-400"></i> ${r.fecha || 'Reciente'}</span>
+                                <span class="uppercase font-extrabold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">${r.estado || 'Pendiente'}</span>
+                            </div>
+
+                            <div class="pt-2 border-t border-slate-800 space-y-1">
+                                <span class="text-[10px] text-slate-400 font-bold block">Compartir reporte:</span>
+                                <div class="grid grid-cols-5 gap-1.5">
+                                    <a href="https://api.whatsapp.com/send?text=${shareText}%20${shareUrl}" target="_blank" class="bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-400 p-2 rounded-lg text-center transition border border-emerald-500/30" title="WhatsApp">
+                                        <i class="fa-brands fa-whatsapp text-sm"></i>
+                                    </a>
+                                    <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" class="bg-blue-600/30 hover:bg-blue-600/50 text-blue-400 p-2 rounded-lg text-center transition border border-blue-500/30" title="Facebook">
+                                        <i class="fa-brands fa-facebook-f text-sm"></i>
+                                    </a>
+                                    <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" class="bg-sky-500/30 hover:bg-sky-500/50 text-sky-400 p-2 rounded-lg text-center transition border border-sky-500/30" title="X / Twitter">
+                                        <i class="fa-brands fa-x-twitter text-sm"></i>
+                                    </a>
+                                    <button onclick="compartirInstagram('${reporteDirectLink}')" class="bg-gradient-to-tr from-amber-500/30 via-rose-500/30 to-purple-500/30 hover:opacity-80 text-rose-300 p-2 rounded-lg text-center transition border border-rose-500/30 cursor-pointer" title="Instagram">
+                                        <i class="fa-brands fa-instagram text-sm"></i>
+                                    </button>
+                                    <button onclick="copiarEnlace('${reporteDirectLink}')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg text-center transition border border-slate-700 cursor-pointer" title="Copiar Enlace">
+                                        <i class="fa-solid fa-link text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    let colorPin = '#10b981';
+                    if (r.gravedad === 'alta' || String(r.gravedad).includes('Alta')) colorPin = '#f43f5e';
+                    else if (r.gravedad === 'media' || String(r.gravedad).includes('Media')) colorPin = '#f59e0b';
+
+                    if (markersMap[r.id]) {
+                        markersMap[r.id].setLatLng([r.latitud, r.longitud]);
+                        markersMap[r.id].setStyle({ fillColor: colorPin });
+                        markersMap[r.id].setPopupContent(popupContent);
+                    } else {
+                        const customMarker = L.circleMarker([r.latitud, r.longitud], {
+                            radius: 9,
+                            fillColor: colorPin,
+                            color: '#ffffff',
+                            weight: 2,
+                            opacity: 1,
+                            fillOpacity: 0.9
+                        });
+                        customMarker.addTo(reportesLayer).bindPopup(popupContent);
+                        markersMap[r.id] = customMarker;
+                    }
+
+                    if (reporteIdCompartido && String(r.id) === String(reporteIdCompartido)) {
+                        markerAperturaAuto = { marker: markersMap[r.id], lat: r.latitud, lng: r.longitud };
+                    }
+                });
+
+                Object.keys(markersMap).forEach(id => {
+                    if (!idsEnBase.has(id)) {
+                        reportesLayer.removeLayer(markersMap[id]);
+                        delete markersMap[id];
+                    }
+                });
+
+                if (markerAperturaAuto) {
+                    document.getElementById('welcome-modal').classList.add('hidden');
+                    map.setView([markerAperturaAuto.lat, markerAperturaAuto.lng], 16);
+                    setTimeout(() => {
+                        markerAperturaAuto.marker.openPopup();
+                    }, 400);
+                }
+
+            } catch (err) {
+                console.error("Error al cargar reportes:", err);
+            }
+        }
+
+        function verImagenZoom(url, titulo) {
+            Swal.fire({
+                title: `<span class="text-sm font-bold text-white">${titulo || 'Evidencia de Fotografía'}</span>`,
+                imageUrl: url,
+                imageAlt: 'Foto de Evidencia',
+                background: '#0f172a',
+                color: '#f8fafc',
+                showCloseButton: true,
+                showConfirmButton: true,
+                confirmButtonText: '<i class="fa-solid fa-arrow-left me-1"></i> Volver al Mapa',
+                confirmButtonColor: '#10b981',
+                customClass: {
+                    popup: 'rounded-3xl border border-emerald-500/40 max-w-lg shadow-2xl p-4',
+                    image: 'rounded-2xl max-h-[55vh] object-contain w-full my-2 border border-slate-700 cursor-pointer',
+                    confirmButton: 'w-full py-3 rounded-xl font-black text-slate-950 uppercase text-xs shadow-lg'
+                }
+            });
+        }
+
+        function compartirInstagram(url) {
+            navigator.clipboard.writeText(url);
+            Swal.fire({
+                icon: 'info',
+                title: 'Enlace copiado para Instagram',
+                text: 'Abre Instagram e intégralo en tu Historia o Publicación.',
+                background: '#0f172a',
+                color: '#f8fafc',
+                confirmButtonColor: '#10b981'
+            });
+        }
+
+        function copiarEnlace(url) {
+            navigator.clipboard.writeText(url);
+            Swal.fire({
+                icon: 'success',
+                title: '¡Enlace copiado!',
+                text: 'Se copió el enlace directo al reporte.',
+                timer: 1500,
+                showConfirmButton: false,
+                background: '#0f172a',
+                color: '#f8fafc'
+            });
+        }
+
+        function abrirMenuReporte(lat, lng) {
+            document.getElementById('latitud').value = lat;
+            document.getElementById('longitud').value = lng;
+            
+            const overlay = document.getElementById('report-modal-overlay');
+            const card = document.getElementById('report-card');
+            
+            overlay.classList.remove('hidden', 'pointer-events-none', 'opacity-0');
+            overlay.classList.add('opacity-100');
+            card.classList.remove('scale-95');
+            card.classList.add('scale-100');
+        }
+
+        function cerrarMenuReporte() {
+            const overlay = document.getElementById('report-modal-overlay');
+            const card = document.getElementById('report-card');
+            
+            card.classList.remove('scale-100');
+            card.classList.add('scale-95');
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+
+        document.getElementById('input-foto').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    document.getElementById('foto-preview').src = event.target.result;
+                    document.getElementById('preview-container').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('form-reporte').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Publicando...`;
+
+            const formData = new FormData();
+            formData.append('titulo', document.getElementById('titulo').value);
+            formData.append('categoria', document.getElementById('categoria').value);
+            formData.append('gravedad', document.getElementById('gravedad').value);
+            formData.append('descripcion', document.getElementById('descripcion').value);
+            formData.append('latitud', document.getElementById('latitud').value);
+            formData.append('longitud', document.getElementById('longitud').value);
+
+            const fileInput = document.getElementById('input-foto');
+            if (fileInput.files[0]) {
+                formData.append('foto', fileInput.files[0]);
+            }
+
+            try {
+                const res = await fetch('/api/reportes', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    cerrarMenuReporte();
+                    document.getElementById('form-reporte').reset();
+                    document.getElementById('preview-container').classList.add('hidden');
+                    document.getElementById('modal-success').classList.remove('hidden');
+                    cargarReportes();
+                } else {
+                    throw new Error('No se pudo procesar el reporte');
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al publicar',
+                    text: 'Ocurrió un fallo de conexión al guardar el reporte.',
+                    background: '#0f172a',
+                    color: '#f8fafc',
+                    confirmButtonColor: '#10b981'
+                });
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>Publicar Reporte</span>`;
+            }
+        });
+
+        function cerrarModalExito() {
+            document.getElementById('modal-success').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
