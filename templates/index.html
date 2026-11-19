@@ -37,10 +37,17 @@
             background: #0f172a !important;
         }
 
+        .header-guia-activa {
+            z-index: 2250 !important;
+        }
+
         .gps-destacado {
             position: relative;
             z-index: 2300 !important;
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.45), 0 0 25px rgba(16, 185, 129, 0.55) !important;
+            background-color: #10b981 !important;
+            color: #020617 !important;
+            border-color: #a7f3d0 !important;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.4), 0 0 24px rgba(16, 185, 129, 0.85) !important;
             transform: scale(1.05);
         }
     </style>
@@ -48,10 +55,12 @@
 <body class="bg-slate-950 text-slate-100 h-screen overflow-hidden font-sans relative">
 
     <!-- OSCURECIDO GUÍA PARA ENFOCAR EL BOTÓN DE UBICACIÓN -->
-    <div id="gps-spotlight-overlay" class="fixed inset-0 bg-slate-950/75 backdrop-blur-[2px] z-[2200] hidden transition-opacity duration-300" onclick="cerrarGuiaGPS()"></div>
+    <div id="gps-spotlight-overlay" class="fixed inset-0 bg-slate-950/70 z-[2200] hidden transition-opacity duration-300" onclick="cerrarGuiaGPS()"></div>
     <div id="gps-callout" class="fixed top-20 right-4 sm:right-6 z-[2350] hidden max-w-xs bg-slate-900 border border-emerald-400/50 text-slate-100 rounded-2xl p-4 shadow-2xl space-y-2">
-        <div class="flex items-center justify-end text-emerald-400 text-lg pr-6">
-            <i class="fa-solid fa-arrow-up animate-bounce"></i>
+        <div class="relative h-5 w-full">
+            <span id="gps-flecha-indicadora" class="absolute -top-1 text-emerald-400 text-xl leading-none -translate-x-1/2">
+                <i class="fa-solid fa-arrow-up animate-bounce"></i>
+            </span>
         </div>
         <p class="text-xs text-slate-200 leading-relaxed">
             Con este botón puedes <strong class="text-emerald-400">activar la ubicación de tu dispositivo</strong> para centrar el mapa donde estás parado fácilmente.
@@ -180,7 +189,7 @@
     </div>
 
     <!-- ENCABEZADO PRINCIPAL -->
-    <header class="h-16 bg-slate-950/90 backdrop-blur border-b border-slate-800 flex items-center justify-between px-4 sm:px-6 z-10 relative">
+    <header id="main-header" class="h-16 bg-slate-950/95 backdrop-blur border-b border-slate-800 flex items-center justify-between px-4 sm:px-6 z-10 relative">
         <div class="flex items-center gap-3">
             <button onclick="toggleMenuHamburguesa()" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-emerald-400 rounded-xl border border-slate-800 transition flex items-center justify-center shadow-md" title="Menú Institucional">
                 <i class="fa-solid fa-bars text-base"></i>
@@ -323,19 +332,98 @@
             }
         }
 
-        function solicitarUbicacionDispositivo() {
-            if (!navigator.geolocation) return;
+        function alinearFlechaConBoton() {
+            const btn = document.getElementById('btn-ubicacion-gps');
+            const callout = document.getElementById('gps-callout');
+            const flecha = document.getElementById('gps-flecha-indicadora');
+            if (!btn || !callout || !flecha) return;
+
+            const btnRect = btn.getBoundingClientRect();
+            const calloutRect = callout.getBoundingClientRect();
+            const centroBotonX = btnRect.left + (btnRect.width / 2);
+            const offsetDentroCallout = centroBotonX - calloutRect.left;
+            const limiteIzq = 24;
+            const limiteDer = Math.max(limiteIzq, calloutRect.width - 24);
+            const posFinal = Math.min(limiteDer, Math.max(limiteIzq, offsetDentroCallout));
+            flecha.style.left = `${posFinal}px`;
+        }
+
+        function enfocarBotonUbicacion() {
+            const overlay = document.getElementById('gps-spotlight-overlay');
+            const callout = document.getElementById('gps-callout');
+            const btn = document.getElementById('btn-ubicacion-gps');
+            const header = document.getElementById('main-header');
+
+            if (overlay) overlay.classList.remove('hidden');
+            if (header) header.classList.add('header-guia-activa');
+            if (btn) btn.classList.add('gps-destacado');
+            if (callout) {
+                callout.classList.remove('hidden');
+                alinearFlechaConBoton();
+            }
+        }
+
+        function cerrarGuiaGPS() {
+            const overlay = document.getElementById('gps-spotlight-overlay');
+            const callout = document.getElementById('gps-callout');
+            const btn = document.getElementById('btn-ubicacion-gps');
+            const header = document.getElementById('main-header');
+
+            if (overlay) overlay.classList.add('hidden');
+            if (callout) callout.classList.add('hidden');
+            if (btn) btn.classList.remove('gps-destacado');
+            if (header) header.classList.remove('header-guia-activa');
+        }
+
+        function activarUbicacionConBoton() {
+            cerrarGuiaGPS();
+
+            if (!navigator.geolocation) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Ubicación no compatible',
+                    text: 'Tu navegador no soporta geolocalización. Puedes tocar cualquier punto del mapa para crear tu reporte.',
+                    background: '#0f172a',
+                    color: '#f8fafc',
+                    confirmButtonColor: '#10b981',
+                    customClass: { popup: 'rounded-3xl border border-slate-700' }
+                });
+                return;
+            }
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     centrarEnPosicion(position.coords.latitude, position.coords.longitude, 16);
                 },
-                () => {
+                (err) => {
+                    if (err && err.code === 1) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Permiso de ubicación bloqueado',
+                            text: 'Habilita la ubicación para este sitio en los ajustes o ícono de candado de tu navegador y vuelve a tocar el botón Ubicación.',
+                            background: '#0f172a',
+                            color: '#f8fafc',
+                            confirmButtonColor: '#10b981',
+                            customClass: { popup: 'rounded-3xl border border-slate-700' }
+                        });
+                        return;
+                    }
+
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
                             centrarEnPosicion(position.coords.latitude, position.coords.longitude, 16);
                         },
-                        () => {},
+                        () => {
+                            Swal.fire({
+                                icon: 'info',
+                                title: 'No se detectó señal GPS',
+                                text: 'Revisa que la ubicación esté encendida en tu dispositivo o toca el punto deseado directamente en el mapa.',
+                                background: '#0f172a',
+                                color: '#f8fafc',
+                                confirmButtonColor: '#10b981',
+                                customClass: { popup: 'rounded-3xl border border-slate-700' }
+                            });
+                        },
                         { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
                     );
                 },
@@ -343,35 +431,12 @@
             );
         }
 
-        function enfocarBotonUbicacion() {
-            const overlay = document.getElementById('gps-spotlight-overlay');
+        window.addEventListener('resize', () => {
             const callout = document.getElementById('gps-callout');
-            const btn = document.getElementById('btn-ubicacion-gps');
-
-            if (overlay) overlay.classList.remove('hidden');
-            if (callout) callout.classList.remove('hidden');
-            if (btn) btn.classList.add('gps-destacado');
-
-            // Dispara la solicitud de ubicación del navegador/Google tras enfocar el botón
-            setTimeout(() => {
-                solicitarUbicacionDispositivo();
-            }, 250);
-        }
-
-        function cerrarGuiaGPS() {
-            const overlay = document.getElementById('gps-spotlight-overlay');
-            const callout = document.getElementById('gps-callout');
-            const btn = document.getElementById('btn-ubicacion-gps');
-
-            if (overlay) overlay.classList.add('hidden');
-            if (callout) callout.classList.add('hidden');
-            if (btn) btn.classList.remove('gps-destacado');
-        }
-
-        function activarUbicacionConBoton() {
-            cerrarGuiaGPS();
-            solicitarUbicacionDispositivo();
-        }
+            if (callout && !callout.classList.contains('hidden')) {
+                alinearFlechaConBoton();
+            }
+        });
 
         function mostrarConsejoUbicacion() {
             if (consejoUbicacionMostrado) return;
