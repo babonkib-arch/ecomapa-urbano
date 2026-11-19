@@ -348,9 +348,52 @@
     <!-- Leaflet JS & Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let map, tempMarker, reportesLayer;
+        let map, tempMarker, reportesLayer, userMarker;
         let markersMap = {};
         let consejoUbicacionMostrado = false;
+        let mapaListoParaUbicacion = false;
+
+        function colocarMarcadorUsuario(lat, lng) {
+            if (!map) return;
+            map.setView([lat, lng], 16);
+            if (userMarker) {
+                userMarker.setLatLng([lat, lng]).openPopup();
+            } else {
+                userMarker = L.circleMarker([lat, lng], {
+                    radius: 8,
+                    fillColor: '#3b82f6',
+                    color: '#ffffff',
+                    weight: 2,
+                    fillOpacity: 1
+                }).addTo(map).bindPopup("<b>¡Estás aquí!</b>").openPopup();
+            }
+        }
+
+        function buscarUbicacionEnMapa() {
+            if (!navigator.geolocation || !map) return;
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    colocarMarcadorUsuario(position.coords.latitude, position.coords.longitude);
+                },
+                () => {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            colocarMarcadorUsuario(position.coords.latitude, position.coords.longitude);
+                        },
+                        () => {},
+                        { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
+                    );
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && mapaListoParaUbicacion) {
+                buscarUbicacionEnMapa();
+            }
+        });
 
         function formatearFechaUruguay(valorFecha) {
             if (!valorFecha) return 'Reciente';
@@ -449,6 +492,9 @@
                     popup: 'rounded-3xl border border-emerald-500/30 shadow-2xl p-5',
                     confirmButton: 'w-full py-3 rounded-xl font-black text-slate-950 text-xs uppercase tracking-wider shadow-lg'
                 }
+            }).then(() => {
+                mapaListoParaUbicacion = true;
+                buscarUbicacionEnMapa();
             });
         }
 
