@@ -37,40 +37,80 @@
             background: #0f172a !important;
         }
 
-        .header-guia-activa {
-            z-index: 2250 !important;
+        /* Animación de despliegue de la barra superior del celular */
+        @keyframes desplegarBarraCelular {
+            0%, 15% {
+                transform: translateY(-105%);
+            }
+            30%, 88% {
+                transform: translateY(0%);
+            }
+            100% {
+                transform: translateY(-105%);
+            }
         }
 
-        .gps-destacado {
-            position: relative;
-            z-index: 2300 !important;
-            background-color: #10b981 !important;
-            color: #020617 !important;
-            border-color: #a7f3d0 !important;
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.4), 0 0 24px rgba(16, 185, 129, 0.85) !important;
-            transform: scale(1.05);
+        /* Animación del toque y activación del ícono de Ubicación */
+        @keyframes activarTileUbicacion {
+            0%, 38% {
+                background-color: #1e293b;
+                border-color: #334155;
+                color: #94a3b8;
+                transform: scale(1);
+                box-shadow: none;
+            }
+            45% {
+                transform: scale(0.94);
+            }
+            52%, 90% {
+                background-color: #10b981;
+                border-color: #6ee7b7;
+                color: #020617;
+                transform: scale(1);
+                box-shadow: 0 0 14px rgba(16, 185, 129, 0.55);
+            }
+            100% {
+                background-color: #1e293b;
+                border-color: #334155;
+                color: #94a3b8;
+                transform: scale(1);
+                box-shadow: none;
+            }
+        }
+
+        @keyframes pulsoIndicadorToque {
+            0%, 36% {
+                opacity: 0;
+                transform: translate(8px, 8px) scale(0.7);
+            }
+            44% {
+                opacity: 1;
+                transform: translate(0px, 0px) scale(1.1);
+            }
+            52% {
+                opacity: 1;
+                transform: translate(0px, 0px) scale(0.85);
+            }
+            65%, 100% {
+                opacity: 0;
+                transform: translate(0px, 0px) scale(1);
+            }
+        }
+
+        .anim-barra-celular {
+            animation: desplegarBarraCelular 6.5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+        }
+
+        .anim-tile-gps {
+            animation: activarTileUbicacion 6.5s ease-in-out infinite;
+        }
+
+        .anim-dedo-toque {
+            animation: pulsoIndicadorToque 6.5s ease-in-out infinite;
         }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 h-screen overflow-hidden font-sans relative">
-
-    <!-- OSCURECIDO GUÍA PARA ENFOCAR EL BOTÓN DE UBICACIÓN -->
-    <div id="gps-spotlight-overlay" class="fixed inset-0 bg-slate-950/70 z-[2200] hidden transition-opacity duration-300" onclick="cerrarGuiaGPS()"></div>
-    <div id="gps-callout" class="fixed top-20 right-4 sm:right-6 z-[2350] hidden max-w-xs bg-slate-900 border border-emerald-400/50 text-slate-100 rounded-2xl p-4 shadow-2xl space-y-2">
-        <div class="relative h-5 w-full">
-            <span id="gps-flecha-indicadora" class="absolute -top-1 text-emerald-400 text-xl leading-none -translate-x-1/2">
-                <i class="fa-solid fa-arrow-up animate-bounce"></i>
-            </span>
-        </div>
-        <p class="text-xs text-slate-200 leading-relaxed">
-            Con este botón puedes <strong class="text-emerald-400">activar la ubicación de tu dispositivo</strong> para centrar el mapa donde estás parado fácilmente.
-        </p>
-        <div class="flex justify-end pt-1">
-            <button type="button" onclick="cerrarGuiaGPS()" class="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 underline">
-                Entendido
-            </button>
-        </div>
-    </div>
 
     <!-- MENÚ LATERAL DESPLEGABLE (HAMBURGUESA) -->
     <div id="drawer-overlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[2500] hidden transition-opacity opacity-0" onclick="toggleMenuHamburguesa()"></div>
@@ -189,7 +229,7 @@
     </div>
 
     <!-- ENCABEZADO PRINCIPAL -->
-    <header id="main-header" class="h-16 bg-slate-950/95 backdrop-blur border-b border-slate-800 flex items-center justify-between px-4 sm:px-6 z-10 relative">
+    <header class="h-16 bg-slate-950/90 backdrop-blur border-b border-slate-800 flex items-center justify-between px-4 sm:px-6 z-10 relative">
         <div class="flex items-center gap-3">
             <button onclick="toggleMenuHamburguesa()" class="p-2.5 bg-slate-900 hover:bg-slate-800 text-emerald-400 rounded-xl border border-slate-800 transition flex items-center justify-center shadow-md" title="Menú Institucional">
                 <i class="fa-solid fa-bars text-base"></i>
@@ -205,13 +245,9 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <button id="btn-ubicacion-gps" type="button" onclick="activarUbicacionConBoton()" class="px-3.5 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 border border-emerald-500/40 shadow-md" title="Activar ubicación del dispositivo">
-                <i class="fa-solid fa-location-crosshairs"></i>
-                <span>Ubicación</span>
-            </button>
             <a href="/login" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-200 transition flex items-center gap-2 border border-slate-700 shadow-md">
                 <i class="fa-solid fa-user-shield text-emerald-400"></i>
-                <span class="hidden sm:inline">Acceso Admin</span>
+                <span>Acceso Admin</span>
             </a>
         </div>
     </header>
@@ -312,146 +348,64 @@
     <!-- Leaflet JS & Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let map, tempMarker, reportesLayer, userMarker;
+        let map, tempMarker, reportesLayer;
         let markersMap = {};
         let consejoUbicacionMostrado = false;
-
-        function centrarEnPosicion(lat, lng, zoomNivel = 16) {
-            if (!map) return;
-            map.setView([lat, lng], zoomNivel);
-            if (userMarker) {
-                userMarker.setLatLng([lat, lng]).openPopup();
-            } else {
-                userMarker = L.circleMarker([lat, lng], {
-                    radius: 8,
-                    fillColor: '#3b82f6',
-                    color: '#ffffff',
-                    weight: 2,
-                    fillOpacity: 1
-                }).addTo(map).bindPopup("<b>¡Estás aquí!</b>").openPopup();
-            }
-        }
-
-        function alinearFlechaConBoton() {
-            const btn = document.getElementById('btn-ubicacion-gps');
-            const callout = document.getElementById('gps-callout');
-            const flecha = document.getElementById('gps-flecha-indicadora');
-            if (!btn || !callout || !flecha) return;
-
-            const btnRect = btn.getBoundingClientRect();
-            const calloutRect = callout.getBoundingClientRect();
-            const centroBotonX = btnRect.left + (btnRect.width / 2);
-            const offsetDentroCallout = centroBotonX - calloutRect.left;
-            const limiteIzq = 24;
-            const limiteDer = Math.max(limiteIzq, calloutRect.width - 24);
-            const posFinal = Math.min(limiteDer, Math.max(limiteIzq, offsetDentroCallout));
-            flecha.style.left = `${posFinal}px`;
-        }
-
-        function enfocarBotonUbicacion() {
-            const overlay = document.getElementById('gps-spotlight-overlay');
-            const callout = document.getElementById('gps-callout');
-            const btn = document.getElementById('btn-ubicacion-gps');
-            const header = document.getElementById('main-header');
-
-            if (overlay) overlay.classList.remove('hidden');
-            if (header) header.classList.add('header-guia-activa');
-            if (btn) btn.classList.add('gps-destacado');
-            if (callout) {
-                callout.classList.remove('hidden');
-                alinearFlechaConBoton();
-            }
-        }
-
-        function cerrarGuiaGPS() {
-            const overlay = document.getElementById('gps-spotlight-overlay');
-            const callout = document.getElementById('gps-callout');
-            const btn = document.getElementById('btn-ubicacion-gps');
-            const header = document.getElementById('main-header');
-
-            if (overlay) overlay.classList.add('hidden');
-            if (callout) callout.classList.add('hidden');
-            if (btn) btn.classList.remove('gps-destacado');
-            if (header) header.classList.remove('header-guia-activa');
-        }
-
-        function activarUbicacionConBoton() {
-            cerrarGuiaGPS();
-
-            if (!navigator.geolocation) {
-                Swal.fire({
-                    icon: 'info',
-                    title: 'Ubicación no compatible',
-                    text: 'Tu navegador no soporta geolocalización. Puedes tocar cualquier punto del mapa para crear tu reporte.',
-                    background: '#0f172a',
-                    color: '#f8fafc',
-                    confirmButtonColor: '#10b981',
-                    customClass: { popup: 'rounded-3xl border border-slate-700' }
-                });
-                return;
-            }
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    centrarEnPosicion(position.coords.latitude, position.coords.longitude, 16);
-                },
-                (err) => {
-                    if (err && err.code === 1) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Permiso de ubicación bloqueado',
-                            text: 'Habilita la ubicación para este sitio en los ajustes o ícono de candado de tu navegador y vuelve a tocar el botón Ubicación.',
-                            background: '#0f172a',
-                            color: '#f8fafc',
-                            confirmButtonColor: '#10b981',
-                            customClass: { popup: 'rounded-3xl border border-slate-700' }
-                        });
-                        return;
-                    }
-
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            centrarEnPosicion(position.coords.latitude, position.coords.longitude, 16);
-                        },
-                        () => {
-                            Swal.fire({
-                                icon: 'info',
-                                title: 'No se detectó señal GPS',
-                                text: 'Revisa que la ubicación esté encendida en tu dispositivo o toca el punto deseado directamente en el mapa.',
-                                background: '#0f172a',
-                                color: '#f8fafc',
-                                confirmButtonColor: '#10b981',
-                                customClass: { popup: 'rounded-3xl border border-slate-700' }
-                            });
-                        },
-                        { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
-                    );
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-        }
-
-        window.addEventListener('resize', () => {
-            const callout = document.getElementById('gps-callout');
-            if (callout && !callout.classList.contains('hidden')) {
-                alinearFlechaConBoton();
-            }
-        });
 
         function mostrarConsejoUbicacion() {
             if (consejoUbicacionMostrado) return;
             consejoUbicacionMostrado = true;
 
             Swal.fire({
-                icon: 'info',
                 title: '<span class="text-lg font-black text-white">Consejo para ubicar tu zona</span>',
                 html: `
-                    <div class="text-left space-y-2.5 text-xs text-slate-300 leading-relaxed pt-1">
-                        <p>Te recomendamos <strong class="text-emerald-400">activar la ubicación manualmente</strong> en tu celular o en los permisos del navegador para orientarte y ubicar fácilmente el punto exacto donde estás parado.</p>
-                        <p class="text-[11px] text-slate-400 bg-slate-800/70 border border-slate-700/70 p-2.5 rounded-xl">
-                            <i class="fa-solid fa-lightbulb text-amber-400 me-1"></i>
-                            Así no tendrás que buscar calle por calle para marcar tu reporte en el mapa de Fray Bentos.
-                        </p>
+                    <div class="text-left space-y-3 text-xs text-slate-300 leading-relaxed pt-1">
+                        <p>Te recomendamos <strong class="text-emerald-400">activar la ubicación manualmente</strong> deslizando la barra superior de tu celular para orientarte y ubicar fácilmente dónde estás parado sin tener que buscar calle por calle.</p>
+
+                        <!-- ANIMACIÓN IMPROVISADA DE CELULAR DESPLEGANDO BARRA SUPERIOR -->
+                        <div class="mx-auto w-52 h-44 bg-slate-950 border-2 border-slate-700 rounded-[1.6rem] p-2 shadow-inner relative overflow-hidden flex flex-col justify-between">
+                            <!-- Notch / Barra de estado superior -->
+                            <div class="flex items-center justify-between px-2 py-0.5 text-[9px] text-slate-400 border-b border-slate-800/80 z-20 bg-slate-950/90">
+                                <span class="font-bold">13:45</span>
+                                <span class="w-8 h-1 bg-slate-700 rounded-full"></span>
+                                <span><i class="fa-solid fa-wifi mr-1"></i><i class="fa-solid fa-battery-full text-emerald-400"></i></span>
+                            </div>
+
+                            <!-- Pantalla base del celular -->
+                            <div class="flex-1 flex flex-col items-center justify-center text-center px-2 space-y-1">
+                                <i class="fa-solid fa-map-location-dot text-2xl text-slate-600"></i>
+                                <span class="text-[10px] text-slate-500 font-semibold">Desliza barra superior</span>
+                            </div>
+
+                            <!-- Barra desplegable de ajustes rápidos -->
+                            <div class="anim-barra-celular absolute inset-x-1.5 top-6 bg-slate-900/95 border border-slate-700 rounded-2xl p-2 shadow-2xl z-10">
+                                <div class="grid grid-cols-2 gap-1.5 relative">
+                                    <div class="bg-slate-800 border border-slate-700 rounded-xl p-2 flex items-center gap-1.5 text-[10px] text-slate-300">
+                                        <i class="fa-solid fa-wifi text-sky-400"></i>
+                                        <span class="font-bold truncate">Wi-Fi</span>
+                                    </div>
+                                    <div class="bg-slate-800 border border-slate-700 rounded-xl p-2 flex items-center gap-1.5 text-[10px] text-slate-300">
+                                        <i class="fa-solid fa-bolt text-amber-400"></i>
+                                        <span class="font-bold truncate">Linterna</span>
+                                    </div>
+                                    <div class="anim-tile-gps col-span-2 border rounded-xl p-2 flex items-center justify-between text-[10px] font-black transition">
+                                        <span class="flex items-center gap-1.5">
+                                            <i class="fa-solid fa-location-dot"></i>
+                                            <span>Ubicación</span>
+                                        </span>
+                                        <span class="text-[9px] uppercase tracking-wider">Activar</span>
+                                    </div>
+
+                                    <!-- Indicador de toque sobre Ubicación -->
+                                    <span class="anim-dedo-toque absolute -bottom-1 right-6 text-white text-base pointer-events-none drop-shadow">
+                                        <i class="fa-solid fa-hand-pointer"></i>
+                                    </span>
+                                </div>
+                                <div class="mt-1.5 flex justify-center">
+                                    <span class="w-7 h-1 bg-slate-600 rounded-full"></span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 `,
                 background: '#0f172a',
@@ -462,8 +416,6 @@
                     popup: 'rounded-3xl border border-emerald-500/30 shadow-2xl p-5',
                     confirmButton: 'w-full py-3 rounded-xl font-black text-slate-950 text-xs uppercase tracking-wider shadow-lg'
                 }
-            }).then(() => {
-                enfocarBotonUbicacion();
             });
         }
 
