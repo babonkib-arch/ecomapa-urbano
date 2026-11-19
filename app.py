@@ -1,6 +1,7 @@
 import os
 import base64
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from functools import wraps
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
@@ -8,6 +9,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import inspect, text, case
 
 app = Flask(__name__)
+
+# Base de datos en Supabase (PostgreSQL) limpiada y con secuencia reiniciada a 1
+TZ_UY = ZoneInfo("America/Montevideo")
+
+def ahora_uy():
+    return datetime.now(TZ_UY).replace(tzinfo=None)
 
 # Llave secreta para manejar sesiones de forma segura
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'eco_mapa_secret_key_2026_fray_bentos')
@@ -41,7 +48,7 @@ class Reporte(db.Model):
     longitud = db.Column(db.Float, nullable=False)
     estado = db.Column(db.String(20), default='Pendiente')
     foto_url = db.Column(db.Text, nullable=True)
-    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    fecha_creacion = db.Column(db.DateTime, default=ahora_uy)
 
     def to_dict(self):
         fecha_str = self.fecha_creacion.strftime('%d/%m/%Y %H:%M') if self.fecha_creacion else 'Reciente'
@@ -65,6 +72,21 @@ def admin_required(f):
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
+
+def reiniciar_secuencia_reportes_si_vacia():
+    """Si no quedan reportes en la tabla, reinicia el contador de ID a 1."""
+    if Reporte.query.count() == 0:
+        dialecto = db.engine.dialect.name
+        with db.engine.connect() as conn:
+            if dialecto == 'postgresql':
+                conn.execute(text("ALTER SEQUENCE reporte_id_seq RESTART WITH 1;"))
+                conn.commit()
+            elif dialecto == 'sqlite':
+                try:
+                    conn.execute(text("DELETE FROM sqlite_sequence WHERE name = 'reporte';"))
+                    conn.commit()
+                except Exception:
+                    pass
 
 with app.app_context():
     db.create_all()
@@ -210,6 +232,7 @@ def eliminar_reporte(reporte_id):
         reporte = Reporte.query.get_or_404(reporte_id)
         db.session.delete(reporte)
         db.session.commit()
+        reiniciar_secuencia_reportes_si_vacia()
         return jsonify({'mensaje': 'Reporte eliminado correctamente'}), 200
     except Exception as e:
         db.session.rollback()
@@ -252,7 +275,7 @@ def crear_reporte():
             longitud=float(longitud),
             estado='Pendiente',
             foto_url=foto_data_url,
-            fecha_creacion=datetime.now()
+            fecha_creacion=ahora_uy()
         )
 
         db.session.add(nuevo_reporte)

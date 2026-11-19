@@ -356,35 +356,33 @@
             if (!valorFecha) return 'Reciente';
             const str = String(valorFecha).trim();
 
-            // Si ya viene formateado como DD/MM/YYYY HH:mm, evitar re-parsear con ambigüedad
             if (/^\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}/.test(str)) {
                 return str;
             }
 
-            let normalizada = str;
-            if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}(:\d{2})?$/.test(str)) {
-                normalizada = str.replace(' ', 'T') + 'Z';
-            } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(str)) {
-                normalizada = str + 'Z';
+            if (/Z$/i.test(str) || /[+-]\d{2}:?\d{2}$/.test(str)) {
+                const fechaObj = new Date(str);
+                if (!isNaN(fechaObj.getTime())) {
+                    const partes = new Intl.DateTimeFormat('es-UY', {
+                        timeZone: 'America/Montevideo',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    }).formatToParts(fechaObj);
+                    const mapaPartes = Object.fromEntries(partes.map(p => [p.type, p.value]));
+                    return `${mapaPartes.day}/${mapaPartes.month}/${mapaPartes.year} ${mapaPartes.hour}:${mapaPartes.minute}`;
+                }
             }
 
-            const fechaObj = new Date(normalizada);
-            if (isNaN(fechaObj.getTime())) {
-                return str;
+            const match = str.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
+            if (match) {
+                return `${match[3]}/${match[2]}/${match[1]} ${match[4]}:${match[5]}`;
             }
 
-            const partes = new Intl.DateTimeFormat('es-UY', {
-                timeZone: 'America/Montevideo',
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-            }).formatToParts(fechaObj);
-
-            const mapaPartes = Object.fromEntries(partes.map(p => [p.type, p.value]));
-            return `${mapaPartes.day}/${mapaPartes.month}/${mapaPartes.year} ${mapaPartes.hour}:${mapaPartes.minute}`;
+            return str;
         }
 
         function mostrarConsejoUbicacion() {
@@ -502,7 +500,7 @@
             cargarReportes();
 
             // Sincronizar el mapa automáticamente cada 2 minutos para optimizar ancho de banda
-            setInterval(cargarReportes, 120000);
+            setInterval(cargarReportes, 60000);
         });
 
         async function cargarReportes() {
