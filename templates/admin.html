@@ -9,8 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         .zoom-visor-contenedor {
-            max-height: 62vh;
-            overflow: auto;
+            height: 58vh;
+            width: 100%;
+            overflow: hidden;
             border-radius: 1rem;
             border: 1px solid #334155;
             background: #020617;
@@ -18,21 +19,20 @@
             align-items: center;
             justify-content: center;
             position: relative;
+            cursor: grab;
+            touch-action: none;
+        }
+        .zoom-visor-contenedor.arrastrando {
+            cursor: grabbing;
         }
         .zoom-foto-libre {
-            max-height: 58vh;
             max-width: 100%;
+            max-height: 100%;
             object-fit: contain;
-            transition: transform 0.25s ease;
-            cursor: zoom-in;
             transform-origin: center center;
             user-select: none;
-        }
-        .zoom-foto-libre.ampliada {
-            transform: scale(2.2);
-            max-height: none;
-            max-width: none;
-            cursor: zoom-out;
+            -webkit-user-drag: none;
+            will-change: transform;
         }
     </style>
 </head>
@@ -375,10 +375,24 @@
             Swal.fire({
                 title: `<span class="text-sm font-bold text-white">${titulo || 'Evidencia'}</span>`,
                 html: `
-                    <div class="space-y-2 text-left">
-                        <p class="text-[11px] text-slate-400 text-center">Haz clic sobre la foto para ampliar o reducir; desliza para moverte libremente.</p>
+                    <div class="space-y-2.5 text-left">
+                        <div class="flex items-center justify-between gap-2 text-[11px] text-slate-400">
+                            <span>Usa la <strong class="text-slate-200">ruedita del mouse</strong> para acercar o alejar y arrastra para moverte.</span>
+                            <span id="zoom-porcentaje" class="font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">100%</span>
+                        </div>
                         <div id="visor-libre" class="zoom-visor-contenedor">
                             <img id="img-zoom-libre" src="${url}" alt="Foto de Evidencia" class="zoom-foto-libre">
+                        </div>
+                        <div class="flex items-center justify-center gap-2 pt-1">
+                            <button type="button" id="btn-zoom-menos" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700 transition">
+                                <i class="fa-solid fa-minus"></i> Alejar
+                            </button>
+                            <button type="button" id="btn-zoom-reset" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-xl text-xs font-bold border border-slate-700 transition">
+                                Restablecer (100%)
+                            </button>
+                            <button type="button" id="btn-zoom-mas" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700 transition">
+                                <i class="fa-solid fa-plus"></i> Acercar
+                            </button>
                         </div>
                     </div>
                 `,
@@ -391,24 +405,80 @@
                 didOpen: () => {
                     const img = document.getElementById('img-zoom-libre');
                     const visor = document.getElementById('visor-libre');
+                    const etiquetaZoom = document.getElementById('zoom-porcentaje');
+                    const btnMenos = document.getElementById('btn-zoom-menos');
+                    const btnMas = document.getElementById('btn-zoom-mas');
+                    const btnReset = document.getElementById('btn-zoom-reset');
                     if (!img || !visor) return;
 
-                    img.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const estaAmpliada = img.classList.toggle('ampliada');
-                        if (estaAmpliada) {
-                            const rect = img.getBoundingClientRect();
-                            const relX = (e.clientX - rect.left) / rect.width;
-                            const relY = (e.clientY - rect.top) / rect.height;
-                            img.style.transformOrigin = `${(relX * 100).toFixed(1)}% ${(relY * 100).toFixed(1)}%`;
-                            visor.scrollLeft = Math.max(0, (visor.scrollWidth - visor.clientWidth) * relX);
-                            visor.scrollTop = Math.max(0, (visor.scrollHeight - visor.clientHeight) * relY);
-                        } else {
-                            img.style.transformOrigin = 'center center';
-                            visor.scrollLeft = 0;
-                            visor.scrollTop = 0;
+                    let escala = 1;
+                    let posX = 0;
+                    let posY = 0;
+                    let arrastrando = false;
+                    let inicioX = 0;
+                    let inicioY = 0;
+
+                    function aplicarTransformacion() {
+                        if (escala <= 1) {
+                            escala = 1;
+                            posX = 0;
+                            posY = 0;
                         }
+                        img.style.transform = `translate(${posX}px, ${posY}px) scale(${escala})`;
+                        if (etiquetaZoom) {
+                            etiquetaZoom.textContent = `${Math.round(escala * 100)}%`;
+                        }
+                    }
+
+                    function ajustarZoom(delta) {
+                        const nuevaEscala = Math.min(5, Math.max(1, Number((escala + delta).toFixed(2))));
+                        escala = nuevaEscala;
+                        aplicarTransformacion();
+                    }
+
+                    visor.addEventListener('wheel', (e) => {
+                        e.preventDefault();
+                        const paso = e.deltaY < 0 ? 0.2 : -0.2;
+                        ajustarZoom(paso);
+                    }, { passive: false });
+
+                    visor.addEventListener('mousedown', (e) => {
+                        if (escala <= 1) return;
+                        arrastrando = true;
+                        visor.classList.add('arrastrando');
+                        inicioX = e.clientX - posX;
+                        inicioY = e.clientY - posY;
                     });
+
+                    window.addEventListener('mousemove', onMouseMove);
+                    window.addEventListener('mouseup', onMouseUp);
+
+                    function onMouseMove(e) {
+                        if (!arrastrando) return;
+                        posX = e.clientX - inicioX;
+                        posY = e.clientY - inicioY;
+                        aplicarTransformacion();
+                    }
+
+                    function onMouseUp() {
+                        if (!arrastrando) return;
+                        arrastrando = false;
+                        visor.classList.remove('arrastrando');
+                    }
+
+                    if (btnMenos) btnMenos.addEventListener('click', () => ajustarZoom(-0.25));
+                    if (btnMas) btnMas.addEventListener('click', () => ajustarZoom(0.25));
+                    if (btnReset) btnReset.addEventListener('click', () => {
+                        escala = 1;
+                        posX = 0;
+                        posY = 0;
+                        aplicarTransformacion();
+                    });
+
+                    Swal.getPopup().addEventListener('swal:afterClose', () => {
+                        window.removeEventListener('mousemove', onMouseMove);
+                        window.removeEventListener('mouseup', onMouseUp);
+                    }, { once: true });
                 },
                 customClass: {
                     popup: 'rounded-3xl border border-emerald-500/40 max-w-2xl w-full shadow-2xl p-4',
