@@ -36,9 +36,32 @@
         .leaflet-popup-tip {
             background: #0f172a !important;
         }
+
+        .gps-destacado {
+            position: relative;
+            z-index: 2300 !important;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.45), 0 0 25px rgba(16, 185, 129, 0.55) !important;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 h-screen overflow-hidden font-sans relative">
+
+    <!-- OSCURECIDO GUÍA PARA ENFOCAR EL BOTÓN DE UBICACIÓN -->
+    <div id="gps-spotlight-overlay" class="fixed inset-0 bg-slate-950/75 backdrop-blur-[2px] z-[2200] hidden transition-opacity duration-300" onclick="cerrarGuiaGPS()"></div>
+    <div id="gps-callout" class="fixed top-20 right-4 sm:right-6 z-[2350] hidden max-w-xs bg-slate-900 border border-emerald-400/50 text-slate-100 rounded-2xl p-4 shadow-2xl space-y-2">
+        <div class="flex items-center justify-end text-emerald-400 text-lg pr-6">
+            <i class="fa-solid fa-arrow-up animate-bounce"></i>
+        </div>
+        <p class="text-xs text-slate-200 leading-relaxed">
+            Con este botón puedes <strong class="text-emerald-400">activar la ubicación de tu dispositivo</strong> para centrar el mapa donde estás parado fácilmente.
+        </p>
+        <div class="flex justify-end pt-1">
+            <button type="button" onclick="cerrarGuiaGPS()" class="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 underline">
+                Entendido
+            </button>
+        </div>
+    </div>
 
     <!-- MENÚ LATERAL DESPLEGABLE (HAMBURGUESA) -->
     <div id="drawer-overlay" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[2500] hidden transition-opacity opacity-0" onclick="toggleMenuHamburguesa()"></div>
@@ -173,9 +196,13 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
+            <button id="btn-ubicacion-gps" type="button" onclick="activarUbicacionConBoton()" class="px-3.5 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 border border-emerald-500/40 shadow-md" title="Activar ubicación del dispositivo">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span>Ubicación</span>
+            </button>
             <a href="/login" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-200 transition flex items-center gap-2 border border-slate-700 shadow-md">
                 <i class="fa-solid fa-user-shield text-emerald-400"></i>
-                <span>Acceso Admin</span>
+                <span class="hidden sm:inline">Acceso Admin</span>
             </a>
         </div>
     </header>
@@ -276,9 +303,75 @@
     <!-- Leaflet JS & Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let map, tempMarker, reportesLayer;
+        let map, tempMarker, reportesLayer, userMarker;
         let markersMap = {};
         let consejoUbicacionMostrado = false;
+
+        function centrarEnPosicion(lat, lng, zoomNivel = 16) {
+            if (!map) return;
+            map.setView([lat, lng], zoomNivel);
+            if (userMarker) {
+                userMarker.setLatLng([lat, lng]).openPopup();
+            } else {
+                userMarker = L.circleMarker([lat, lng], {
+                    radius: 8,
+                    fillColor: '#3b82f6',
+                    color: '#ffffff',
+                    weight: 2,
+                    fillOpacity: 1
+                }).addTo(map).bindPopup("<b>¡Estás aquí!</b>").openPopup();
+            }
+        }
+
+        function solicitarUbicacionDispositivo() {
+            if (!navigator.geolocation) return;
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    centrarEnPosicion(position.coords.latitude, position.coords.longitude, 16);
+                },
+                () => {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            centrarEnPosicion(position.coords.latitude, position.coords.longitude, 16);
+                        },
+                        () => {},
+                        { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
+                    );
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        function enfocarBotonUbicacion() {
+            const overlay = document.getElementById('gps-spotlight-overlay');
+            const callout = document.getElementById('gps-callout');
+            const btn = document.getElementById('btn-ubicacion-gps');
+
+            if (overlay) overlay.classList.remove('hidden');
+            if (callout) callout.classList.remove('hidden');
+            if (btn) btn.classList.add('gps-destacado');
+
+            // Dispara la solicitud de ubicación del navegador/Google tras enfocar el botón
+            setTimeout(() => {
+                solicitarUbicacionDispositivo();
+            }, 250);
+        }
+
+        function cerrarGuiaGPS() {
+            const overlay = document.getElementById('gps-spotlight-overlay');
+            const callout = document.getElementById('gps-callout');
+            const btn = document.getElementById('btn-ubicacion-gps');
+
+            if (overlay) overlay.classList.add('hidden');
+            if (callout) callout.classList.add('hidden');
+            if (btn) btn.classList.remove('gps-destacado');
+        }
+
+        function activarUbicacionConBoton() {
+            cerrarGuiaGPS();
+            solicitarUbicacionDispositivo();
+        }
 
         function mostrarConsejoUbicacion() {
             if (consejoUbicacionMostrado) return;
@@ -304,6 +397,8 @@
                     popup: 'rounded-3xl border border-emerald-500/30 shadow-2xl p-5',
                     confirmButton: 'w-full py-3 rounded-xl font-black text-slate-950 text-xs uppercase tracking-wider shadow-lg'
                 }
+            }).then(() => {
+                enfocarBotonUbicacion();
             });
         }
 
