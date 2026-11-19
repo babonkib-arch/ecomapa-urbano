@@ -278,123 +278,53 @@
     <script>
         let map, tempMarker, reportesLayer, userMarker;
         let markersMap = {};
-        let popupUbicacionMostrado = false;
 
-        function actualizarMarcadorUsuario(lat, lng, zoomNivel = 15, abrirPopup = true) {
-            if (!map) return;
-            map.setView([lat, lng], zoomNivel);
-            if (userMarker) {
-                userMarker.setLatLng([lat, lng]);
-                if (abrirPopup) userMarker.openPopup();
-            } else {
-                userMarker = L.circleMarker([lat, lng], {
-                    radius: 8,
-                    fillColor: '#3b82f6',
-                    color: '#ffffff',
-                    weight: 2,
-                    fillOpacity: 1
-                }).addTo(map).bindPopup("<b>¡Estás aquí!</b>");
-                if (abrirPopup) userMarker.openPopup();
-            }
-        }
-
-        function activarGPSAutomatico(mostrarCargando = false) {
-            if (!navigator.geolocation) return;
-
-            if (mostrarCargando) {
-                Swal.fire({
-                    title: '<span class="text-base font-black text-white">Detectando ubicación...</span>',
-                    html: '<p class="text-xs text-slate-300">Si el navegador te pide permiso, toca <b>Permitir</b>.</p>',
-                    background: '#0f172a',
-                    color: '#f8fafc',
-                    timer: 10000,
-                    showConfirmButton: false,
-                    allowOutsideClick: true,
-                    customClass: { popup: 'rounded-3xl border border-emerald-500/30 shadow-2xl' }
-                });
-            }
+        function activarGPSAlEntrar() {
+            if (!navigator.geolocation || !map) return;
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    if (Swal.isVisible()) Swal.close();
-                    actualizarMarcadorUsuario(
-                        position.coords.latitude,
-                        position.coords.longitude,
-                        15,
-                        true
-                    );
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    map.setView([lat, lng], 15);
+
+                    if (userMarker) {
+                        userMarker.setLatLng([lat, lng]).openPopup();
+                    } else {
+                        userMarker = L.circleMarker([lat, lng], {
+                            radius: 8,
+                            fillColor: '#3b82f6',
+                            color: '#ffffff',
+                            weight: 2,
+                            fillOpacity: 1
+                        }).addTo(map).bindPopup("<b>¡Estás aquí!</b>").openPopup();
+                    }
                 },
                 () => {
-                    // Intento de respaldo con precisión estándar
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
-                            if (Swal.isVisible()) Swal.close();
-                            actualizarMarcadorUsuario(
-                                position.coords.latitude,
-                                position.coords.longitude,
-                                15,
-                                true
-                            );
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            map.setView([lat, lng], 15);
+
+                            if (userMarker) {
+                                userMarker.setLatLng([lat, lng]).openPopup();
+                            } else {
+                                userMarker = L.circleMarker([lat, lng], {
+                                    radius: 8,
+                                    fillColor: '#3b82f6',
+                                    color: '#ffffff',
+                                    weight: 2,
+                                    fillOpacity: 1
+                                }).addTo(map).bindPopup("<b>¡Estás aquí!</b>").openPopup();
+                            }
                         },
-                        () => {
-                            if (Swal.isVisible()) Swal.close();
-                        },
+                        () => {},
                         { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
                     );
                 },
-                { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
             );
-        }
-
-        function mostrarPopupUbicacion() {
-            if (popupUbicacionMostrado) return;
-            popupUbicacionMostrado = true;
-
-            if (!navigator.geolocation) return;
-
-            if (navigator.permissions && navigator.permissions.query) {
-                navigator.permissions.query({ name: 'geolocation' }).then((status) => {
-                    status.onchange = () => {
-                        if (status.state === 'granted') {
-                            activarGPSAutomatico(false);
-                        }
-                    };
-
-                    if (status.state === 'granted') {
-                        activarGPSAutomatico(false);
-                        return;
-                    }
-
-                    abrirDialogoActivarUbicacion();
-                }).catch(() => abrirDialogoActivarUbicacion());
-            } else {
-                abrirDialogoActivarUbicacion();
-            }
-        }
-
-        function abrirDialogoActivarUbicacion() {
-            Swal.fire({
-                icon: 'info',
-                title: '<span class="text-lg font-black text-white">Activa tu ubicación</span>',
-                html: '<p class="text-xs text-slate-300 leading-relaxed">Para saber dónde estás parado y facilitar el reporte de incidencias en tu zona, activa o permite el acceso a tu ubicación.</p>',
-                background: '#0f172a',
-                color: '#f8fafc',
-                showCancelButton: true,
-                confirmButtonText: '<i class="fa-solid fa-location-crosshairs me-1"></i> Activar ubicación',
-                cancelButtonText: 'Continuar sin GPS',
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#334155',
-                reverseButtons: true,
-                customClass: {
-                    popup: 'rounded-3xl border border-emerald-500/30 shadow-2xl',
-                    confirmButton: 'rounded-xl font-black text-slate-950 text-xs uppercase px-4 py-2.5',
-                    cancelButton: 'rounded-xl font-bold text-slate-200 text-xs px-4 py-2.5'
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    activarGPSAutomatico(true);
-                }
-            });
         }
 
         function cerrarBienvenida() {
@@ -402,7 +332,7 @@
             if (map) {
                 map.invalidateSize();
             }
-            mostrarPopupUbicacion();
+            activarGPSAlEntrar();
         }
 
         function toggleMenuHamburguesa() {
@@ -439,7 +369,7 @@
 
             if (reporteIdCompartido) {
                 document.getElementById('welcome-modal').classList.add('hidden');
-                setTimeout(mostrarPopupUbicacion, 800);
+                setTimeout(activarGPSAlEntrar, 500);
             }
 
             cargarReportes();
