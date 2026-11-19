@@ -276,55 +276,35 @@
     <!-- Leaflet JS & Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let map, tempMarker, reportesLayer, userMarker;
+        let map, tempMarker, reportesLayer;
         let markersMap = {};
+        let consejoUbicacionMostrado = false;
 
-        function activarGPSAlEntrar() {
-            if (!navigator.geolocation || !map) return;
+        function mostrarConsejoUbicacion() {
+            if (consejoUbicacionMostrado) return;
+            consejoUbicacionMostrado = true;
 
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    map.setView([lat, lng], 15);
-
-                    if (userMarker) {
-                        userMarker.setLatLng([lat, lng]).openPopup();
-                    } else {
-                        userMarker = L.circleMarker([lat, lng], {
-                            radius: 8,
-                            fillColor: '#3b82f6',
-                            color: '#ffffff',
-                            weight: 2,
-                            fillOpacity: 1
-                        }).addTo(map).bindPopup("<b>¡Estás aquí!</b>").openPopup();
-                    }
-                },
-                () => {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            const lat = position.coords.latitude;
-                            const lng = position.coords.longitude;
-                            map.setView([lat, lng], 15);
-
-                            if (userMarker) {
-                                userMarker.setLatLng([lat, lng]).openPopup();
-                            } else {
-                                userMarker = L.circleMarker([lat, lng], {
-                                    radius: 8,
-                                    fillColor: '#3b82f6',
-                                    color: '#ffffff',
-                                    weight: 2,
-                                    fillOpacity: 1
-                                }).addTo(map).bindPopup("<b>¡Estás aquí!</b>").openPopup();
-                            }
-                        },
-                        () => {},
-                        { enableHighAccuracy: false, timeout: 12000, maximumAge: 60000 }
-                    );
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
-            );
+            Swal.fire({
+                icon: 'info',
+                title: '<span class="text-lg font-black text-white">Consejo para ubicar tu zona</span>',
+                html: `
+                    <div class="text-left space-y-2.5 text-xs text-slate-300 leading-relaxed pt-1">
+                        <p>Te recomendamos <strong class="text-emerald-400">activar la ubicación manualmente</strong> en tu celular o en los permisos del navegador para orientarte y ubicar fácilmente el punto exacto donde estás parado.</p>
+                        <p class="text-[11px] text-slate-400 bg-slate-800/70 border border-slate-700/70 p-2.5 rounded-xl">
+                            <i class="fa-solid fa-lightbulb text-amber-400 me-1"></i>
+                            Así no tendrás que buscar calle por calle para marcar tu reporte en el mapa de Fray Bentos.
+                        </p>
+                    </div>
+                `,
+                background: '#0f172a',
+                color: '#f8fafc',
+                confirmButtonText: 'Entendido, ir al mapa',
+                confirmButtonColor: '#10b981',
+                customClass: {
+                    popup: 'rounded-3xl border border-emerald-500/30 shadow-2xl p-5',
+                    confirmButton: 'w-full py-3 rounded-xl font-black text-slate-950 text-xs uppercase tracking-wider shadow-lg'
+                }
+            });
         }
 
         function cerrarBienvenida() {
@@ -332,7 +312,7 @@
             if (map) {
                 map.invalidateSize();
             }
-            activarGPSAlEntrar();
+            mostrarConsejoUbicacion();
         }
 
         function toggleMenuHamburguesa() {
@@ -369,7 +349,7 @@
 
             if (reporteIdCompartido) {
                 document.getElementById('welcome-modal').classList.add('hidden');
-                setTimeout(activarGPSAlEntrar, 500);
+                setTimeout(mostrarConsejoUbicacion, 700);
             }
 
             cargarReportes();
