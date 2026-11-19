@@ -7,6 +7,34 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .zoom-visor-contenedor {
+            max-height: 62vh;
+            overflow: auto;
+            border-radius: 1rem;
+            border: 1px solid #334155;
+            background: #020617;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .zoom-foto-libre {
+            max-height: 58vh;
+            max-width: 100%;
+            object-fit: contain;
+            transition: transform 0.25s ease;
+            cursor: zoom-in;
+            transform-origin: center center;
+            user-select: none;
+        }
+        .zoom-foto-libre.ampliada {
+            transform: scale(2.2);
+            max-height: none;
+            max-width: none;
+            cursor: zoom-out;
+        }
+    </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
 
@@ -200,7 +228,6 @@
                 const spanTexto = el.querySelector('.texto-fecha');
                 if (!raw || !spanTexto) return;
 
-                // Si la fecha viene en formato ISO sin zona horaria (ej. UTC de Render), la interpretamos y pasamos a GMT-3
                 const normalizada = raw.includes('T') && !raw.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(raw)
                     ? `${raw}Z`
                     : raw;
@@ -347,17 +374,44 @@
         function verImagenZoom(url, titulo) {
             Swal.fire({
                 title: `<span class="text-sm font-bold text-white">${titulo || 'Evidencia'}</span>`,
-                imageUrl: url,
-                imageAlt: 'Foto de Evidencia',
+                html: `
+                    <div class="space-y-2 text-left">
+                        <p class="text-[11px] text-slate-400 text-center">Haz clic sobre la foto para ampliar o reducir; desliza para moverte libremente.</p>
+                        <div id="visor-libre" class="zoom-visor-contenedor">
+                            <img id="img-zoom-libre" src="${url}" alt="Foto de Evidencia" class="zoom-foto-libre">
+                        </div>
+                    </div>
+                `,
                 background: '#0f172a',
                 color: '#f8fafc',
                 showCloseButton: true,
                 showConfirmButton: true,
                 confirmButtonText: 'Volver al Panel',
                 confirmButtonColor: '#10b981',
+                didOpen: () => {
+                    const img = document.getElementById('img-zoom-libre');
+                    const visor = document.getElementById('visor-libre');
+                    if (!img || !visor) return;
+
+                    img.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const estaAmpliada = img.classList.toggle('ampliada');
+                        if (estaAmpliada) {
+                            const rect = img.getBoundingClientRect();
+                            const relX = (e.clientX - rect.left) / rect.width;
+                            const relY = (e.clientY - rect.top) / rect.height;
+                            img.style.transformOrigin = `${(relX * 100).toFixed(1)}% ${(relY * 100).toFixed(1)}%`;
+                            visor.scrollLeft = Math.max(0, (visor.scrollWidth - visor.clientWidth) * relX);
+                            visor.scrollTop = Math.max(0, (visor.scrollHeight - visor.clientHeight) * relY);
+                        } else {
+                            img.style.transformOrigin = 'center center';
+                            visor.scrollLeft = 0;
+                            visor.scrollTop = 0;
+                        }
+                    });
+                },
                 customClass: {
-                    popup: 'rounded-3xl border border-emerald-500/40 max-w-lg shadow-2xl p-4',
-                    image: 'rounded-2xl max-h-[55vh] object-contain w-full my-2 border border-slate-700 cursor-pointer',
+                    popup: 'rounded-3xl border border-emerald-500/40 max-w-2xl w-full shadow-2xl p-4',
                     confirmButton: 'w-full py-3 rounded-xl font-black text-slate-950 uppercase text-xs shadow-lg'
                 }
             });

@@ -173,10 +173,6 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <button onclick="centrarUbicacionUsuario()" class="px-3.5 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-emerald-500/30 shadow-md" title="Mi Ubicación GPS">
-                <i class="fa-solid fa-location-crosshairs"></i>
-                <span class="hidden sm:inline">Mi GPS</span>
-            </button>
             <a href="/login" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-bold text-slate-200 transition flex items-center gap-2 border border-slate-700 shadow-md">
                 <i class="fa-solid fa-user-shield text-emerald-400"></i>
                 <span>Acceso Admin</span>
@@ -280,11 +276,58 @@
     <!-- Leaflet JS & Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        let map, tempMarker, reportesLayer, userMarker;
+        let markersMap = {};
+        let popupUbicacionMostrado = false;
+
+        function mostrarPopupUbicacion() {
+            if (popupUbicacionMostrado) return;
+            popupUbicacionMostrado = true;
+
+            if (!navigator.geolocation) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Ubicación no compatible',
+                    text: 'Tu navegador no soporta geolocalización. Puedes tocar cualquier punto del mapa para reportar.',
+                    background: '#0f172a',
+                    color: '#f8fafc',
+                    confirmButtonColor: '#10b981',
+                    confirmButtonText: 'Entendido',
+                    customClass: { popup: 'rounded-3xl border border-slate-700' }
+                });
+                return;
+            }
+
+            Swal.fire({
+                icon: 'info',
+                title: '<span class="text-lg font-black text-white">Activa tu ubicación</span>',
+                html: '<p class="text-xs text-slate-300 leading-relaxed">Para saber dónde estás parado y facilitar el reporte de incidencias en tu zona, activa o permite el acceso a tu ubicación.</p>',
+                background: '#0f172a',
+                color: '#f8fafc',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fa-solid fa-location-crosshairs me-1"></i> Activar ubicación',
+                cancelButtonText: 'Ahora no',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#334155',
+                reverseButtons: true,
+                customClass: {
+                    popup: 'rounded-3xl border border-emerald-500/30 shadow-2xl',
+                    confirmButton: 'rounded-xl font-black text-slate-950 text-xs uppercase px-4 py-2.5',
+                    cancelButton: 'rounded-xl font-bold text-slate-200 text-xs px-4 py-2.5'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    solicitarUbicacionGPS();
+                }
+            });
+        }
+
         function cerrarBienvenida() {
             document.getElementById('welcome-modal').classList.add('hidden');
             if (map) {
                 map.invalidateSize();
             }
+            mostrarPopupUbicacion();
         }
 
         function toggleMenuHamburguesa() {
@@ -302,9 +345,6 @@
                 setTimeout(() => overlay.classList.remove('opacity-0'), 10);
             }
         }
-
-        let map, tempMarker, reportesLayer, userMarker;
-        let markersMap = {};
 
         function actualizarMarcadorUsuario(lat, lng, zoomNivel = 15, abrirPopup = true) {
             if (!map) return;
@@ -324,7 +364,7 @@
             }
         }
 
-        function solicitarUbicacionAutomatica() {
+        function solicitarUbicacionGPS() {
             if (!navigator.geolocation) return;
 
             navigator.geolocation.getCurrentPosition(
@@ -337,21 +377,15 @@
                     );
                 },
                 () => {
-                    // Reintento con menor precisión si el GPS demora o falla en interiores
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            actualizarMarcadorUsuario(
-                                position.coords.latitude,
-                                position.coords.longitude,
-                                15,
-                                true
-                            );
-                        },
-                        () => {
-                            console.log("Geolocalización denegada o no disponible.");
-                        },
-                        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
-                    );
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Ubicación desactivada o denegada',
+                        text: 'Asegúrate de tener el GPS encendido y permitir el acceso a la ubicación en tu navegador.',
+                        background: '#0f172a',
+                        color: '#f8fafc',
+                        confirmButtonColor: '#10b981',
+                        customClass: { popup: 'rounded-3xl border border-slate-700' }
+                    });
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
@@ -370,36 +404,20 @@
                 abrirMenuReporte(e.latlng.lat, e.latlng.lng);
             });
 
-            // Solicitar ubicación automáticamente al entrar a la app
-            solicitarUbicacionAutomatica();
+            const urlParams = new URLSearchParams(window.location.search);
+            const reporteIdCompartido = urlParams.get('reporte');
+
+            // Si entra directo a un reporte compartido, oculta bienvenida y pide ubicación sin tapar el reporte
+            if (reporteIdCompartido) {
+                document.getElementById('welcome-modal').classList.add('hidden');
+                setTimeout(mostrarPopupUbicacion, 800);
+            }
 
             cargarReportes();
 
             // Sincronizar el mapa automáticamente cada 2 minutos para optimizar ancho de banda
             setInterval(cargarReportes, 60000);
         });
-
-        function centrarUbicacionUsuario() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    actualizarMarcadorUsuario(
-                        position.coords.latitude,
-                        position.coords.longitude,
-                        16,
-                        true
-                    );
-                }, () => {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'GPS no disponible',
-                        text: 'No se pudo obtener tu ubicación actual.',
-                        background: '#0f172a',
-                        color: '#f8fafc',
-                        confirmButtonColor: '#10b981'
-                    });
-                }, { enableHighAccuracy: true, timeout: 10000 });
-            }
-        }
 
         async function cargarReportes() {
             try {
